@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #f5f7fb;
+  --muted: #9aa5b8;
+  --muted-strong: #c0c9d8;
+  --canvas: #080b12;
+  --surface: #10151f;
+  --surface-raised: #151c28;
+  --line: rgba(203, 214, 232, 0.11);
+  --line-strong: rgba(203, 214, 232, 0.18);
+  --amber: #e8b86a;
+  --amber-bright: #f5c879;
+  --mint: #7ce1c0;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-amber: var(--amber);
+  --color-amber-bright: var(--amber-bright);
+  --color-mint: var(--mint);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--canvas);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 82% -10%, rgba(28, 79, 91, 0.2), transparent 31rem),
+    radial-gradient(circle at -8% 22%, rgba(101, 68, 38, 0.12), transparent 26rem),
+    var(--canvas);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+::selection {
+  background: rgba(232, 184, 106, 0.32);
+  color: #fff;
+}
+
+.page-shell {
+  width: min(100% - 32px, 1360px);
+  margin-inline: auto;
+}
+
+.surface {
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(22, 29, 42, 0.94), rgba(12, 16, 24, 0.94));
+  box-shadow: 0 18px 70px rgba(0, 0, 0, 0.2);
+}
+
+.surface-subtle {
+  border: 1px solid var(--line);
+  background: rgba(17, 22, 32, 0.68);
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--amber-bright);
+  outline-offset: 3px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.display {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.045em;
+}
+
+.eyebrow {
+  color: var(--amber);
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.hero-mesh {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(to bottom, black, transparent 90%);
+}
+
+.hero-orb {
+  animation: drift 9s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate3d(0, -9px, 0) rotate(2deg);
+  }
+}
+
+@media (max-width: 1024px) {
+  .game-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    width: min(100% - 24px, 1360px);
+  }
+
+  .game-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

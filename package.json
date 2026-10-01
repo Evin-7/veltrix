@@ -1,0 +1,33 @@
+{
+  "name": "veltrix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Veltrix virtual-credit iGaming demonstration platform",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @veltrix/web",
+    "build": "npm run build --workspace @veltrix/web",
+    "lint": "npm run lint --workspace @veltrix/web",
+    "typecheck": "npm run typecheck --workspace @veltrix/web",
+    "test": "npm run test --workspace @veltrix/web",
+    "format": "prettier --write .",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "prisma": "6.12.0",
+    "tsx": "^4.20.6"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "6.12.0"
+  }
+}

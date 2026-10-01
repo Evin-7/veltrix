@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+enum Role {
+  PLAYER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ProviderStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum GameStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum GameCategory {
+  SLOTS
+  TABLE_GAMES
+  LIVE_STYLE
+  BLACKJACK
+  ROULETTE
+  ARCADE
+}
+
+enum WalletTransactionType {
+  WELCOME_BONUS
+  DAILY_REWARD
+  GAME_WAGER
+  GAME_WIN
+  ADMIN_ADJUSTMENT
+}
+
+enum GameSessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+enum GameRoundStatus {
+  PENDING
+  ACTIVE
+  SETTLED
+  CANCELLED
+}
+
+enum GameType {
+  SLOTS
+  BLACKJACK
+  ROULETTE
+}
+
+enum GameActionType {
+  SLOT_SPIN
+  ROULETTE_SPIN
+  BLACKJACK_DEAL
+  BLACKJACK_HIT
+  BLACKJACK_STAND
+  BLACKJACK_DOUBLE
+}
+
+model User {
+  id                 String              @id @default(uuid()) @db.Uuid
+  email              String              @unique @db.VarChar(320)
+  passwordHash       String              @db.VarChar(255)
+  role               Role                @default(PLAYER)
+  status             UserStatus          @default(ACTIVE)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  lastLoginAt        DateTime?
+  profile            Profile?
+  sessions           AuthSession[]
+  wallet             Wallet?
+  walletTransactions WalletTransaction[]
+  favourites         Favourite[]
+  recentGames        RecentGame[]
+  gameSessions       GameSession[]
+  gameRounds         GameRound[]
+  gameActions        GameAction[]
+
+  @@index([status])
+  @@index([role])
+}
+
+model Profile {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @db.Uuid
+  username    String   @unique @db.VarChar(32)
+  displayName String?  @db.VarChar(80)
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuthSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  tokenHash  String    @unique @db.VarChar(64)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model GameProvider {
+  id        String         @id @default(uuid()) @db.Uuid
+  name      String         @unique @db.VarChar(80)
+  slug      String         @unique @db.VarChar(80)
+  status    ProviderStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  games     Game[]
+
+  @@index([status])
+}
+
+model Game {
+  id           String        @id @default(uuid()) @db.Uuid
+  providerId   String        @db.Uuid
+  name         String        @db.VarChar(120)
+  slug         String        @unique @db.VarChar(120)
+  description  String        @db.VarChar(500)
+  category     GameCategory
+  thumbnail    String?
+  status       GameStatus    @default(ACTIVE)
+  featured     Boolean       @default(false)
+  newGame      Boolean       @default(false)
+  popular      Boolean       @default(false)
+  demoRtp      Decimal       @db.Decimal(5, 2)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  provider     GameProvider  @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  favourites   Favourite[]
+  recentGames  RecentGame[]
+  gameSessions GameSession[]
+  gameRounds   GameRound[]
+
+  @@index([providerId])
+  @@index([status, category])
+  @@index([status, featured])
+  @@index([status, popular])
+  @@index([status, newGame])
+}
+
+model GameSession {
+  id           String            @id @default(uuid()) @db.Uuid
+  userId       String            @db.Uuid
+  gameId       String            @db.Uuid
+  status       GameSessionStatus @default(ACTIVE)
+  startedAt    DateTime          @default(now())
+  endedAt      DateTime?
+  totalWagered Int               @default(0)
+  totalWon     Int               @default(0)
+  roundCount   Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game         Game              @relation(fields: [gameId], references: [id], onDelete: Restrict)
+  rounds       GameRound[]
+  actions      GameAction[]
+
+  @@index([userId, status, updatedAt])
+  @@index([gameId, status, updatedAt])
+  @@index([userId, createdAt])
+}
+
+model GameRound {
+  id          String          @id @default(uuid()) @db.Uuid
+  sessionId   String          @db.Uuid
+  gameId      String          @db.Uuid
+  userId      String          @db.Uuid
+  roundNumber Int
+  status      GameRoundStatus @default(PENDING)
+  wager       Int
+  payout      Int             @default(0)
+  netResult   Int             @default(0)
+  gameType    GameType
+  state       Json?
+  result      Json?
+  createdAt   DateTime        @default(now())
+  settledAt   DateTime?
+  session     GameSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  game        Game            @relation(fields: [gameId], references: [id], onDelete: Restrict)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actions     GameAction[]
+
+  @@unique([sessionId, roundNumber])
+  @@index([userId, createdAt])
+  @@index([userId, gameType, createdAt])
+  @@index([sessionId, status])
+}
+
+model GameAction {
+  id             String         @id @default(uuid()) @db.Uuid
+  sessionId      String         @db.Uuid
+  roundId        String         @db.Uuid
+  userId         String         @db.Uuid
+  type           GameActionType
+  idempotencyKey String         @unique @db.VarChar(160)
+  requestHash    String         @db.VarChar(64)
+  response       Json
+  createdAt      DateTime       @default(now())
+  session        GameSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round          GameRound      @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roundId, createdAt])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+model Wallet {
+  id           String              @id @default(uuid()) @db.Uuid
+  userId       String              @unique @db.Uuid
+  balance      Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@index([balance])
+}
+
+model WalletTransaction {
+  id             String                @id @default(uuid()) @db.Uuid
+  walletId       String                @db.Uuid
+  userId         String                @db.Uuid
+  type           WalletTransactionType
+  amount         Int
+  balanceBefore  Int
+  balanceAfter   Int
+  referenceId    String?               @db.VarChar(160)
+  idempotencyKey String?               @unique @db.VarChar(160)
+  metadata       Json?
+  createdAt      DateTime              @default(now())
+  wallet         Wallet                @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([walletId, createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, type, createdAt])
+  @@index([referenceId])
+}
+
+model Favourite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  gameId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([userId, createdAt])
+  @@index([gameId])
+}
+
+model RecentGame {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  gameId       String   @db.Uuid
+  lastPlayedAt DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game         Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([userId, lastPlayedAt])
+  @@index([gameId])
+}
