@@ -84,4 +84,7 @@ export function Panel({ children, className = "" }: { children: React.ReactNode;
 export function StatusPill({ value }: { value: string }) { const tone = value === "ACTIVE" || value === "COMPLETED" ? "border-[#245a4c] bg-[#12352e] text-[#8af0c4]" : value === "DISABLED" || value === "INACTIVE" || value === "ABANDONED" ? "border-[#5c3340] bg-[#321b26] text-[#f39bad]" : "border-[#64552b] bg-[#332c18] text-[#f4d98b]"; return <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${tone}`}>{value}</span>; }
 export function EmptyState({ children = "No records found." }: { children?: React.ReactNode }) { return <div className="px-6 py-14 text-center text-sm text-[#718097]">{children}</div>; }
 export function formatDate(value: string | null) { return value ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—"; }
-export function formatVc(value: number) { return `${new Intl.NumberFormat("en-US").format(value)} VC`; }
+export function formatVc(value: number) {
+  const sign = value < 0 ? "-" : "";
+  return `${sign}€${new Intl.NumberFormat("en-US").format(Math.abs(value))}`;
+}
