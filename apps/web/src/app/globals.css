@@ -241,8 +241,8 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 :root[data-theme="light"] .veltrix-logo:not(.veltrix-logo--surface-dark) .veltrix-logo-image--light,
 .veltrix-logo--surface-dark .veltrix-logo-image--dark,
 .veltrix-logo--surface-light .veltrix-logo-image--light { display: block; }
-.app-header { height: var(--app-header-height); }
-.app-header-inner { height: 100%; }
+.app-header { min-height: var(--app-header-height); }
+.app-header-inner { min-height: var(--app-header-height); }
 .home-hero { position: relative; display: grid; align-items: center; isolation: isolate; height: calc(100vh - var(--app-header-height)); height: calc(100dvh - var(--app-header-height)); min-height: calc(100vh - var(--app-header-height)); min-height: calc(100dvh - var(--app-header-height)); background: radial-gradient(circle at 78% 48%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 32rem), radial-gradient(circle at 8% 14%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 28rem); padding-block: clamp(2rem, 6vh, 5rem); }
 .home-hero-inner { width: min(calc(100% - (var(--page-gutter) * 2)), var(--content-max-width)); margin-inline: auto; }
 .player-page { padding-block: var(--section-space) var(--section-space-large); }
@@ -297,6 +297,7 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .gameplay-page, .gameplay-layout, .slot-game-shell { min-width: 0; font-family: var(--font-display); }
 .gameplay-layout, .slot-game-shell { color: var(--game-fg); }
 .gameplay-game-header { border-color: var(--game-border); }
+.gameplay-game-header > :first-child, .gameplay-game-header > :last-child { min-width: 0; }
 .gameplay-layout .text-ink, .gameplay-layout .text-foreground { color: var(--game-fg); }
 .gameplay-layout .text-muted, .gameplay-layout .text-foreground-muted { color: var(--game-muted); }
 .gameplay-layout .text-muted-strong, .gameplay-layout .text-foreground-subtle { color: var(--game-subtle); }
@@ -464,6 +465,15 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 @keyframes slot-line-draw { from { stroke-dashoffset: 100; opacity: 0; } to { stroke-dashoffset: 0; opacity: 0.9; } }
 
 @media (max-width: 640px) { .slot-control-bar { grid-template-columns: 1fr; } .slot-spin-button { width: 100%; } .slot-support-grid { grid-template-columns: 1fr; } .slot-status-strip strong { font-size: 0.65rem; } }
+
+@media (max-width: 640px) {
+  .gameplay-page { padding-top: 1.25rem; }
+  .gameplay-game-header { align-items: flex-start; gap: 1rem; }
+  .gameplay-game-header > :first-child, .gameplay-game-header > :last-child { flex: 1 1 100%; }
+  .gameplay-game-header > :last-child { flex-wrap: wrap; justify-content: flex-end; }
+  .gameplay-game-header h1 { max-width: 100%; }
+}
+
 @media (prefers-reduced-motion: reduce) { .slot-machine-spinning .slot-symbol-tile, .slot-winning-line { animation: none; } }
 
 @media (min-width: 1500px) { .game-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
