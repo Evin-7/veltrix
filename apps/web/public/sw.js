@@ -1,4 +1,4 @@
-const CACHE_NAME = "veltrix-static-v1";
+const CACHE_NAME = "veltrix-static-v3";
 const CACHEABLE_DESTINATIONS = new Set(["font", "image", "script", "style"]);
 
 self.addEventListener("install", () => {
