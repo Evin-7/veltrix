@@ -6,7 +6,7 @@ Veltrix is a premium virtual-credit gaming demonstration platform. It is a portf
 
 ## Phase 5 scope
 
-Phase 5 adds a separate `apps/admin` control room backed by the existing web app’s versioned admin APIs:
+Phase 5 adds a separate `apps/admin` interface backed by the existing web app’s versioned admin APIs:
 
 - ADMIN and SUPER_ADMIN-only dashboard, player, catalog, session, transaction, and audit views
 - server-derived dashboard KPIs and activity trends for 24-hour, 7-day, and 30-day ranges
@@ -122,7 +122,7 @@ npm run dev:admin
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-Open [http://localhost:3001](http://localhost:3001) for the admin control room.
+Open [http://localhost:3001](http://localhost:3001) for the admin interface.
 
 Useful commands:
 
@@ -176,7 +176,7 @@ Seed passwords are hashed before persistence. Registration always creates a `PLA
 ```text
 veltrix/
 ├── apps/web/src/app/            # Player UI and versioned Next Route Handlers
-├── apps/admin/src/app/          # Admin control-room UI
+├── apps/admin/src/app/          # Admin UI
 ├── apps/web/src/server/         # Prisma, auth, validation, services, errors
 ├── apps/web/src/features/       # UI-facing feature types and presentation
 ├── apps/web/src/server/gameplay/ # pure game engines and transactional orchestration

@@ -1,15 +1,208 @@
 "use client";
 
-import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { AdminShell, EmptyState, PageIntro, Panel, formatDate, formatVc } from "@/components/admin-shell";
+import { useEffect, useState, type FormEvent } from "react";
+import { AdminButton, AdminSearchInput } from "@/components/admin-form";
 import { AdminSelect } from "@/components/admin-select";
+import {
+  AdminShell,
+  EmptyState,
+  PageIntro,
+  Panel,
+  formatDate,
+  formatVc,
+} from "@/components/admin-shell";
 import { apiFetch, type ApiMeta } from "@/lib/api";
 
-type Transaction = { id: string; type: string; amount: number; balanceBefore: number; balanceAfter: number; referenceId: string | null; idempotencyKey: string | null; metadata: unknown; createdAt: string; user: { email: string; username: string | null } };
+type Transaction = {
+  id: string;
+  type: string;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  referenceId: string | null;
+  idempotencyKey: string | null;
+  metadata: unknown;
+  createdAt: string;
+  user: { email: string; username: string | null };
+};
+const transactionTypes = [
+  { value: "", label: "All transaction types" },
+  { value: "WELCOME_BONUS", label: "Welcome bonus" },
+  { value: "DAILY_REWARD", label: "Daily reward" },
+  { value: "GAME_WAGER", label: "Game wager" },
+  { value: "GAME_WIN", label: "Game win" },
+  { value: "ADMIN_ADJUSTMENT", label: "Admin adjustment" },
+];
 
-function TransactionsContent() { const [records, setRecords] = useState<Transaction[]>([]); const [meta, setMeta] = useState<ApiMeta | null>(null); const [search, setSearch] = useState(""); const [type, setType] = useState(""); const [page, setPage] = useState(1); const [error, setError] = useState(""); async function load() { const params = new URLSearchParams({ page: String(page), pageSize: "25" }); if (search) params.set("search", search); if (type) params.set("type", type); try { const result = await apiFetch<Transaction[]>(`/api/v1/admin/transactions?${params}`); setRecords(result.data); setMeta(result.meta ?? null); } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load transactions."); } } // The search field is submitted explicitly; page/type changes auto-refresh.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { void load(); }, [page, type]); return <><PageIntro eyebrow="Ledger explorer" title="Transactions" description="Read-only visibility into the append-only virtual-credit ledger. Use the player detail for authorized balance adjustments." /><Panel className="mb-6 p-4"><form onSubmit={(event) => { event.preventDefault(); setPage(1); void load(); }} className="grid gap-3 md:grid-cols-[1fr_220px_auto]"><div className="flex items-center gap-3 rounded-xl border border-[#2b3547] bg-[#0c1018] px-3"><Search size={16} className="text-[#637089]" /><input aria-label="Search transactions" value={search} onChange={(event) => setSearch(event.target.value)} className="w-full bg-transparent py-3 text-sm text-white outline-none" /></div><AdminSelect ariaLabel="Transaction type" onValueChange={(value) => { setType(value); setPage(1); }} options={[{ value: "", label: "All transaction types" }, { value: "WELCOME_BONUS", label: "WELCOME_BONUS" }, { value: "DAILY_REWARD", label: "DAILY_REWARD" }, { value: "GAME_WAGER", label: "GAME_WAGER" }, { value: "GAME_WIN", label: "GAME_WIN" }, { value: "ADMIN_ADJUSTMENT", label: "ADMIN_ADJUSTMENT" }]} value={type} /><button className="rounded-xl bg-[#83f5c5] px-5 py-3 text-sm font-bold text-[#09120f]">Filter ledger</button></form></Panel>{error && <Panel className="mb-6 border-[#643443] p-4 text-sm text-[#ffadbd]">{error}</Panel>}<Panel className="overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left"><thead className="border-b border-[#252d3d] bg-[#151a25] text-[10px] uppercase tracking-[0.16em] text-[#637089]"><tr><th className="px-6 py-4">Player</th><th className="px-4 py-4">Type</th><th className="px-4 py-4">Amount</th><th className="px-4 py-4">Balance after</th><th className="px-4 py-4">Reference</th><th className="px-6 py-4">Created</th></tr></thead><tbody className="divide-y divide-[#202837]">{records.map((record) => <tr key={record.id} className="hover:bg-[#151a25]"><td className="px-6 py-4"><div className="text-xs font-semibold text-[#e4eaf5]">{record.user.username ?? "—"}</div><div className="mt-1 text-[10px] text-[#718097]">{record.user.email}</div></td><td className="px-4 py-4 text-[11px] font-semibold text-[#aab4c8]">{record.type.replaceAll("_", " ")}</td><td className={`px-4 py-4 text-sm font-semibold ${record.amount >= 0 ? "text-[#83f5c5]" : "text-[#ffadbd]"}`}>{record.amount >= 0 ? "+" : ""}{formatVc(record.amount)}</td><td className="px-4 py-4 text-sm text-[#dce4f1]">{formatVc(record.balanceAfter)}</td><td className="max-w-[180px] truncate px-4 py-4 text-[10px] text-[#718097]">{record.referenceId ?? "—"}</td><td className="px-6 py-4 text-xs text-[#8994aa]">{formatDate(record.createdAt)}</td></tr>)}</tbody></table>{!records.length && <EmptyState>No ledger entries match those filters.</EmptyState>}</div><div className="flex items-center justify-between border-t border-[#252d3d] px-6 py-4 text-xs text-[#718097]"><span>{meta ? `Page ${meta.page} of ${Math.max(1, meta.totalPages)} · ${meta.total} records` : "Loading…"}</span><div className="flex gap-2"><button disabled={page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-[#2b3547] px-3 py-2 disabled:opacity-40">Previous</button><button disabled={!meta || page >= meta.totalPages} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-[#2b3547] px-3 py-2 disabled:opacity-40">Next</button></div></div></Panel></>; }
+function TransactionsContent() {
+  const [records, setRecords] = useState<Transaction[]>([]);
+  const [meta, setMeta] = useState<ApiMeta | null>(null);
+  const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [type, setType] = useState("");
+  const [page, setPage] = useState(1);
+  const [requestVersion, setRequestVersion] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
-export default function TransactionsPage() { return <AdminShell><TransactionsContent /></AdminShell>; }
+  useEffect(() => {
+    let active = true;
+    const params = new URLSearchParams({ page: String(page), pageSize: "25" });
+    if (submittedSearch) params.set("search", submittedSearch);
+    if (type) params.set("type", type);
+    setIsLoading(true);
+    setRecords([]);
+    setMeta(null);
+    setHasLoaded(false);
+    void apiFetch<Transaction[]>(`/api/v1/admin/transactions?${params}`)
+      .then((result) => {
+        if (!active) return;
+        setRecords(result.data);
+        setMeta(result.meta ?? null);
+        setHasLoaded(true);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [page, requestVersion, submittedSearch, type]);
+
+  function submitFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmittedSearch(search.trim());
+    setPage(1);
+    setRequestVersion((version) => version + 1);
+  }
+
+  return (
+    <>
+      <PageIntro
+        eyebrow="Ledger explorer"
+        title="Transactions"
+        description="Read-only visibility into the append-only virtual-credit ledger. Use the player detail for authorized balance adjustments."
+      />
+      <Panel className="mb-6 p-4">
+        <form
+          onSubmit={submitFilters}
+          className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_240px_auto]"
+        >
+          <AdminSearchInput
+            aria-label="Search transactions"
+            autoComplete="off"
+            className="w-full"
+            label="Search transactions"
+            onChange={(event) => setSearch(event.currentTarget.value)}
+            placeholder="Search by player or reference"
+            value={search}
+          />
+          <AdminSelect
+            ariaLabel="Transaction type"
+            onValueChange={(value) => {
+              setType(value);
+              setPage(1);
+            }}
+            options={transactionTypes}
+            value={type}
+          />
+          <AdminButton className="md:min-w-36" type="submit">
+            Filter ledger
+          </AdminButton>
+        </form>
+      </Panel>
+      <Panel className="overflow-hidden">
+        <div aria-busy={isLoading} className="admin-table-scroll">
+          <table className="admin-table admin-table--dense min-w-[900px]">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Balance after</th>
+                <th>Reference</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={record.id}>
+                  <td>
+                    <div className="text-xs font-semibold">
+                      {record.user.username ?? "—"}
+                    </div>
+                    <div className="mt-1 text-[10px] text-[var(--admin-muted)]">
+                      {record.user.email}
+                    </div>
+                  </td>
+                  <td className="text-[11px] font-semibold">
+                    {record.type.replaceAll("_", " ")}
+                  </td>
+                  <td
+                    className={`text-sm font-semibold ${record.amount >= 0 ? "text-[var(--admin-success)]" : "text-[var(--admin-danger)]"}`}
+                  >
+                    {record.amount >= 0 ? "+" : ""}
+                    {formatVc(record.amount)}
+                  </td>
+                  <td className="text-sm">{formatVc(record.balanceAfter)}</td>
+                  <td className="max-w-[180px] truncate text-[10px] text-[var(--admin-muted)]">
+                    {record.referenceId ?? "—"}
+                  </td>
+                  <td className="text-xs text-[var(--admin-muted)]">
+                    {formatDate(record.createdAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {isLoading && (
+            <div aria-live="polite" className="admin-empty-state" role="status">
+              Loading transactions…
+            </div>
+          )}
+          {!isLoading && hasLoaded && !records.length && (
+            <EmptyState>No ledger entries match those filters.</EmptyState>
+          )}
+        </div>
+        <div className="flex flex-col gap-3 border-t border-[var(--admin-border)] px-5 py-4 text-xs text-[var(--admin-muted)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <span aria-live="polite">
+            {meta
+              ? `Page ${meta.page} of ${Math.max(1, meta.totalPages)} · ${meta.total} records`
+              : isLoading
+                ? "Loading transactions…"
+                : ""}
+          </span>
+          <div className="flex gap-2">
+            <AdminButton
+              aria-label="Previous transactions page"
+              disabled={page <= 1 || isLoading}
+              onClick={() => setPage((value) => value - 1)}
+              size="sm"
+              variant="secondary"
+            >
+              Previous
+            </AdminButton>
+            <AdminButton
+              aria-label="Next transactions page"
+              disabled={!meta || page >= meta.totalPages || isLoading}
+              onClick={() => setPage((value) => value + 1)}
+              size="sm"
+              variant="secondary"
+            >
+              Next
+            </AdminButton>
+          </div>
+        </div>
+      </Panel>
+    </>
+  );
+}
+
+export default function TransactionsPage() {
+  return (
+    <AdminShell>
+      <TransactionsContent />
+    </AdminShell>
+  );
+}

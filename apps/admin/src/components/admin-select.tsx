@@ -2,7 +2,16 @@
 
 import { Check, ChevronDown } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 
 export type AdminSelectOption = {
   value: string;
@@ -12,6 +21,9 @@ export type AdminSelectOption = {
 
 type AdminSelectProps = {
   ariaLabel: string;
+  id?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
   className?: string;
   disabled?: boolean;
   onValueChange: (value: string) => void;
@@ -34,7 +46,11 @@ const MENU_GAP = 8;
 const MENU_MAX_HEIGHT = 320;
 const MENU_MIN_WIDTH = 208;
 
-function nextEnabledIndex(options: readonly AdminSelectOption[], start: number, direction: 1 | -1) {
+function nextEnabledIndex(
+  options: readonly AdminSelectOption[],
+  start: number,
+  direction: 1 | -1,
+) {
   if (options.length === 0) return -1;
   let index = start;
   for (let step = 0; step < options.length; step += 1) {
@@ -48,14 +64,30 @@ function firstEnabledIndex(options: readonly AdminSelectOption[]) {
   return options.findIndex((option) => !option.disabled);
 }
 
-export function AdminSelect({ ariaLabel, className = "", disabled = false, onValueChange, options, size = "md", value }: AdminSelectProps) {
-  const selectId = useId().replace(/:/g, "");
+export function AdminSelect({
+  ariaLabel,
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
+  className = "",
+  disabled = false,
+  onValueChange,
+  options,
+  size = "md",
+  value,
+}: AdminSelectProps) {
+  const generatedId = useId().replace(/:/g, "");
+  const selectId = id ?? generatedId;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [position, setPosition] = useState<MenuPosition | null>(null);
-  const selectedIndex = useMemo(() => options.findIndex((option) => option.value === value && !option.disabled), [options, value]);
+  const selectedIndex = useMemo(
+    () =>
+      options.findIndex((option) => option.value === value && !option.disabled),
+    [options, value],
+  );
   const selectedOption = options.find((option) => option.value === value);
 
   const updatePosition = useCallback(() => {
@@ -63,15 +95,35 @@ export function AdminSelect({ ariaLabel, className = "", disabled = false, onVal
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
-    const estimatedHeight = Math.min(MENU_MAX_HEIGHT, Math.max(64, options.length * 44 + 8));
-    const availableBelow = window.innerHeight - rect.bottom - MENU_GAP - VIEWPORT_MARGIN;
+    const estimatedHeight = Math.min(
+      MENU_MAX_HEIGHT,
+      Math.max(64, options.length * 44 + 8),
+    );
+    const availableBelow =
+      window.innerHeight - rect.bottom - MENU_GAP - VIEWPORT_MARGIN;
     const availableAbove = rect.top - MENU_GAP - VIEWPORT_MARGIN;
-    const placement = availableBelow < estimatedHeight && availableAbove > availableBelow ? "top" : "bottom";
-    const availableSpace = placement === "top" ? availableAbove : availableBelow;
-    const width = Math.min(Math.max(rect.width, MENU_MIN_WIDTH), window.innerWidth - VIEWPORT_MARGIN * 2);
-    const left = Math.min(Math.max(VIEWPORT_MARGIN, rect.left), window.innerWidth - width - VIEWPORT_MARGIN);
-    const nextPosition: MenuPosition = { left, maxHeight: Math.max(64, Math.min(MENU_MAX_HEIGHT, availableSpace)), placement, width };
-    if (placement === "top") nextPosition.bottom = window.innerHeight - rect.top + MENU_GAP;
+    const placement =
+      availableBelow < estimatedHeight && availableAbove > availableBelow
+        ? "top"
+        : "bottom";
+    const availableSpace =
+      placement === "top" ? availableAbove : availableBelow;
+    const width = Math.min(
+      Math.max(rect.width, MENU_MIN_WIDTH),
+      window.innerWidth - VIEWPORT_MARGIN * 2,
+    );
+    const left = Math.min(
+      Math.max(VIEWPORT_MARGIN, rect.left),
+      window.innerWidth - width - VIEWPORT_MARGIN,
+    );
+    const nextPosition: MenuPosition = {
+      left,
+      maxHeight: Math.max(64, Math.min(MENU_MAX_HEIGHT, availableSpace)),
+      placement,
+      width,
+    };
+    if (placement === "top")
+      nextPosition.bottom = window.innerHeight - rect.top + MENU_GAP;
     else nextPosition.top = rect.bottom + MENU_GAP;
     setPosition(nextPosition);
   }, [options.length]);
@@ -79,7 +131,8 @@ export function AdminSelect({ ariaLabel, className = "", disabled = false, onVal
   useEffect(() => {
     if (!open) return;
     const animationFrame = window.requestAnimationFrame(updatePosition);
-    const handleViewportChange = () => window.requestAnimationFrame(updatePosition);
+    const handleViewportChange = () =>
+      window.requestAnimationFrame(updatePosition);
     window.addEventListener("resize", handleViewportChange);
     window.addEventListener("scroll", handleViewportChange, true);
     return () => {
@@ -93,21 +146,29 @@ export function AdminSelect({ ariaLabel, className = "", disabled = false, onVal
     if (!open) return;
     function handleOutsidePointer(event: globalThis.PointerEvent) {
       const target = event.target as Node;
-      if (!triggerRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
+      if (
+        !triggerRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      )
+        setOpen(false);
     }
     document.addEventListener("pointerdown", handleOutsidePointer);
-    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+    return () =>
+      document.removeEventListener("pointerdown", handleOutsidePointer);
   }, [open]);
 
   function openMenu() {
     if (disabled) return;
-    setActiveIndex(selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(options));
+    setActiveIndex(
+      selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(options),
+    );
     setOpen(true);
   }
 
   function closeMenu(restoreFocus = false) {
     setOpen(false);
-    if (restoreFocus) window.requestAnimationFrame(() => triggerRef.current?.focus());
+    if (restoreFocus)
+      window.requestAnimationFrame(() => triggerRef.current?.focus());
   }
 
   function chooseOption(option: AdminSelectOption) {
@@ -135,13 +196,27 @@ export function AdminSelect({ ariaLabel, className = "", disabled = false, onVal
         openMenu();
         return;
       }
-      setActiveIndex((current) => nextEnabledIndex(options, current >= 0 ? current : firstEnabledIndex(options), event.key === "ArrowDown" ? 1 : -1));
+      setActiveIndex((current) =>
+        nextEnabledIndex(
+          options,
+          current >= 0 ? current : firstEnabledIndex(options),
+          event.key === "ArrowDown" ? 1 : -1,
+        ),
+      );
       return;
     }
     if (event.key === "Home" || event.key === "End") {
       event.preventDefault();
       if (!open) openMenu();
-      else setActiveIndex(event.key === "Home" ? firstEnabledIndex(options) : [...options].map((option, index) => ({ option, index })).reverse().find(({ option }) => !option.disabled)?.index ?? -1);
+      else
+        setActiveIndex(
+          event.key === "Home"
+            ? firstEnabledIndex(options)
+            : ([...options]
+                .map((option, index) => ({ option, index }))
+                .reverse()
+                .find(({ option }) => !option.disabled)?.index ?? -1),
+        );
       return;
     }
     if (event.key === "Enter" || event.key === " ") {
@@ -155,26 +230,94 @@ export function AdminSelect({ ariaLabel, className = "", disabled = false, onVal
     }
   }
 
-  const menuStyle: CSSProperties | undefined = position ? { left: position.left, maxHeight: position.maxHeight, top: position.top, bottom: position.bottom, width: position.width } : undefined;
-  const activeOptionId = activeIndex >= 0 ? `${selectId}-option-${activeIndex}` : undefined;
-  const menu = open && position ? (
-    <div aria-label={ariaLabel} className="admin-select-menu" data-placement={position.placement} id={`${selectId}-menu`} ref={menuRef} role="listbox" style={menuStyle}>
-      {options.length > 0 ? options.map((option, index) => {
-        const selected = option.value === value;
-        const active = index === activeIndex;
-        return <div aria-disabled={option.disabled || undefined} aria-selected={selected} className={`admin-select-option${selected ? " is-selected" : ""}${active ? " is-active" : ""}${option.disabled ? " is-disabled" : ""}`} id={`${selectId}-option-${index}`} key={option.value} onClick={() => chooseOption(option)} onMouseDown={(event) => event.preventDefault()} onPointerEnter={() => !option.disabled && setActiveIndex(index)} role="option">
-          <span>{option.label}</span>
-          {selected ? <Check aria-hidden="true" size={15} strokeWidth={2.2} /> : null}
-        </div>;
-      }) : <p className="admin-select-empty">No options available</p>}
-    </div>
-  ) : null;
+  const menuStyle: CSSProperties | undefined = position
+    ? {
+        left: position.left,
+        maxHeight: position.maxHeight,
+        top: position.top,
+        bottom: position.bottom,
+        width: position.width,
+      }
+    : undefined;
+  const activeOptionId =
+    activeIndex >= 0 ? `${selectId}-option-${activeIndex}` : undefined;
+  const menu =
+    open && position ? (
+      <div
+        aria-label={ariaLabel}
+        className="admin-select-menu"
+        data-placement={position.placement}
+        id={`${selectId}-menu`}
+        ref={menuRef}
+        role="listbox"
+        style={menuStyle}
+      >
+        {options.length > 0 ? (
+          options.map((option, index) => {
+            const selected = option.value === value;
+            const active = index === activeIndex;
+            return (
+              <div
+                aria-disabled={option.disabled || undefined}
+                aria-selected={selected}
+                className={`admin-select-option${selected ? " is-selected" : ""}${active ? " is-active" : ""}${option.disabled ? " is-disabled" : ""}`}
+                id={`${selectId}-option-${index}`}
+                key={option.value}
+                onClick={() => chooseOption(option)}
+                onMouseDown={(event) => event.preventDefault()}
+                onPointerEnter={() => !option.disabled && setActiveIndex(index)}
+                role="option"
+              >
+                <span>{option.label}</span>
+                {selected ? (
+                  <Check aria-hidden="true" size={15} strokeWidth={2.2} />
+                ) : null}
+              </div>
+            );
+          })
+        ) : (
+          <p className="admin-select-empty">No options available</p>
+        )}
+      </div>
+    ) : null;
 
-  return <div className={`admin-select admin-select--${size} ${className}`} data-disabled={disabled || undefined} data-open={open || undefined}>
-    <button aria-activedescendant={open ? activeOptionId : undefined} aria-controls={`${selectId}-menu`} aria-expanded={open} aria-haspopup="listbox" aria-label={ariaLabel} className="admin-select-trigger" disabled={disabled} onClick={() => open ? closeMenu() : openMenu()} onKeyDown={handleTriggerKeyDown} ref={triggerRef} role="combobox" type="button">
-      <span className="admin-select-trigger-label">{selectedOption?.label ?? ""}</span>
-      <ChevronDown aria-hidden="true" className="admin-select-chevron" size={size === "sm" ? 14 : 16} strokeWidth={1.8} />
-    </button>
-    {typeof document !== "undefined" && menu ? createPortal(menu, document.body) : null}
-  </div>;
+  return (
+    <div
+      className={`admin-select admin-select--${size} ${className}`}
+      data-disabled={disabled || undefined}
+      data-open={open || undefined}
+    >
+      <button
+        aria-activedescendant={open ? activeOptionId : undefined}
+        aria-controls={`${selectId}-menu`}
+        aria-describedby={ariaDescribedBy}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-invalid={ariaInvalid || undefined}
+        aria-label={ariaLabel}
+        className="admin-select-trigger"
+        data-invalid={ariaInvalid || undefined}
+        disabled={disabled}
+        id={selectId}
+        onClick={() => (open ? closeMenu() : openMenu())}
+        onKeyDown={handleTriggerKeyDown}
+        ref={triggerRef}
+        role="combobox"
+        type="button"
+      >
+        <span className="admin-select-trigger-label">
+          {selectedOption?.label ?? ""}
+        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className="admin-select-chevron"
+          size={size === "sm" ? 14 : 16}
+          strokeWidth={1.8}
+        />
+      </button>
+      {typeof document !== "undefined" && menu
+        ? createPortal(menu, document.body)
+        : null}
+    </div>
+  );
 }

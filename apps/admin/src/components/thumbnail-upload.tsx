@@ -1,7 +1,8 @@
 "use client";
 
-import { ImagePlus, Trash2, Upload } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { ImagePlus, LoaderCircle, Trash2, Upload } from "lucide-react";
+import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { AdminButton } from "@/components/admin-form";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -10,14 +11,21 @@ type ThumbnailUploadProps = {
   disabled: boolean;
   imageUrl: string | null;
   open: boolean;
+  uploading?: boolean;
 };
 
-export function ThumbnailUpload({ disabled, imageUrl, open }: ThumbnailUploadProps) {
+export function ThumbnailUpload({
+  disabled,
+  imageUrl,
+  open,
+  uploading = false,
+}: ThumbnailUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const fieldId = useId();
+  const fieldId = useId().replace(/:/g, "");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [removed, setRemoved] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -25,7 +33,6 @@ export function ThumbnailUpload({ disabled, imageUrl, open }: ThumbnailUploadPro
       setPreviewUrl(null);
       return;
     }
-
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
@@ -35,8 +42,12 @@ export function ThumbnailUpload({ disabled, imageUrl, open }: ThumbnailUploadPro
     if (open) return;
     setFile(null);
     setRemoved(false);
+    setDragging(false);
     setError("");
-    if (inputRef.current) inputRef.current.value = "";
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      inputRef.current.setCustomValidity("");
+    }
   }, [open]);
 
   const visibleImageUrl = file ? previewUrl : removed ? null : imageUrl;
@@ -44,81 +55,159 @@ export function ThumbnailUpload({ disabled, imageUrl, open }: ThumbnailUploadPro
   function selectFile(selected: File | undefined) {
     if (!selected) return;
     if (!ACCEPTED_IMAGE_TYPES.has(selected.type.toLowerCase())) {
-      setError("Choose a JPG, PNG, or WebP image.");
-      if (inputRef.current) inputRef.current.value = "";
+      const message = "Choose a JPG, PNG, or WebP image.";
+      setError(message);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+        inputRef.current.setCustomValidity(message);
+      }
       return;
     }
     if (selected.size > MAX_IMAGE_BYTES) {
-      setError("Choose an image under 8 MB.");
-      if (inputRef.current) inputRef.current.value = "";
+      const message = "Choose an image under 8 MB.";
+      setError(message);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+        inputRef.current.setCustomValidity(message);
+      }
       return;
     }
-
     setError("");
+    inputRef.current?.setCustomValidity("");
     setFile(selected);
     setRemoved(false);
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+    if (!disabled) selectFile(event.dataTransfer.files?.[0]);
   }
 
   function removeImage() {
     setFile(null);
     setRemoved(true);
     setError("");
-    if (inputRef.current) inputRef.current.value = "";
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      inputRef.current.setCustomValidity("");
+    }
   }
 
   return (
-    <div className="grid gap-2 md:col-span-2">
-      <span className="text-xs font-semibold text-[#8994aa]" id={`${fieldId}-label`}>Game thumbnail</span>
-      <input name="thumbnail" type="hidden" value={removed ? "" : imageUrl ?? ""} />
+    <div
+      className="admin-upload admin-field--wide"
+      data-admin-field="thumbnailFile"
+    >
+      <span className="admin-field-label" id={`${fieldId}-label`}>
+        Game thumbnail
+      </span>
+      <input
+        name="thumbnail"
+        type="hidden"
+        value={removed ? "" : (imageUrl ?? "")}
+      />
       <input
         ref={inputRef}
         accept="image/jpeg,image/png,image/webp"
         aria-describedby={`${fieldId}-help${error ? ` ${fieldId}-error` : ""}`}
         aria-labelledby={`${fieldId}-label`}
-        className="sr-only"
+        aria-invalid={Boolean(error) || undefined}
+        className="admin-upload-input"
+        disabled={disabled}
         id={fieldId}
         name="thumbnailFile"
         onChange={(event) => selectFile(event.currentTarget.files?.[0])}
-        disabled={disabled}
+        tabIndex={-1}
         type="file"
       />
-      <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-[#344054] bg-[#0d1119] p-4 sm:flex-row sm:items-center">
-        <div className="grid h-24 w-full shrink-0 place-items-center overflow-hidden rounded-xl border border-[#252d3d] bg-[#151a25] text-[#69768e] sm:w-36">
+      <div
+        className="admin-upload-dropzone"
+        data-dragging={dragging || undefined}
+        data-invalid={Boolean(error) || undefined}
+        data-uploading={uploading || undefined}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          if (!disabled) setDragging(true);
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            setDragging(false);
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={handleDrop}
+      >
+        <div className="admin-upload-preview">
           {visibleImageUrl ? (
-            <img alt="Game thumbnail preview" className="h-full w-full object-cover" src={visibleImageUrl} />
+            // The preview may be a local blob URL or a deployment-specific media host.
+            // Keep this small admin-only preview unoptimized instead of requiring image host config.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              alt="Game thumbnail preview"
+              className="h-full w-full object-cover"
+              src={visibleImageUrl}
+            />
           ) : (
             <ImagePlus aria-hidden="true" size={25} />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-[#edf3fd]">
-            {file?.name ?? (visibleImageUrl ? "Current thumbnail" : "No image selected")}
+          <p className="truncate text-sm font-semibold text-[var(--admin-text-strong)]">
+            {file?.name ??
+              (visibleImageUrl ? "Current thumbnail" : "No image selected")}
           </p>
-          <p className="mt-1 text-xs leading-5 text-[#8994aa]" id={`${fieldId}-help`}>
-            JPG, PNG, or WebP · up to 8 MB. The image will be uploaded securely when you save.
+          <p className="admin-field-hint mt-1" id={`${fieldId}-help`}>
+            JPG, PNG, or WebP · up to 8 MB. The image uploads securely when you
+            save.
           </p>
-          {error ? <p className="mt-1 text-xs text-[#ffadbd]" id={`${fieldId}-error`} role="alert">{error}</p> : null}
+          {error ? (
+            <p
+              className="admin-field-error mt-1"
+              id={`${fieldId}-error`}
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
+          {uploading ? (
+            <p
+              aria-live="polite"
+              className="admin-upload-size admin-upload-state"
+              role="status"
+            >
+              <LoaderCircle
+                aria-hidden="true"
+                className="admin-button-spinner"
+                size={13}
+              />
+              Uploading securely…
+            </p>
+          ) : file ? (
+            <p className="admin-upload-size" role="status">
+              {(file.size / (1024 * 1024)).toFixed(2)} MB selected
+            </p>
+          ) : null}
         </div>
-        <div className="flex shrink-0 gap-2">
-          <button
-            className="inline-flex items-center gap-2 rounded-lg border border-[#2b3547] px-3 py-2.5 text-xs font-semibold text-[#b5c0d3] hover:border-[#83f5c5] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => inputRef.current?.click()}
+        <div className="admin-upload-actions flex shrink-0 gap-2">
+          <AdminButton
             disabled={disabled}
-            type="button"
+            onClick={() => inputRef.current?.click()}
+            size="sm"
+            variant="secondary"
           >
             <Upload aria-hidden="true" size={14} />
             {visibleImageUrl ? "Replace" : "Choose file"}
-          </button>
+          </AdminButton>
           {visibleImageUrl ? (
-            <button
+            <AdminButton
               aria-label="Remove game thumbnail"
-              className="grid h-10 w-10 place-items-center rounded-lg border border-[#2b3547] text-[#8994aa] hover:border-[#643443] hover:text-[#ffadbd] disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={removeImage}
               disabled={disabled}
-              type="button"
+              onClick={removeImage}
+              size="sm"
+              variant="danger"
             >
               <Trash2 aria-hidden="true" size={14} />
-            </button>
+            </AdminButton>
           ) : null}
         </div>
       </div>

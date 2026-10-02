@@ -1,78 +1,97 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
-import { apiFetch, ApiError, jsonBody } from "@/lib/api";
+import {
+  AdminButton,
+  AdminField,
+  AdminInput,
+  useAdminFormValidation,
+} from "@/components/admin-form";
 import { AdminVeltrixLogo } from "@/components/veltrix-logo";
+import { apiFetch, jsonBody } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { errors, validate, setErrors } = useAdminFormValidation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault(); setBusy(true); setError("");
-    try { await apiFetch("/api/v1/admin/auth/login", { method: "POST", body: jsonBody({ email, password }) }); router.replace("/"); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "Unable to sign in."); }
-    finally { setBusy(false); }
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!validate(event.currentTarget)) return;
+    setBusy(true);
+    try {
+      await apiFetch("/api/v1/admin/auth/login", {
+        method: "POST",
+        body: jsonBody({ email, password }),
+      });
+      router.replace("/");
+    } catch {
+      // apiFetch surfaces operation errors through the shared admin toast.
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <main className="grid min-h-screen place-items-center px-5 py-10">
-      <div className="w-full max-w-[380px]">
+      <div className="w-full max-w-[24rem]">
         <div className="mb-8 text-center">
           <AdminVeltrixLogo className="mx-auto mb-5 w-[190px]" priority />
           <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#83f5c5]">
-            Veltrix Control Room
+            Veltrix Admin
           </div>
         </div>
         <form
-          className="rounded-3xl border border-[#252d3d] bg-[#11151f] p-6 shadow-2xl shadow-black/20"
+          className="admin-login-card grid gap-5 rounded-3xl border p-6"
+          noValidate
           onSubmit={submit}
         >
-          <label className="block text-xs font-semibold text-[#b3bdd0]">
-            Email
-            <input
+          <AdminField error={errors.email} label="Email" name="email">
+            <AdminInput
               autoComplete="username"
-              className="mt-2 w-full rounded-xl border border-[#2b3547] bg-[#0c1018] px-4 py-3 text-sm text-white outline-none transition focus:border-[#83f5c5]"
-              onChange={(event) => setEmail(event.target.value)}
+              name="email"
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setErrors((current) => ({ ...current, email: "" }));
+              }}
               required
               type="email"
               value={email}
             />
-          </label>
-          <label className="mt-5 block text-xs font-semibold text-[#b3bdd0]">
-            Password
-            <input
+          </AdminField>
+          <AdminField error={errors.password} label="Password" name="password">
+            <AdminInput
               autoComplete="current-password"
-              className="mt-2 w-full rounded-xl border border-[#2b3547] bg-[#0c1018] px-4 py-3 text-sm text-white outline-none transition focus:border-[#83f5c5]"
-              onChange={(event) => setPassword(event.target.value)}
+              name="password"
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setErrors((current) => ({ ...current, password: "" }));
+              }}
               required
               type="password"
               value={password}
             />
-          </label>
-          {error ? (
-            <div
-              aria-live="polite"
-              className="mt-4 rounded-xl border border-[#643443] bg-[#321b26] px-4 py-3 text-xs text-[#ffadbd]"
-            >
-              {error}
-            </div>
-          ) : null}
-          <button
-            className="mt-6 flex w-full items-center justify-center rounded-xl bg-[#83f5c5] px-4 py-3.5 text-sm font-bold text-[#09120f] transition hover:bg-[#a5fbd8] disabled:cursor-wait disabled:opacity-60"
-            disabled={busy}
+          </AdminField>
+          <AdminButton
+            className="mt-1 w-full"
+            loading={busy}
+            loadingText="Logging in…"
             type="submit"
           >
-            {busy ? "Logging in…" : "Login"}
-          </button>
+            Login
+          </AdminButton>
         </form>
         <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-[#637089]">
-          <ShieldCheck className="text-[#83f5c5]" size={14} /> Session protected by Veltrix auth
+          <ShieldCheck
+            aria-hidden="true"
+            className="text-[#83f5c5]"
+            size={14}
+          />{" "}
+          Session protected by Veltrix auth
         </div>
       </div>
     </main>

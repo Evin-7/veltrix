@@ -1,6 +1,11 @@
 import { dispatchAdminToast } from "@/lib/admin-toast";
 
-export type ApiMeta = { page: number; pageSize: number; total: number; totalPages: number };
+export type ApiMeta = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
 
 export class ApiError extends Error {
   status: number;
@@ -13,31 +18,45 @@ export class ApiError extends Error {
   }
 }
 
-const apiBase = (process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+type AdminRequestInit = RequestInit & { suppressErrorToast?: boolean };
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}) {
+const apiBase = (
+  process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:3000"
+).replace(/\/$/, "");
+
+export async function apiFetch<T>(path: string, init: AdminRequestInit = {}) {
+  const { suppressErrorToast = false, ...requestInit } = init;
   let response: Response;
   try {
-    const headers = new Headers(init.headers);
-    const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
-    if (init.body && !isFormData && !headers.has("Content-Type")) {
+    const headers = new Headers(requestInit.headers);
+    const isFormData =
+      typeof FormData !== "undefined" && requestInit.body instanceof FormData;
+    if (requestInit.body && !isFormData && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
     response = await fetch(`${apiBase}${path}`, {
-      ...init,
+      ...requestInit,
       credentials: "include",
       headers,
     });
   } catch {
     const message = "The admin service could not be reached. Please try again.";
-    dispatchAdminToast({ type: "error", message });
+    if (!suppressErrorToast) dispatchAdminToast({ type: "error", message });
     throw new ApiError(0, "NETWORK_ERROR", message);
   }
-  const payload = (await response.json().catch(() => ({}))) as { data?: T; meta?: ApiMeta; error?: { code?: string; message?: string } };
+  const payload = (await response.json().catch(() => ({}))) as {
+    data?: T;
+    meta?: ApiMeta;
+    error?: { code?: string; message?: string };
+  };
   if (!response.ok) {
     const message = payload.error?.message ?? "The request failed.";
-    dispatchAdminToast({ type: "error", message });
-    throw new ApiError(response.status, payload.error?.code ?? "REQUEST_FAILED", message);
+    if (!suppressErrorToast) dispatchAdminToast({ type: "error", message });
+    throw new ApiError(
+      response.status,
+      payload.error?.code ?? "REQUEST_FAILED",
+      message,
+    );
   }
   return { data: payload.data as T, meta: payload.meta };
 }

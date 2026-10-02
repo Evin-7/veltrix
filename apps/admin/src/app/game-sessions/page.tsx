@@ -1,13 +1,191 @@
 "use client";
 
 import Link from "next/link";
-import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { AdminShell, EmptyState, PageIntro, Panel, StatusPill, formatDate, formatVc } from "@/components/admin-shell";
+import { useEffect, useState, type FormEvent } from "react";
+import { AdminButton, AdminSearchInput } from "@/components/admin-form";
+import {
+  AdminShell,
+  EmptyState,
+  PageIntro,
+  Panel,
+  StatusPill,
+  formatDate,
+  formatVc,
+} from "@/components/admin-shell";
 import { apiFetch, type ApiMeta } from "@/lib/api";
 
-type Session = { id: string; status: string; startedAt: string; endedAt: string | null; totalWagered: number; totalWon: number; roundCount: number; createdAt: string; user: { email: string; username: string | null }; game: { name: string; slug: string } };
-function SessionsContent() { const [records, setRecords] = useState<Session[]>([]); const [meta, setMeta] = useState<ApiMeta | null>(null); const [search, setSearch] = useState(""); const [page, setPage] = useState(1); const [error, setError] = useState(""); async function load() { const query = new URLSearchParams({ page: String(page), pageSize: "25" }); if (search) query.set("search", search); try { const result = await apiFetch<Session[]>(`/api/v1/admin/sessions?${query}`); setRecords(result.data); setMeta(result.meta ?? null); } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load sessions."); } } // Search is submitted explicitly; pagination auto-refreshes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { void load(); }, [page]); return <><PageIntro eyebrow="Gameplay observability" title="Game sessions" description="Read-only session and round history for support, analytics, and incident review. Settlement remains exclusively server-authoritative." /><Panel className="mb-6 p-4"><form onSubmit={(event) => { event.preventDefault(); setPage(1); void load(); }} className="flex gap-3"><div className="flex flex-1 items-center gap-3 rounded-xl border border-[#2b3547] bg-[#0c1018] px-3"><Search size={16} className="text-[#637089]" /><input aria-label="Search game sessions" value={search} onChange={(event) => setSearch(event.target.value)} className="w-full bg-transparent py-3 text-sm text-white outline-none" /></div><button className="rounded-xl bg-[#83f5c5] px-5 py-3 text-sm font-bold text-[#09120f]">Search</button></form></Panel>{error && <Panel className="mb-6 border-[#643443] p-4 text-sm text-[#ffadbd]">{error}</Panel>}<Panel className="overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[920px] text-left"><thead className="border-b border-[#252d3d] bg-[#151a25] text-[10px] uppercase tracking-[0.16em] text-[#637089]"><tr><th className="px-6 py-4">Session / game</th><th className="px-4 py-4">Player</th><th className="px-4 py-4">Status</th><th className="px-4 py-4">Rounds</th><th className="px-4 py-4">Wagered</th><th className="px-6 py-4">Started</th></tr></thead><tbody className="divide-y divide-[#202837]">{records.map((record) => <tr key={record.id} className="hover:bg-[#151a25]"><td className="px-6 py-4"><Link href={`/game-sessions/${record.id}`} className="text-xs font-semibold text-[#e4eaf5] hover:text-[#83f5c5]">{record.game.name}</Link><div className="mt-1 text-[10px] text-[#718097]">{record.id.slice(0, 8)} · {record.game.slug}</div></td><td className="px-4 py-4"><div className="text-xs text-[#dce4f1]">{record.user.username ?? "—"}</div><div className="mt-1 text-[10px] text-[#718097]">{record.user.email}</div></td><td className="px-4 py-4"><StatusPill value={record.status} /></td><td className="px-4 py-4 text-sm text-[#aab4c8]">{record.roundCount}</td><td className="px-4 py-4 text-sm text-[#dce4f1]">{formatVc(record.totalWagered)}</td><td className="px-6 py-4 text-xs text-[#8994aa]">{formatDate(record.startedAt)}</td></tr>)}</tbody></table>{!records.length && <EmptyState>No sessions match those filters.</EmptyState>}</div><div className="flex items-center justify-between border-t border-[#252d3d] px-6 py-4 text-xs text-[#718097]"><span>{meta ? `Page ${meta.page} of ${Math.max(1, meta.totalPages)} · ${meta.total} sessions` : "Loading…"}</span><div className="flex gap-2"><button disabled={page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-[#2b3547] px-3 py-2 disabled:opacity-40">Previous</button><button disabled={!meta || page >= meta.totalPages} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-[#2b3547] px-3 py-2 disabled:opacity-40">Next</button></div></div></Panel></>; }
-export default function SessionsPage() { return <AdminShell><SessionsContent /></AdminShell>; }
+type Session = {
+  id: string;
+  status: string;
+  startedAt: string;
+  endedAt: string | null;
+  totalWagered: number;
+  totalWon: number;
+  roundCount: number;
+  createdAt: string;
+  user: { email: string; username: string | null };
+  game: { name: string; slug: string };
+};
+
+function SessionsContent() {
+  const [records, setRecords] = useState<Session[]>([]);
+  const [meta, setMeta] = useState<ApiMeta | null>(null);
+  const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [requestVersion, setRequestVersion] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const query = new URLSearchParams({ page: String(page), pageSize: "25" });
+    if (submittedSearch) query.set("search", submittedSearch);
+    setIsLoading(true);
+    setRecords([]);
+    setMeta(null);
+    setHasLoaded(false);
+    void apiFetch<Session[]>(`/api/v1/admin/sessions?${query}`)
+      .then((result) => {
+        if (!active) return;
+        setRecords(result.data);
+        setMeta(result.meta ?? null);
+        setHasLoaded(true);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [page, requestVersion, submittedSearch]);
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmittedSearch(search.trim());
+    setPage(1);
+    setRequestVersion((version) => version + 1);
+  }
+
+  return (
+    <>
+      <PageIntro
+        eyebrow="Gameplay observability"
+        title="Game sessions"
+        description="Read-only session and round history for support, analytics, and incident review. Settlement remains exclusively server-authoritative."
+      />
+      <Panel className="mb-6 p-4">
+        <form
+          onSubmit={submitSearch}
+          className="flex flex-col gap-3 sm:flex-row"
+        >
+          <AdminSearchInput
+            aria-label="Search game sessions"
+            autoComplete="off"
+            className="flex-1"
+            label="Search game sessions"
+            onChange={(event) => setSearch(event.currentTarget.value)}
+            placeholder="Search by player, game, or session"
+            value={search}
+          />
+          <AdminButton className="sm:min-w-28" type="submit">
+            Search
+          </AdminButton>
+        </form>
+      </Panel>
+      <Panel className="overflow-hidden">
+        <div aria-busy={isLoading} className="admin-table-scroll">
+          <table className="admin-table admin-table--dense min-w-[920px]">
+            <thead>
+              <tr>
+                <th>Session / game</th>
+                <th>Player</th>
+                <th>Status</th>
+                <th>Rounds</th>
+                <th>Wagered</th>
+                <th>Started</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={record.id}>
+                  <td>
+                    <Link
+                      href={`/game-sessions/${record.id}`}
+                      className="text-xs font-semibold text-[var(--admin-text)] hover:text-[var(--admin-accent)]"
+                    >
+                      {record.game.name}
+                    </Link>
+                    <div className="mt-1 text-[10px] text-[var(--admin-muted)]">
+                      {record.id.slice(0, 8)} · {record.game.slug}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="text-xs">{record.user.username ?? "—"}</div>
+                    <div className="mt-1 text-[10px] text-[var(--admin-muted)]">
+                      {record.user.email}
+                    </div>
+                  </td>
+                  <td>
+                    <StatusPill value={record.status} />
+                  </td>
+                  <td className="text-sm">{record.roundCount}</td>
+                  <td className="text-sm">{formatVc(record.totalWagered)}</td>
+                  <td className="text-xs text-[var(--admin-muted)]">
+                    {formatDate(record.startedAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {isLoading && (
+            <div aria-live="polite" className="admin-empty-state" role="status">
+              Loading sessions…
+            </div>
+          )}
+          {!isLoading && hasLoaded && !records.length && (
+            <EmptyState>No sessions match those filters.</EmptyState>
+          )}
+        </div>
+        <div className="flex flex-col gap-3 border-t border-[var(--admin-border)] px-5 py-4 text-xs text-[var(--admin-muted)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <span aria-live="polite">
+            {meta
+              ? `Page ${meta.page} of ${Math.max(1, meta.totalPages)} · ${meta.total} sessions`
+              : isLoading
+                ? "Loading sessions…"
+                : ""}
+          </span>
+          <div className="flex gap-2">
+            <AdminButton
+              aria-label="Previous sessions page"
+              disabled={page <= 1 || isLoading}
+              onClick={() => setPage((value) => value - 1)}
+              size="sm"
+              variant="secondary"
+            >
+              Previous
+            </AdminButton>
+            <AdminButton
+              aria-label="Next sessions page"
+              disabled={!meta || page >= meta.totalPages || isLoading}
+              onClick={() => setPage((value) => value + 1)}
+              size="sm"
+              variant="secondary"
+            >
+              Next
+            </AdminButton>
+          </div>
+        </div>
+      </Panel>
+    </>
+  );
+}
+
+export default function SessionsPage() {
+  return (
+    <AdminShell>
+      <SessionsContent />
+    </AdminShell>
+  );
+}

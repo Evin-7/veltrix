@@ -1,4 +1,4 @@
-# Veltrix Admin Control Room
+# Veltrix Admin
 
 The Phase 5 back office is a separate Next.js workspace at `apps/admin`. It is a browser UI only; the existing `apps/web` app remains the single Prisma, session, wallet, and API boundary.
 
@@ -8,7 +8,7 @@ The Phase 5 back office is a separate Next.js workspace at `apps/admin`. It is a
 2. Set `ADMIN_APP_URL=http://localhost:3001` in the web environment.
 3. Copy `apps/admin/.env.example` to `apps/admin/.env.local` if the API is not running at its default URL.
 4. Start the player API/app with `npm run dev`.
-5. Start the control room in another terminal with `npm run dev:admin`.
+5. Start the admin interface in another terminal with `npm run dev:admin`.
 6. Open `http://localhost:3001` and sign in with an `ADMIN` or `SUPER_ADMIN` account.
 
 The admin origin is explicitly checked by the API. In deployment, set `ADMIN_APP_URL` to the exact browser origin or place both apps behind a same-origin reverse proxy. Do not use `*` CORS and do not put credentials in the admin app bundle.

@@ -2,48 +2,141 @@
 
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 
 type AdminModalProps = {
   children: React.ReactNode;
   description?: string;
+  footer?: ReactNode;
   onClose: () => void;
   open: boolean;
   title: string;
 };
 
-export function AdminModal({ children, description, onClose, open, title }: AdminModalProps) {
+const focusableSelector = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled]):not([type=hidden]):not([tabindex='-1'])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+export function AdminModal({
+  children,
+  description,
+  footer,
+  onClose,
+  open,
+  title,
+}: AdminModalProps) {
   const titleId = useId().replace(/:/g, "");
   const descriptionId = `${titleId}-description`;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
 
+    const previousFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const dialog = dialogRef.current;
+    const focusFrame = window.requestAnimationFrame(() => {
+      const firstFocusable =
+        dialog?.querySelector<HTMLElement>(focusableSelector);
+      (firstFocusable ?? dialog)?.focus();
+    });
+
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab" || !dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(focusableSelector),
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first ||
+          !dialog.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last ||
+          !dialog.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [onClose, open]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/65 p-0 sm:items-center sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <div aria-describedby={description ? descriptionId : undefined} aria-labelledby={titleId} aria-modal="true" className="w-full max-w-2xl overflow-hidden rounded-t-3xl border border-[#252d3d] bg-[#11151f] shadow-2xl shadow-black/40 sm:rounded-3xl" role="dialog">
-        <div className="flex items-start justify-between gap-5 border-b border-[#252d3d] px-5 py-5 sm:px-6">
+    <div
+      className="admin-modal-overlay"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onCloseRef.current();
+      }}
+    >
+      <div
+        aria-describedby={description ? descriptionId : undefined}
+        aria-labelledby={titleId}
+        aria-modal="true"
+        className="admin-modal"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex={-1}
+      >
+        <div className="admin-modal-header">
           <div>
-            <h2 className="text-base font-semibold text-white" id={titleId}>{title}</h2>
-            {description ? <p className="mt-1 text-xs leading-5 text-[#718097]" id={descriptionId}>{description}</p> : null}
+            <h2 className="admin-modal-title" id={titleId}>
+              {title}
+            </h2>
+            {description ? (
+              <p className="admin-modal-description" id={descriptionId}>
+                {description}
+              </p>
+            ) : null}
           </div>
-          <button aria-label="Close dialog" className="admin-icon-button h-9 w-9 shrink-0" onClick={onClose} type="button"><X aria-hidden="true" size={16} /></button>
+          <button
+            aria-label="Close dialog"
+            className="admin-icon-button admin-modal-close"
+            onClick={() => onCloseRef.current()}
+            type="button"
+          >
+            <X aria-hidden="true" size={16} />
+          </button>
         </div>
-        <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">{children}</div>
+        <div className="admin-modal-body admin-scrollbar">{children}</div>
+        {footer ? <div className="admin-modal-footer">{footer}</div> : null}
       </div>
     </div>,
     document.body,

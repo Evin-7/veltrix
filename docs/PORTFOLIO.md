@@ -4,7 +4,7 @@ Veltrix is a full-stack virtual-credit iGaming demonstration built to show produ
 
 ## What it demonstrates
 
-- A responsive player lobby with original game presentation and a separate admin control room.
+- A responsive player lobby with original game presentation and a separate admin interface.
 - Next.js 16 App Router, React 19, TypeScript strict mode, Tailwind CSS 4, and npm workspaces.
 - Neon PostgreSQL with Prisma migrations and an idempotent fictional demo seed.
 - Argon2id password hashing, hashed HttpOnly sessions, role authorization, same-origin checks, secure headers, and generic error responses.

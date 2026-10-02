@@ -20,4 +20,4 @@ Before a wager is debited, the gameplay transaction locks the player wallet, che
 
 ## Administration
 
-The admin control room provides read-only inspection of configured limits and active pauses. It has no casual override action. Player changes are audited and create a notification so the player can see that the setting became active.
+The admin interface provides read-only inspection of configured limits and active pauses. It has no casual override action. Player changes are audited and create a notification so the player can see that the setting became active.
