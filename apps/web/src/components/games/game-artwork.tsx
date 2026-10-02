@@ -14,7 +14,7 @@ export function GameArtwork({ game, className, compact = false, priority = false
       <Image alt={`${game.name} cover art`} className="object-cover transition-transform duration-500 group-hover/art:scale-[1.06]" fill priority={priority} sizes="(min-width: 1500px) 16vw, (min-width: 850px) 22vw, 45vw" src={imagePath} />
       <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-black/10" />
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/15 to-transparent" />
-      {!compact ? <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2 sm:inset-x-4"><span className="rounded-full border border-white/15 bg-black/25 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">{game.category}</span><span className="rounded-full border border-white/15 bg-black/25 px-2 py-1 text-[9px] font-semibold text-white/80 backdrop-blur-sm">{game.demoRtp} RTP</span></div> : null}
+      {!compact ? <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2 sm:inset-x-4"><span className="rounded-full border border-white/15 bg-black/25 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">{game.category}</span>{game.category !== "Arcade" ? <span className="rounded-full border border-white/15 bg-black/25 px-2 py-1 text-[9px] font-semibold text-white/80 backdrop-blur-sm">{game.rtp} RTP</span> : null}</div> : null}
     </div>
   );
 }

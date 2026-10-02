@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { filterGames } from "./filter";
 
 const games = [
-  { id: "1", name: "Lunar Circuit", slug: "lunar-circuit", description: "", category: "Slots" as const, provider: "Astra Works", providerSlug: "astra-works", thumbnail: null, status: "ACTIVE" as const, featured: true, isNew: true, popular: true, demoRtp: "96.4%", players: "2.4k", accent: "#82e4c1", palette: ["#153b49", "#172034"] as [string, string], symbol: "◒" },
-  { id: "2", name: "Velvet Roulette", slug: "velvet-roulette", description: "", category: "Table Games" as const, provider: "House of V", providerSlug: "house-of-v", thumbnail: null, status: "ACTIVE" as const, featured: true, isNew: false, popular: true, demoRtp: "97.3%", players: "1.8k", accent: "#e9b46a", palette: ["#5e2637", "#1b1425"] as [string, string], symbol: "✦" },
-  { id: "3", name: "Gilded Dice", slug: "gilded-dice", description: "", category: "Table Games" as const, provider: "House of V", providerSlug: "house-of-v", thumbnail: null, status: "ACTIVE" as const, featured: false, isNew: true, popular: false, demoRtp: "96.8%", players: "690", accent: "#f4d68c", palette: ["#6a4626", "#261a1d"] as [string, string], symbol: "◆" },
+  { id: "1", name: "Lunar Circuit", slug: "lunar-circuit", description: "", category: "Slots" as const, provider: "Astra Works", providerSlug: "astra-works", thumbnail: null, status: "ACTIVE" as const, featured: true, isNew: true, popular: true, rtp: "96.4%", accent: "#82e4c1", palette: ["#153b49", "#172034"] as [string, string], symbol: "◒" },
+  { id: "2", name: "Velvet Roulette", slug: "velvet-roulette", description: "", category: "Table Games" as const, provider: "House of V", providerSlug: "house-of-v", thumbnail: null, status: "ACTIVE" as const, featured: true, isNew: false, popular: true, rtp: "97.3%", accent: "#e9b46a", palette: ["#5e2637", "#1b1425"] as [string, string], symbol: "✦" },
+  { id: "3", name: "Gilded Dice", slug: "gilded-dice", description: "", category: "Table Games" as const, provider: "House of V", providerSlug: "house-of-v", thumbnail: null, status: "ACTIVE" as const, featured: false, isNew: true, popular: false, rtp: "96.8%", accent: "#f4d68c", palette: ["#6a4626", "#261a1d"] as [string, string], symbol: "◆" },
 ];
 
 describe("filterGames", () => {

@@ -64,7 +64,7 @@ export function mapGame(game: {
     featured: game.featured,
     isNew: game.newGame,
     popular: game.popular,
-    demoRtp: `${Number(game.demoRtp).toFixed(1)}%`,
+    rtp: `${Number(game.demoRtp).toFixed(1)}%`,
     ...presentation,
   };
 }

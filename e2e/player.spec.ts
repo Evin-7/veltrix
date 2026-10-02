@@ -18,19 +18,39 @@ test.describe("player journey", () => {
 
     await page.goto("/casino");
     await expect(page.getByRole("heading", { name: "Find your next ritual." })).toBeVisible();
-    await page.getByRole("link", { name: /Open Neon Relics/ }).click();
-    await expect(page.getByRole("heading", { name: "Neon Relics" })).toBeVisible();
-    await page.getByRole("button", { name: "Spin reels" }).click();
-    await expect(page.getByText("Balance updated server-side.")).toBeVisible();
 
-    await page.goto("/casino/veltrix-blackjack");
-    await page.getByRole("button", { name: "Deal hand" }).click();
-    await expect(page.getByText(/Balance updated server-side\./)).toBeVisible();
+    const games = [
+      { slug: "neon-relics", action: "Spin" },
+      { slug: "veltrix-blackjack", action: "Deal hand" },
+      { slug: "european-roulette", action: "Spin wheel" },
+      { slug: "lunar-circuit", action: "Spin reels" },
+      { slug: "velvet-roulette", action: "Spin wheel" },
+      { slug: "signal-blackjack", action: "Deal hand" },
+      { slug: "neon-paddock", action: "Start night run" },
+      { slug: "orbit-reels", action: "Spin reels" },
+      { slug: "gilded-dice", action: "Roll dice" },
+      { slug: "tide-chase", action: "Start night run" },
+      { slug: "ember-room", action: "Spin reels" },
+      { slug: "afterglow-baccarat", action: "Deal baccarat" },
+      { slug: "cinder-club", action: "Roll dice" },
+      { slug: "prism-pulse", action: "Start night run" },
+      { slug: "moonlit-mint", action: "Spin reels" },
+    ];
 
-    await page.goto("/casino/european-roulette");
-    await page.getByRole("button", { name: "Bet on 0" }).click();
-    await page.getByRole("button", { name: "Spin wheel" }).click();
-    await expect(page.getByText(/Balance updated server-side\./)).toBeVisible();
+    for (const game of games) {
+      await page.goto(`/casino/${game.slug}`);
+      await page.getByRole("button", { name: "Play Demo" }).click();
+      await expect(page).toHaveURL(new RegExp(`/casino/${game.slug}/play$`));
+      await page.getByRole("button", { name: game.action }).click();
+      if (game.action === "Deal hand") {
+        const stand = page.getByRole("button", { name: "Stand" });
+        if (await stand.isVisible()) await stand.click();
+      }
+      if (game.action === "Deal hand") await expect(page.getByText(/PLAYER|DEALER|PUSH|BUST|BLACKJACK/).first()).toBeVisible();
+      else if (game.action === "Start night run") await expect(page.getByText(/score|Returned|Run complete/).first()).toBeVisible({ timeout: 10_000 });
+      else await expect(page.getByText(/Round complete|Round settled|Bet .* settled|No line win|No win/).first()).toBeVisible();
+      await page.goto("/casino");
+    }
 
     await page.goto("/wallet");
     await expect(page.getByRole("heading", { name: /wallet/i })).toBeVisible();

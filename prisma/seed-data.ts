@@ -7,9 +7,9 @@ export const providerSeeds = [
 ] as const;
 
 export const gameSeeds = [
-  { name: "Neon Relics", slug: "neon-relics", description: "Five reels of original relics, bright lines, and server-led demo spins.", category: "SLOTS", providerSlug: "veltrix-originals", featured: true, newGame: true, popular: true, demoRtp: 96.2 },
-  { name: "Veltrix Blackjack", slug: "veltrix-blackjack", description: "A focused blackjack table built around clear decisions and fictional VC.", category: "BLACKJACK", providerSlug: "veltrix-originals", featured: true, newGame: true, popular: true, demoRtp: 99.1 },
-  { name: "European Roulette", slug: "european-roulette", description: "A single-zero wheel with simple demo bets and a calm neon table.", category: "ROULETTE", providerSlug: "veltrix-originals", featured: true, newGame: true, popular: true, demoRtp: 97.3 },
+  { name: "Neon Relics", slug: "neon-relics", description: "Five reels of original relics, bright lines, and a luminous night-shift rhythm.", category: "SLOTS", providerSlug: "veltrix-originals", featured: true, newGame: true, popular: true, demoRtp: 96.2 },
+  { name: "Veltrix Blackjack", slug: "veltrix-blackjack", description: "A focused blackjack table built around clear decisions and measured play.", category: "BLACKJACK", providerSlug: "veltrix-originals", featured: true, newGame: true, popular: true, demoRtp: 99.1 },
+  { name: "European Roulette", slug: "european-roulette", description: "A single-zero wheel with simple bets and a calm neon table.", category: "ROULETTE", providerSlug: "veltrix-originals", featured: true, newGame: true, popular: true, demoRtp: 97.3 },
   { name: "Lunar Circuit", slug: "lunar-circuit", description: "A cool-toned slot run through a bright orbital city.", category: "SLOTS", providerSlug: "astra-works", featured: true, newGame: true, popular: true, demoRtp: 96.4 },
   { name: "Velvet Roulette", slug: "velvet-roulette", description: "An elegant European wheel with a midnight finish.", category: "TABLE_GAMES", providerSlug: "house-of-v", featured: true, newGame: false, popular: true, demoRtp: 97.3 },
   { name: "Signal Blackjack", slug: "signal-blackjack", description: "A focused table with crisp decisions and quiet tension.", category: "TABLE_GAMES", providerSlug: "northstar-studio", featured: true, newGame: false, popular: true, demoRtp: 99.2 },

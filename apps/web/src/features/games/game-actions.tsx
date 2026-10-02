@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, LoaderCircle, Play } from "lucide-react";
+import { Heart, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
   const [isFavourite, setIsFavourite] = useState(initialIsFavourite);
   const [isFavouritePopping, setIsFavouritePopping] = useState(false);
   const [isSavingFavourite, setIsSavingFavourite] = useState(false);
-  const [isRecordingPreview, setIsRecordingPreview] = useState(false);
+  const [isLaunching, setIsLaunching] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const { showToast } = useToast();
 
@@ -44,7 +44,7 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
       setIsFavourite(savedValue);
       setIsFavouritePopping(savedValue);
       window.dispatchEvent(new CustomEvent("veltrix:favourite-changed", { detail: { slug: gameSlug, isFavourite: savedValue } }));
-      showToast(savedValue ? "Added to favourites" : "Removed from favourites", "success");
+      showToast(savedValue ? "Added to favourites" : "Removed from favourites", "success", { card: savedValue ? { rank: "K", suit: "♥" } : { rank: "J", suit: "♠" }, variant: "premium" });
     } catch {
       setIsFavourite(previousValue);
       setIsFavouritePopping(false);
@@ -55,24 +55,18 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
     }
   }
 
-  async function recordPreview() {
+  function launchGame() {
     if (!isAuthenticated) return redirectToLogin();
     setMessage(null);
-    setIsRecordingPreview(true);
-    try {
-      const response = await fetch(`/api/v1/games/${gameSlug}/recent`, { method: "POST" });
-      if (response.status === 401) return redirectToLogin();
-      setMessage(response.ok ? "Demo preview saved. No VC was spent." : "We could not save this preview right now.");
-    } finally {
-      setIsRecordingPreview(false);
-    }
+    setIsLaunching(true);
+    router.push(`/casino/${gameSlug}/play`);
   }
 
   return (
     <div>
       <div className="flex flex-wrap gap-3">
-        <Button disabled={isRecordingPreview} onClick={recordPreview} size="lg" variant="primary">
-          {isRecordingPreview ? <LoaderCircle className="animate-spin" size={17} /> : <Play fill="currentColor" size={17} />} Play Demo
+        <Button disabled={isLaunching} onClick={launchGame} size="lg" variant="primary">
+          {isLaunching ? <LoaderCircle className="animate-spin" size={17} /> : null} {isLaunching ? "Opening…" : "Play"}
         </Button>
         <Button aria-label={isFavourite ? `Remove ${gameName} from favourites` : `Add ${gameName} to favourites`} aria-pressed={isFavourite} disabled={isSavingFavourite} onClick={toggleFavourite} size="lg" variant="secondary">
           <Heart className={cn(isFavourite ? "text-favorite" : "text-foreground-muted", isFavouritePopping && "favorite-heart-pop")} fill={isFavourite ? "currentColor" : "none"} size={17} /> {isFavourite ? "Saved" : "Favourite"}

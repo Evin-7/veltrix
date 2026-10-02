@@ -17,8 +17,7 @@ export type Game = {
   featured: boolean;
   isNew: boolean;
   popular: boolean;
-  demoRtp: string;
-  players: string;
+  rtp: string;
   accent: string;
   palette: [string, string];
   symbol: string;
