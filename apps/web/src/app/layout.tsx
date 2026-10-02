@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { GameAudioProvider } from "@/features/gameplay/game-audio";
 
 const roboto = Roboto({ subsets: ["latin"], display: "swap", variable: "--font-roboto", weight: ["400", "500", "600", "700"] });
 const oswald = Oswald({ subsets: ["latin"], display: "swap", variable: "--font-oswald", weight: ["400", "500", "600", "700"] });
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     default: "Veltrix — Play the atmosphere",
     template: "%s — Veltrix",
   },
-  description: "A premium virtual-credit gaming demonstration platform.",
+  description: "A premium gaming collection built around Veltrix Credits.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -24,9 +25,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <head><Script id="veltrix-theme" strategy="beforeInteractive">{themeScript}</Script></head>
       <body className={`${roboto.variable} ${oswald.variable}`}>
         <ThemeProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <GameAudioProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </GameAudioProvider>
         </ThemeProvider>
       </body>
     </html>

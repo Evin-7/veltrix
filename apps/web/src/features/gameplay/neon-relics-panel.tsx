@@ -1,8 +1,9 @@
 "use client";
 
-import { CircleDot, Coins, Crown, Diamond, Gem, LoaderCircle, RefreshCw, Star, Volume2, VolumeX, Zap, type LucideIcon } from "lucide-react";
+import { CircleDot, Crown, Diamond, Gem, LoaderCircle, RefreshCw, Star, Volume2, VolumeX, Zap, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useGameAudio } from "./game-audio";
 
 const wagers = [10, 25, 50, 100, 250, 500] as const;
 type Wager = (typeof wagers)[number];
@@ -18,13 +19,13 @@ type SlotResult = {
   newBalance: number;
 };
 
-const symbolArt: Record<SlotSymbol, { Icon: LucideIcon; label: string; tone: string; tile: string }> = {
-  crystal: { Icon: Gem, label: "Crystal", tone: "text-cyan-200", tile: "bg-cyan-300/10 border-cyan-200/25" },
-  crown: { Icon: Crown, label: "Crown", tone: "text-amber-200", tile: "bg-amber-300/10 border-amber-200/25" },
-  orb: { Icon: CircleDot, label: "Orb", tone: "text-fuchsia-200", tile: "bg-fuchsia-300/10 border-fuchsia-200/25" },
-  star: { Icon: Star, label: "Star", tone: "text-yellow-100", tile: "bg-yellow-300/10 border-yellow-200/25" },
-  lightning: { Icon: Zap, label: "Lightning", tone: "text-lime-200", tile: "bg-lime-300/10 border-lime-200/25" },
-  diamond: { Icon: Diamond, label: "Diamond", tone: "text-sky-200", tile: "bg-sky-300/10 border-sky-200/25" },
+const symbolArt: Record<SlotSymbol, { Icon: LucideIcon; label: string; tone: string }> = {
+  crystal: { Icon: Gem, label: "Crystal", tone: "slot-symbol-crystal" },
+  crown: { Icon: Crown, label: "Crown", tone: "slot-symbol-crown" },
+  orb: { Icon: CircleDot, label: "Orb", tone: "slot-symbol-orb" },
+  star: { Icon: Star, label: "Star", tone: "slot-symbol-star" },
+  lightning: { Icon: Zap, label: "Lightning", tone: "slot-symbol-lightning" },
+  diamond: { Icon: Diamond, label: "Diamond", tone: "slot-symbol-diamond" },
 };
 
 // Mirrors the implemented server paytable in server/gameplay/slots.ts.
@@ -53,15 +54,15 @@ async function requestJson<T>(url: string, options: RequestInit = {}) {
 function RelicSymbol({ symbol, highlighted = false }: { symbol: SlotSymbol; highlighted?: boolean }) {
   const art = symbolArt[symbol];
   const Icon = art.Icon;
-  return <div aria-label={art.label} className={`slot-symbol-tile ${art.tile} ${highlighted ? "slot-symbol-highlight" : ""}`}><Icon aria-hidden="true" className={art.tone} size={44} strokeWidth={1.45} /><span className={`slot-symbol-label ${art.tone}`}>{art.label}</span></div>;
+  return <div aria-label={art.label} className={`slot-symbol-tile ${art.tone} ${highlighted ? "slot-symbol-highlight" : ""}`}><Icon aria-hidden="true" className={art.tone} size={44} strokeWidth={1.45} /><span className={`slot-symbol-label ${art.tone}`}>{art.label}</span></div>;
 }
 
 function WagerChips({ value, onChange }: { value: Wager; onChange: (value: Wager) => void }) {
-  return <div className="slot-wager-control"><div className="mb-2 flex items-center justify-between gap-3"><span className="slot-control-label">Wager</span><span className="text-[10px] font-semibold text-foreground-muted">Demo VC only</span></div><div className="slot-wager-chips">{wagers.map((item) => <button aria-pressed={value === item} className={value === item ? "slot-wager-chip slot-wager-chip-active" : "slot-wager-chip"} key={item} onClick={() => onChange(item)} type="button">{item}</button>)}</div></div>;
+  return <div className="slot-wager-control"><div className="mb-2 flex items-center justify-between gap-3"><span className="slot-control-label">Wager</span><span className="text-[10px] font-semibold text-foreground-muted">VC</span></div><div className="slot-wager-chips">{wagers.map((item) => <button aria-pressed={value === item} className={value === item ? "slot-wager-chip slot-wager-chip-active" : "slot-wager-chip"} key={item} onClick={() => onChange(item)} type="button">{item}</button>)}</div></div>;
 }
 
 function BalancePill({ balance, onRefresh }: { balance: number; onRefresh: () => void }) {
-  return <div className="flex items-center gap-2"><div className="inline-flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-3 py-2 text-xs font-bold text-success"><Coins size={14} /> {formatVc(balance)}</div><button aria-label="Refresh wallet balance" className="focus-ring rounded-full border border-border p-2 text-foreground-muted hover:bg-surface-hover hover:text-foreground" onClick={onRefresh} type="button"><RefreshCw size={14} /></button></div>;
+  return <div className="flex items-center gap-2"><div className="inline-flex items-center rounded-full border border-success/30 bg-success/10 px-3 py-2 text-xs font-bold text-success">{formatVc(balance)}</div><button aria-label="Refresh wallet balance" className="focus-ring rounded-full border border-border p-2 text-foreground-muted hover:bg-surface-hover hover:text-foreground" onClick={onRefresh} type="button"><RefreshCw size={14} /></button></div>;
 }
 
 export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) {
@@ -72,15 +73,15 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
   const [history, setHistory] = useState<SlotResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [sound, setSound] = useState(false);
+  const { enabled: sound, setEnabled, play } = useGameAudio();
   const [error, setError] = useState<string | null>(null);
 
   async function spin() {
     if (isSubmitting) return;
-    setError(null); setIsSubmitting(true); setIsAnimating(true);
+    setError(null); setIsSubmitting(true); setIsAnimating(true); play("slot-spin-start");
     try {
       const next = await requestJson<SlotResult>("/api/v1/games/neon-relics/spin", { method: "POST", headers: { "Idempotency-Key": idempotencyKey("slots-spin") }, body: JSON.stringify({ wager }) });
-      setResult(next); setReels(next.reels); setBalance(next.newBalance); setHistory((current) => [next, ...current].slice(0, 5));
+      setResult(next); setReels(next.reels); setBalance(next.newBalance); setHistory((current) => [next, ...current].slice(0, 5)); next.reels.forEach((_, reelIndex) => play("slot-reel-stop", { delayMs: reelIndex * 110 })); play(next.payout >= next.wager * 8 ? "slot-big-win" : next.payout > 0 ? "slot-win" : "slot-no-win", { delayMs: 620 });
       window.setTimeout(() => setIsAnimating(false), 720);
     } catch (caught) { setError(caught instanceof Error ? caught.message : "The spin could not be completed."); setIsAnimating(false); } finally { setIsSubmitting(false); }
   }
@@ -89,18 +90,18 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
   const activePaths = [...new Set(result?.winningLines.map((line) => paylinePaths[line.line]).filter(Boolean))];
 
   return <section className="slot-game-shell">
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5"><div><p className="eyebrow">Neon Relics</p><p className="mt-2 text-sm text-foreground-muted">Demo play · VC has no monetary value</p></div><BalancePill balance={balance} onRefresh={() => setBalance(balance)} /></div>
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5"><div><p className="eyebrow">Neon Relics</p><p className="mt-2 text-sm text-foreground-muted">Five reels · three rows</p></div><BalancePill balance={balance} onRefresh={() => setBalance(balance)} /></div>
     <div className="slot-stage mt-5">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="slot-stage-kicker">Relic chamber</p><p className="mt-1 text-xs text-white/55">Five reels · three rows · five paylines</p></div><button aria-pressed={sound} aria-label={sound ? "Turn sound off" : "Turn sound on"} className="focus-ring slot-sound-button" onClick={() => setSound((value) => !value)} type="button">{sound ? <Volume2 size={15} /> : <VolumeX size={15} />}<span className="hidden sm:inline">{sound ? "Sound on" : "Sound off"}</span></button></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="slot-stage-kicker">Relic chamber</p><p className="mt-1 text-xs text-white/55">Five reels · three rows · five paylines</p></div><button aria-pressed={sound} aria-label={sound ? "Turn sound off" : "Turn sound on"} className="focus-ring slot-sound-button" onClick={() => setEnabled((value) => !value)} type="button">{sound ? <Volume2 size={15} /> : <VolumeX size={15} />}<span className="hidden sm:inline">{sound ? "Sound on" : "Sound off"}</span></button></div>
       <div aria-label="Five reel three row slot machine" className={`slot-machine mt-5 ${isAnimating ? "slot-machine-spinning" : ""}`}>
-        <div className="slot-machine-mark"><span className="slot-machine-gem"><Gem size={14} /></span><span>NEON RELICS</span><span className="slot-machine-divider" /><span className="text-[9px] tracking-[0.16em] text-white/45">V · 05</span></div>
+        <div className="slot-machine-mark"><span>NEON RELICS</span><span className="slot-machine-divider" /><span className="text-[9px] tracking-[0.16em] text-white/45">V · 05</span></div>
         <div className="slot-reel-grid">
           {reels.map((reel, reelIndex) => <div className="slot-reel-column" key={`reel-${reelIndex}`}>{reel.map((symbol, rowIndex) => <RelicSymbol highlighted={highlighted(reelIndex, rowIndex)} key={`${reelIndex}-${rowIndex}`} symbol={symbol} />)}</div>)}
           {activePaths.length > 0 ? <svg aria-hidden="true" className="slot-payline-overlay" preserveAspectRatio="none" viewBox="0 0 100 100"><title>Winning paylines</title>{activePaths.map((path) => <path className="slot-winning-line" d={path} key={path} />)}</svg> : null}
         </div>
       </div>
       <div className="slot-status-strip"><div><span>Balance</span><strong>{formatVc(balance)}</strong></div><div><span>Wager</span><strong>{formatVc(wager)}</strong></div><div><span>Last win</span><strong className={result?.payout ? "text-success" : ""}>{result ? result.payout > 0 ? `+${formatVc(result.payout)}` : "No win" : "—"}</strong></div></div>
-      <div className="slot-control-bar"><WagerChips onChange={setWager} value={wager} /><Button className="slot-spin-button" disabled={isSubmitting} onClick={spin} size="lg" variant="primary">{isSubmitting ? <LoaderCircle className="animate-spin" size={19} /> : <Gem size={19} />} {isSubmitting ? "Spinning…" : "Spin"}</Button></div>
+      <div className="slot-control-bar"><WagerChips onChange={setWager} value={wager} /><Button className="slot-spin-button" disabled={isSubmitting} onClick={spin} size="lg" variant="primary">{isSubmitting ? <LoaderCircle className="animate-spin" size={19} /> : null} {isSubmitting ? "Spinning…" : "Spin"}</Button></div>
       <div aria-live="polite" className={`slot-result-callout ${result ? result.payout > 0 ? "slot-result-win" : "slot-result-neutral" : "slot-result-ready"}`}><div><span className="slot-result-kicker">{result ? result.payout > 0 ? "Win" : "Round complete" : "Ready"}</span><strong>{result ? result.payout > 0 ? `+${formatVc(result.payout)}` : "No win this round" : "Choose a wager to begin"}</strong></div>{result ? <span className="text-xs text-white/55">{result.winningLines.length ? `${result.winningLines.length} winning line${result.winningLines.length === 1 ? "" : "s"}` : "Five reels settled"}</span> : null}</div>
       {error ? <p aria-live="assertive" className="mt-3 text-xs font-semibold text-danger">{error}</p> : null}
     </div>
