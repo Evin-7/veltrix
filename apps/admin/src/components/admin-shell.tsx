@@ -49,7 +49,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     if (search.trim()) router.push(`/players?search=${encodeURIComponent(search.trim())}`);
   }
 
-  if (loading) return <div className="grid min-h-screen place-items-center bg-[#090b11] text-sm text-[#8994aa]">Loading control room…</div>;
+  if (loading) return <div aria-label="Loading admin" className="admin-loading-screen" role="status"><span aria-hidden="true" className="admin-loading-spinner" /> <span>Loading admin…</span></div>;
   if (!user) return null;
 
   return <AdminContext.Provider value={user}>

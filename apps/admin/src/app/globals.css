@@ -60,6 +60,9 @@ html[data-theme="light"] { color-scheme: light; }
 body { min-height: 100vh; margin: 0; background: radial-gradient(circle at 88% -12%, color-mix(in srgb, var(--admin-accent) 14%, transparent) 0, transparent 30rem), var(--admin-bg); color: var(--admin-text); font-family: var(--font-montserrat), Montserrat, Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
+.admin-loading-screen { display: flex; min-height: 100vh; align-items: center; justify-content: center; gap: 0.65rem; background: var(--admin-bg); color: var(--admin-muted); font-size: 0.75rem; font-weight: 600; }
+.admin-loading-spinner { display: block; height: 1rem; width: 1rem; border: 2px solid color-mix(in srgb, var(--admin-accent) 24%, transparent); border-top-color: var(--admin-accent); border-radius: 999px; animation: admin-loading-spin 700ms linear infinite; }
+@keyframes admin-loading-spin { to { transform: rotate(360deg); } }
 
 .admin-input { width: 100%; border: 1px solid var(--admin-border); border-radius: 0.75rem; background: var(--admin-bg-deep); padding: 0.75rem; color: var(--admin-text); outline: none; transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
 .admin-input::placeholder { color: var(--admin-muted); opacity: 0.8; }
