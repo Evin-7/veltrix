@@ -99,7 +99,7 @@ function GamesContent() {
   const [togglingProvider, setTogglingProvider] = useState(false);
   const [uploadingGameId, setUploadingGameId] = useState<string | null>(null);
   const [providerId, setProviderId] = useState("");
-  const [category, setCategory] = useState(categories[0]);
+  const [category, setCategory] = useState("");
   const createValidation = useAdminFormValidation();
   const providerValidation = useAdminFormValidation();
 
@@ -111,7 +111,11 @@ function GamesContent() {
       );
       setGames(result.data.games);
       setProviders(result.data.providers);
-      setProviderId((current) => current || result.data.providers[0]?.id || "");
+      setProviderId((current) =>
+        result.data.providers.some((provider) => provider.id === current)
+          ? current
+          : "",
+      );
     } catch {
       // apiFetch reports operation errors through the shared admin toast.
       setLoadFailed(true);
@@ -154,15 +158,19 @@ function GamesContent() {
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
-    if (
-      !createValidation.validate(
-        formElement,
-        providers.length
-          ? {}
-          : { provider: "Create a provider before adding a game." },
-      )
-    )
-      return;
+    const formErrors = {
+      ...(!providers.some((provider) => provider.id === providerId)
+        ? {
+            provider: providers.length
+              ? "Select a provider."
+              : "Create a provider before adding a game.",
+          }
+        : {}),
+      ...(!categories.includes(category)
+        ? { category: "Select a category." }
+        : {}),
+    };
+    if (!createValidation.validate(formElement, formErrors)) return;
     const form = new FormData(formElement);
     setCreating(true);
     try {
@@ -277,7 +285,6 @@ function GamesContent() {
               Cancel
             </AdminButton>
             <AdminButton
-              disabled={providers.length === 0}
               form="create-game-form"
               loading={creating}
               loadingText="Creating…"
@@ -330,19 +337,41 @@ function GamesContent() {
             <AdminSelect
               ariaLabel="Game provider"
               disabled={providers.length === 0}
-              onValueChange={setProviderId}
-              options={providers.map((provider) => ({
-                value: provider.id,
-                label: provider.name,
-              }))}
+              onValueChange={(value) => {
+                setProviderId(value);
+                createValidation.setErrors((current) => ({
+                  ...current,
+                  provider: "",
+                }));
+              }}
+              options={[
+                { value: "", label: "Select a provider", disabled: true },
+                ...providers.map((provider) => ({
+                  value: provider.id,
+                  label: provider.name,
+                })),
+              ]}
               value={providerId}
             />
           </AdminField>
-          <AdminField label="Category" name="category">
+          <AdminField
+            error={createValidation.errors.category}
+            label="Category"
+            name="category"
+          >
             <AdminSelect
               ariaLabel="Game category"
-              onValueChange={setCategory}
-              options={categories.map((item) => ({ value: item, label: item }))}
+              onValueChange={(value) => {
+                setCategory(value);
+                createValidation.setErrors((current) => ({
+                  ...current,
+                  category: "",
+                }));
+              }}
+              options={[
+                { value: "", label: "Select a category", disabled: true },
+                ...categories.map((item) => ({ value: item, label: item })),
+              ]}
               value={category}
             />
           </AdminField>

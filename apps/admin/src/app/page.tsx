@@ -162,7 +162,6 @@ function DashboardContent() {
       {!loading && !data && loadFailed ? (
         <Panel className="p-5">
           <div className="flex flex-col items-center gap-3">
-            <EmptyState>Dashboard metrics could not be loaded.</EmptyState>
             <AdminButton
               loading={refreshing}
               loadingText="Refreshing…"

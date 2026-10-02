@@ -3,6 +3,7 @@
 import { ImagePlus, LoaderCircle, Trash2, Upload } from "lucide-react";
 import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 import { AdminButton } from "@/components/admin-form";
+import { dispatchAdminToast } from "@/lib/admin-toast";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -57,6 +58,12 @@ export function ThumbnailUpload({
     if (!ACCEPTED_IMAGE_TYPES.has(selected.type.toLowerCase())) {
       const message = "Choose a JPG, PNG, or WebP image.";
       setError(message);
+      setFile(null);
+      dispatchAdminToast({
+        type: "error",
+        title: "Invalid thumbnail",
+        message,
+      });
       if (inputRef.current) {
         inputRef.current.value = "";
         inputRef.current.setCustomValidity(message);
@@ -66,6 +73,12 @@ export function ThumbnailUpload({
     if (selected.size > MAX_IMAGE_BYTES) {
       const message = "Choose an image under 8 MB.";
       setError(message);
+      setFile(null);
+      dispatchAdminToast({
+        type: "error",
+        title: "Invalid thumbnail",
+        message,
+      });
       if (inputRef.current) {
         inputRef.current.value = "";
         inputRef.current.setCustomValidity(message);
@@ -110,7 +123,7 @@ export function ThumbnailUpload({
       <input
         ref={inputRef}
         accept="image/jpeg,image/png,image/webp"
-        aria-describedby={`${fieldId}-help${error ? ` ${fieldId}-error` : ""}`}
+        aria-describedby={`${fieldId}-help`}
         aria-labelledby={`${fieldId}-label`}
         aria-invalid={Boolean(error) || undefined}
         className="admin-upload-input"
@@ -160,15 +173,6 @@ export function ThumbnailUpload({
             JPG, PNG, or WebP · up to 8 MB. The image uploads securely when you
             save.
           </p>
-          {error ? (
-            <p
-              className="admin-field-error mt-1"
-              id={`${fieldId}-error`}
-              role="alert"
-            >
-              {error}
-            </p>
-          ) : null}
           {uploading ? (
             <p
               aria-live="polite"
@@ -191,6 +195,7 @@ export function ThumbnailUpload({
         <div className="admin-upload-actions flex shrink-0 gap-2">
           <AdminButton
             disabled={disabled}
+            data-admin-focus-target=""
             onClick={() => inputRef.current?.click()}
             size="sm"
             variant="secondary"
@@ -199,15 +204,15 @@ export function ThumbnailUpload({
             {visibleImageUrl ? "Replace" : "Choose file"}
           </AdminButton>
           {visibleImageUrl ? (
-            <AdminButton
+            <button
               aria-label="Remove game thumbnail"
+              className="admin-button admin-upload-remove"
               disabled={disabled}
               onClick={removeImage}
-              size="sm"
-              variant="danger"
+              type="button"
             >
               <Trash2 aria-hidden="true" size={14} />
-            </AdminButton>
+            </button>
           ) : null}
         </div>
       </div>

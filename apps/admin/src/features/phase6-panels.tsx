@@ -118,7 +118,7 @@ export function PromotionsAdmin() {
       notifyAdminSuccess("Promotion created in draft state.");
       await load();
     } catch {
-      // The API helper owns request error feedback; field errors stay inline.
+      // apiFetch reports request failures through the shared admin toast.
     } finally {
       setIsCreating(false);
     }
@@ -170,7 +170,10 @@ export function PromotionsAdmin() {
           <AdminDialogFooter>
             <AdminButton
               disabled={isCreating}
-              onClick={() => setShowCreate(false)}
+              onClick={() => {
+                setShowCreate(false);
+                createValidation.clear();
+              }}
               variant="secondary"
             >
               Cancel
@@ -187,7 +190,10 @@ export function PromotionsAdmin() {
           </AdminDialogFooter>
         }
         onClose={() => {
-          if (!isCreating) setShowCreate(false);
+          if (!isCreating) {
+            setShowCreate(false);
+            createValidation.clear();
+          }
         }}
         open={showCreate}
         title="New promotion"
@@ -225,14 +231,34 @@ export function PromotionsAdmin() {
             label="Start"
             name="startAt"
           >
-            <AdminInput name="startAt" required type="datetime-local" />
+            <AdminInput
+              name="startAt"
+              onChange={() =>
+                createValidation.setErrors((current) => ({
+                  ...current,
+                  endAt: "",
+                }))
+              }
+              required
+              type="datetime-local"
+            />
           </AdminField>
           <AdminField
             error={createValidation.errors.endAt}
             label="End"
             name="endAt"
           >
-            <AdminInput name="endAt" required type="datetime-local" />
+            <AdminInput
+              name="endAt"
+              onChange={() =>
+                createValidation.setErrors((current) => ({
+                  ...current,
+                  endAt: "",
+                }))
+              }
+              required
+              type="datetime-local"
+            />
           </AdminField>
           <AdminField
             className="admin-field--wide"
@@ -578,7 +604,10 @@ function RewardRow({
           <AdminDialogFooter>
             <AdminButton
               disabled={isSaving}
-              onClick={() => setShowEdit(false)}
+              onClick={() => {
+                setShowEdit(false);
+                validation.clear();
+              }}
               variant="secondary"
             >
               Cancel
@@ -595,7 +624,10 @@ function RewardRow({
           </AdminDialogFooter>
         }
         onClose={() => {
-          if (!isSaving) setShowEdit(false);
+          if (!isSaving) {
+            setShowEdit(false);
+            validation.clear();
+          }
         }}
         open={showEdit}
         title={`Edit ${config.level} rewards`}

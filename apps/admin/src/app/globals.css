@@ -205,17 +205,13 @@ button {
   font-weight: 650;
   line-height: 1.25;
 }
-.admin-field-hint,
-.admin-field-error {
+.admin-field-hint {
   margin: 0;
   font-size: 0.72rem;
   line-height: 1.45;
 }
 .admin-field-hint {
   color: var(--admin-muted);
-}
-.admin-field-error {
-  color: var(--admin-danger);
 }
 .admin-login-card {
   border-color: var(--admin-border);
@@ -588,9 +584,21 @@ button {
 .admin-upload-dropzone:focus-within {
   border-color: var(--admin-accent);
 }
-.admin-upload-dropzone .admin-button--danger {
+.admin-upload-dropzone .admin-upload-remove {
   width: 2.25rem;
-  padding-inline: 0;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-color: var(--admin-danger);
+  border-radius: 999px;
+  background: transparent;
+  padding: 0;
+  color: var(--admin-danger);
+}
+.admin-upload-dropzone .admin-upload-remove:hover:not(:disabled) {
+  border-color: var(--admin-danger);
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger);
 }
 .admin-empty-state {
   padding: 2.5rem 1rem;

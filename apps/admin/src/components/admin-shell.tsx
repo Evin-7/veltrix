@@ -57,7 +57,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    apiFetch<AdminUser>("/api/v1/admin/auth/me", { suppressErrorToast: true })
+    apiFetch<AdminUser>("/api/v1/admin/auth/me")
       .then((result) => {
         if (active) setUser(result.data);
       })
@@ -75,7 +75,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   async function logout() {
     await apiFetch("/api/v1/admin/auth/logout", {
       method: "POST",
-      suppressErrorToast: true,
     }).catch(() => undefined);
     router.replace("/login");
   }
