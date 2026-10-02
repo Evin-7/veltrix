@@ -127,12 +127,11 @@ export default async function ProfilePage() {
             Make it feel like yours.
           </h2>
           <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
-            Update your display name and optional avatar. Protected account
-            fields remain unchanged here.
+            Update your display name. Protected account fields remain unchanged
+            here.
           </p>
           <div className="mt-7">
             <ProfileForm
-              initialAvatarUrl={profile?.avatarUrl ?? null}
               initialDisplayName={
                 profile?.displayName ?? profile?.username ?? ""
               }
