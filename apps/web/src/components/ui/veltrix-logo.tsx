@@ -35,6 +35,7 @@ export function VeltrixLogo({
         priority={priority}
         sizes="(min-width: 640px) 164px, 145px"
         src="/veltrix-wordmark-on-dark.png"
+        unoptimized
       />
       <Image
         alt=""
@@ -44,6 +45,7 @@ export function VeltrixLogo({
         priority={priority}
         sizes="(min-width: 640px) 164px, 145px"
         src="/veltrix-wordmark-on-light.png"
+        unoptimized
       />
     </span>
   );
