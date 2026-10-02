@@ -122,7 +122,9 @@ button { cursor: pointer; }
 :root[data-theme="light"] [class~="bg-[#0c1018]"], :root[data-theme="light"] [class~="bg-[#0d111a]"] { background-color: var(--admin-bg-deep) !important; }
 :root[data-theme="light"] [class~="bg-[#11151f]"], :root[data-theme="light"] [class~="bg-[#111722]"] { background-color: var(--admin-panel) !important; }
 :root[data-theme="light"] [class~="bg-[#151a25]"], :root[data-theme="light"] [class~="bg-[#171d2a]"] { background-color: var(--admin-panel-soft) !important; }
+:root[data-theme="light"] [class~="hover:bg-[#151a25]"]:hover, :root[data-theme="light"] [class~="hover:bg-[#171d2a]"]:hover { background-color: var(--admin-panel-soft) !important; }
 :root[data-theme="light"] .border-\[\#252d3d\], :root[data-theme="light"] .border-\[\#2b3547\], :root[data-theme="light"] .divide-\[\#202837\] { border-color: var(--admin-border) !important; }
+:root[data-theme="light"] [class~="divide-[#202837]"] > :not(:last-child) { border-color: var(--admin-border) !important; }
 :root[data-theme="light"] [class~="border-[#252d3d]/80"] { border-color: color-mix(in srgb, var(--admin-border) 80%, transparent) !important; }
 :root[data-theme="light"] [class~="text-white"], :root[data-theme="light"] [class~="text-[#edf3fd]"], :root[data-theme="light"] [class~="text-[#e4eaf5]"], :root[data-theme="light"] [class~="text-[#dce4f1]"] { color: var(--admin-text-strong) !important; }
 :root[data-theme="light"] [class~="text-[#b3bdd0]"], :root[data-theme="light"] [class~="text-[#b5c0d3]"], :root[data-theme="light"] [class~="text-[#aab4c8]"] { color: var(--admin-text-soft) !important; }
