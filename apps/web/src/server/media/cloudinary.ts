@@ -27,10 +27,9 @@ function isConfiguredForSignedUpload(
   return Boolean(cloudName && apiKey && apiSecret);
 }
 
-export async function uploadAvatarToCloudinary(file: Blob) {
+async function uploadImageToCloudinary(file: Blob, folder: string, fileName: string) {
   const environment = getEnv();
   const cloudName = environment.CLOUDINARY_CLOUD_NAME;
-  const folder = environment.CLOUDINARY_FOLDER;
 
   const signedUpload = isConfiguredForSignedUpload(
     cloudName,
@@ -43,12 +42,12 @@ export async function uploadAvatarToCloudinary(file: Blob) {
     throw new AppError(
       503,
       "IMAGE_UPLOAD_NOT_CONFIGURED",
-      "Profile image uploads are not configured yet.",
+      "Image uploads are not configured yet.",
     );
   }
 
   const body = new FormData();
-  body.append("file", file, "avatar.jpg");
+  body.append("file", file, fileName);
 
   if (signedUpload) {
     const timestamp = String(Math.floor(Date.now() / 1000));
@@ -101,4 +100,12 @@ export async function uploadAvatarToCloudinary(file: Blob) {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+export function uploadAvatarToCloudinary(file: Blob) {
+  return uploadImageToCloudinary(file, getEnv().CLOUDINARY_FOLDER, "avatar.jpg");
+}
+
+export function uploadGameThumbnailToCloudinary(file: Blob, fileName: string) {
+  return uploadImageToCloudinary(file, "veltrix/game-thumbnails", fileName);
 }

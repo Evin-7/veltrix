@@ -51,7 +51,7 @@ const safeMessages: Record<AppErrorCode, string> = {
   CONFLICT: "We could not complete that request right now. Please try again.",
   FILE_TOO_LARGE: "That image is too large. Choose an image under 8 MB.",
   INVALID_IMAGE: "Choose a JPG, PNG, or WebP image and try again.",
-  IMAGE_UPLOAD_NOT_CONFIGURED: "Profile image uploads are not configured yet.",
+  IMAGE_UPLOAD_NOT_CONFIGURED: "Image uploads are not configured yet.",
   IMAGE_UPLOAD_FAILED: "We could not upload that image. Please try again.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
   UNKNOWN: "Something went wrong. Please try again.",

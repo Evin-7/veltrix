@@ -18,10 +18,15 @@ const apiBase = (process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:3000
 export async function apiFetch<T>(path: string, init: RequestInit = {}) {
   let response: Response;
   try {
+    const headers = new Headers(init.headers);
+    const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
+    if (init.body && !isFormData && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
     response = await fetch(`${apiBase}${path}`, {
       ...init,
       credentials: "include",
-      headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...(init.headers ?? {}) },
+      headers,
     });
   } catch {
     const message = "The admin service could not be reached. Please try again.";
