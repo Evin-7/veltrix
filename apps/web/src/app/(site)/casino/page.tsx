@@ -23,13 +23,9 @@ export default async function CasinoPage() {
     user?.role === "PLAYER" ? await listFavouriteGameIds(user.id) : [];
 
   return (
-    <main className="page-shell player-page">
+    <main className="player-page">
       <section className="casino-lobby-intro">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,color-mix(in_srgb,var(--accent)_18%,transparent),transparent_25%),radial-gradient(circle_at_12%_100%,color-mix(in_srgb,var(--primary)_12%,transparent),transparent_29%)]"
-        />
-        <div className="relative flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+        <div className="page-shell relative flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div className="max-w-2xl">
             <Badge tone="mint">The Veltrix lobby</Badge>
             <h1 className="display mt-5 text-5xl leading-[0.95] text-ink sm:text-6xl">
@@ -41,7 +37,7 @@ export default async function CasinoPage() {
             </p>
           </div>
           <Link
-            className="focus-ring inline-flex shrink-0 items-center rounded-full border border-border bg-surface-hover/60 px-4 py-3 text-xs font-semibold text-muted-strong hover:border-border-strong hover:bg-surface-hover hover:text-ink"
+            className="button-secondary focus-ring inline-flex shrink-0 items-center rounded-full px-4 py-3 text-xs"
             href="/responsible-gaming"
           >
             Play responsibly
@@ -49,7 +45,7 @@ export default async function CasinoPage() {
         </div>
       </section>
 
-      <section className="player-section">
+      <section className="page-shell player-section">
         <GameCatalog
           games={gamesResult.games}
           favouriteGameIds={favouriteGameIds}

@@ -2,14 +2,25 @@ import "server-only";
 import { getEnv } from "@/server/env";
 import { AppError, forbidden } from "./errors";
 
-export function assertAdminOrigin(request: Request) {
+function assertTrustedAdminHeaders(request: Request, expectedOrigin: string) {
   const origin = request.headers.get("origin");
-  if (!origin) return;
-
-  try {
-    if (new URL(origin).origin !== new URL(getEnv().ADMIN_APP_URL).origin) {
-      throw forbidden("Request origin is not allowed.");
+  const referer = request.headers.get("referer");
+  const suppliedOrigins = [origin, referer].filter((value): value is string => Boolean(value)).map((value) => {
+    try {
+      return new URL(value).origin;
+    } catch {
+      return null;
     }
+  });
+
+  if (!suppliedOrigins.length || suppliedOrigins.some((value) => value !== expectedOrigin)) {
+    throw forbidden("Request origin is not allowed.");
+  }
+}
+
+export function assertAdminOrigin(request: Request) {
+  try {
+    assertTrustedAdminHeaders(request, new URL(getEnv().ADMIN_APP_URL).origin);
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw forbidden("Request origin is not allowed.");

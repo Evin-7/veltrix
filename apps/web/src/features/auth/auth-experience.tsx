@@ -25,7 +25,7 @@ export function AuthExperience({ mode, children }: AuthExperienceProps) {
       <section aria-hidden="true" className="auth-casino-scene">
         <div className="auth-scene-spotlight" />
         <div className="auth-scene-table" />
-        <div className="auth-scene-wheel-layer" style={{ transform: `translate3d(${pointerShift.x * 3}px, ${pointerShift.y * 2}px, 0)` }}><div className="auth-scene-wheel"><div className="auth-wheel-hub"><VeltrixLogo alt="" className="auth-wheel-logo" /></div></div></div>
+        <div className="auth-scene-wheel-layer" style={{ transform: `translate3d(${pointerShift.x * 3}px, ${pointerShift.y * 2}px, 0)` }}><div className="auth-scene-wheel"><div className="auth-wheel-hub"><VeltrixLogo alt="" className="auth-wheel-logo" surface="dark" /></div></div></div>
         <div className="auth-scene-card auth-scene-card--ace" style={{ transform: `translate3d(${pointerShift.x * -5}px, ${pointerShift.y * -4}px, 0) rotate(-16deg)` }}><span>A</span><b>♠</b></div>
         <div className="auth-scene-card auth-scene-card--queen" style={{ transform: `translate3d(${pointerShift.x * 4}px, ${pointerShift.y * -3}px, 0) rotate(13deg)` }}><span>Q</span><b className="auth-card-red">♥</b></div>
         <div className="auth-scene-chip" style={{ transform: `translate3d(${pointerShift.x * 4}px, ${pointerShift.y * 3}px, 0) rotate(18deg)` }}><span>VC</span><b>100</b></div>

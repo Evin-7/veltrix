@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
-import { conflict } from "@/server/http/errors";
+import { badRequest } from "@/server/http/errors";
 import { hashPassword, verifyPassword } from "./password";
 import { toSafeUser } from "./session";
 import { createPlayerWalletWithWelcome } from "@/server/wallet/service";
@@ -14,6 +14,7 @@ type RegisterInput = z.infer<typeof registerSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
 
 const userWithProfile = { profile: true } as const;
+const DUMMY_PASSWORD_HASH = "$argon2id$v=19$m=19456,p=1,t=2$fFjeZgWjH+K3XdcMukVtzA$L9TA05hhf/uYSBt6veImTKiSRdxzEqK1AfB5VwBdlVM";
 
 type PlayerAccountInput = {
   email: string;
@@ -61,7 +62,7 @@ export async function registerUser(input: RegisterInput): Promise<SafeUser> {
     return toSafeUser(user);
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "P2002") {
-      throw conflict("Email or username is already in use.");
+      throw badRequest("Unable to create an account with those details.");
     }
     throw error;
   }
@@ -70,7 +71,8 @@ export async function registerUser(input: RegisterInput): Promise<SafeUser> {
 export async function authenticateUser(input: LoginInput): Promise<SafeUser> {
   const prisma = getPrisma();
   const user = await prisma.user.findUnique({ where: { email: input.email }, include: userWithProfile });
-  if (!user || user.status !== "ACTIVE" || !user.passwordHash || !(await verifyPassword(user.passwordHash, input.password))) {
+  const passwordValid = await verifyPassword(user?.passwordHash ?? DUMMY_PASSWORD_HASH, input.password);
+  if (!user || user.status !== "ACTIVE" || !user.passwordHash || !passwordValid) {
     throw new Error("INVALID_CREDENTIALS");
   }
 

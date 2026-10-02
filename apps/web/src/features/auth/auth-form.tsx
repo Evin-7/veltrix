@@ -3,13 +3,15 @@
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
+import { requestJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/app-error";
+import { beginRouteTransition } from "@/lib/route-transition";
 import { AuthExperience } from "./auth-experience";
 
 type AuthMode = "login" | "register";
 type AuthFormProps = { mode: AuthMode; next?: string; googleError?: string };
-type ApiErrorPayload = { error?: { message?: string } };
 type FieldName = "email" | "username" | "password" | "confirmPassword";
 type FieldError = { field: FieldName; message: string } | null;
 
@@ -60,21 +62,16 @@ export function AuthForm({ mode, next = "/", googleError }: AuthFormProps) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/v1/auth/${mode}`, {
+      await requestJson(`/api/v1/auth/${mode}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isRegister ? { email, username, password } : { email, password }),
       });
-      const payload = (await response.json()) as ApiErrorPayload;
-      if (!response.ok) {
-        showToast(`${isRegister ? "Couldn’t create account" : "Couldn’t log in"} · ${payload.error?.message ?? "Please check your details and try again."}`, "error");
-        return;
-      }
       showToast(isRegister ? "Welcome to Veltrix · Your account is ready." : "Welcome back to Veltrix.", "success");
+      beginRouteTransition(next);
       router.push(next);
       router.refresh();
-    } catch {
-      showToast(`${isRegister ? "Couldn’t create account" : "Couldn’t log in"} · The service is unavailable right now.`, "error");
+    } catch (error) {
+      showToast(`${isRegister ? "Couldn’t create account" : "Couldn’t log in"} · ${errorMessage(error, "BAD_REQUEST")}`, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -87,6 +84,15 @@ export function AuthForm({ mode, next = "/", googleError }: AuthFormProps) {
   const switchPath = isRegister ? "/login" : "/register";
   const switchHref = next === "/" ? switchPath : `${switchPath}?next=${encodeURIComponent(next)}`;
   const googleHref = next === "/" ? "/api/v1/auth/google" : `/api/v1/auth/google?next=${encodeURIComponent(next)}`;
+  const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+
+  function connectGoogle(event: MouseEvent<HTMLAnchorElement>) {
+    if (isGoogleConnecting) {
+      event.preventDefault();
+      return;
+    }
+    setIsGoogleConnecting(true);
+  }
 
   return <AuthExperience mode={mode}>
     <div className="auth-form-shell">
@@ -102,7 +108,7 @@ export function AuthForm({ mode, next = "/", googleError }: AuthFormProps) {
         <button className="auth-submit-button focus-ring" disabled={isSubmitting} type="submit">{isSubmitting ? <><LoaderCircle className="animate-spin" size={17} /> {isRegister ? "Creating account…" : "Logging in…"}</> : isRegister ? "Create account" : "Log in"}</button>
       </form>
       <div className="auth-provider-divider"><span /> <span>or continue with</span> <span /></div>
-      <a className="auth-google-button focus-ring" href={googleHref}><GoogleMark /> <span>Continue with Google</span></a>
+      <a aria-disabled={isGoogleConnecting} className="auth-google-button focus-ring" href={googleHref} onClick={connectGoogle}><GoogleMark /> <span>{isGoogleConnecting ? "Connecting…" : "Continue with Google"}</span></a>
       <p className="auth-switch">{isRegister ? "Already have an account?" : "New to Veltrix?"} <Link className="focus-ring" href={switchHref}>{isRegister ? "Log in" : "Create account"}</Link></p>
       <div className="auth-form-rule"><span /> <span /></div>
     </div>

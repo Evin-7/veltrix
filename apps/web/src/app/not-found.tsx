@@ -1,14 +1,16 @@
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function NotFound() {
   return (
     <main className="page-shell flex min-h-[60vh] items-center justify-center py-20">
       <div className="max-w-md text-center">
-        <p className="eyebrow">Signal lost</p>
-        <h1 className="display mt-3 text-5xl text-ink">That world isn&apos;t here.</h1>
-        <p className="mt-4 text-sm leading-6 text-muted">The page you were looking for may have moved or is still being tuned.</p>
-        <Link className="focus-ring mt-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-semibold text-muted-strong hover:bg-white/[0.09] hover:text-ink" href="/casino"><ArrowLeft size={15} /> Back to the lobby</Link>
+        <p className="eyebrow">404 · Table empty</p>
+        <h1 className="display mt-3 text-5xl text-ink">That page is not in the lobby.</h1>
+        <p className="mt-4 text-sm leading-6 text-muted">The page you are looking for is not available.</p>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link className="button-primary focus-ring inline-flex items-center rounded-full px-4 py-3 text-sm" href="/">Return home</Link>
+          <Link className="button-secondary focus-ring inline-flex items-center rounded-full px-4 py-3 text-sm" href="/casino">Explore casino</Link>
+        </div>
       </div>
     </main>
   );

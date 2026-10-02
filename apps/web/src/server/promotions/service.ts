@@ -69,10 +69,16 @@ export async function claimPromotion(userId: string, promotionId: string, idempo
     const byKey = await tx.promotionClaim.findUnique({ where: { idempotencyKey } });
     if (byKey) {
       if (byKey.userId !== userId || byKey.promotionId !== promotionId) throw conflict("The idempotency key has already been used for another promotion claim.");
-      return { claimId: byKey.id, rewardVC: byKey.rewardVC, transactionId: byKey.walletTransactionId, idempotent: true };
+      if (!byKey.walletTransactionId) throw conflict("This promotion claim is missing its wallet record.");
+      const transaction = await tx.walletTransaction.findUniqueOrThrow({ where: { id: byKey.walletTransactionId }, select: { balanceAfter: true } });
+      return { claimId: byKey.id, rewardVC: byKey.rewardVC, transactionId: byKey.walletTransactionId, newBalance: transaction.balanceAfter, idempotent: true };
     }
     const existing = await tx.promotionClaim.findUnique({ where: { promotionId_userId: { promotionId, userId } } });
-    if (existing) return { claimId: existing.id, rewardVC: existing.rewardVC, transactionId: existing.walletTransactionId, idempotent: true };
+    if (existing) {
+      if (!existing.walletTransactionId) throw conflict("This promotion claim is missing its wallet record.");
+      const transaction = await tx.walletTransaction.findUniqueOrThrow({ where: { id: existing.walletTransactionId }, select: { balanceAfter: true } });
+      return { claimId: existing.id, rewardVC: existing.rewardVC, transactionId: existing.walletTransactionId, newBalance: transaction.balanceAfter, idempotent: true };
+    }
     const now = new Date();
     if (promotion.status !== "ACTIVE" || promotion.startAt > now || promotion.endAt <= now) throw conflict("This promotion is not currently active.");
     if (!(await isEligible(tx, userId, promotion))) throw forbidden("You are not eligible for this promotion.");

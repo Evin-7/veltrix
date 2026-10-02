@@ -98,7 +98,9 @@ export function doubleBlackjack(state: BlackjackState) {
 }
 
 export function payoutForBlackjack(state: BlackjackState, originalWager: number) {
-  if (state.phase === "PLAYER_BLACKJACK") return originalWager * 5 / 2;
+  // VC is integer-only. A 3:2 return for an odd wager is rounded down so the
+  // wallet and ledger never receive a fractional amount.
+  if (state.phase === "PLAYER_BLACKJACK") return Math.floor(originalWager * 5 / 2);
   if (state.phase === "PUSH") return state.wager;
   if (state.phase === "PLAYER_WIN" || state.phase === "DEALER_BUST") return state.wager * 2;
   return 0;

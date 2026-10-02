@@ -3,6 +3,7 @@
 import { Clock3, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
+import { requestJson } from "@/lib/api-client";
 
 export function SessionReminderNotice() {
   const { activeSession } = useRealtime();
@@ -10,9 +11,9 @@ export function SessionReminderNotice() {
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const [dismissedAt, setDismissedAt] = useState<string | null>(null);
   useEffect(() => {
-    let active = true;
-    fetch("/api/v1/responsible-gaming/status").then((response) => response.ok ? response.json() : null).then((payload: { data?: { settings?: { sessionReminderMinutes?: number } } } | null) => { if (active && payload?.data?.settings?.sessionReminderMinutes) setMinutes(payload.data.settings.sessionReminderMinutes); }).catch(() => undefined);
-    return () => { active = false; };
+    const controller = new AbortController();
+    requestJson<{ settings?: { sessionReminderMinutes?: number } }>("/api/v1/responsible-gaming/status", { signal: controller.signal }).then((payload) => { if (payload.settings?.sessionReminderMinutes) setMinutes(payload.settings.sessionReminderMinutes); }).catch((error) => { if (!controller.signal.aborted) { setMinutes(30); void error; } });
+    return () => controller.abort();
   }, []);
   useEffect(() => {
     if (!activeSession) return;

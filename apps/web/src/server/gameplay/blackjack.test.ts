@@ -25,4 +25,10 @@ describe("Veltrix Blackjack rules", () => {
     const natural: BlackjackState = { deck: [], playerCards: [card("A"), card("K")], dealerCards: [card("9"), card("7")], wager: 100, doubled: false, phase: "PLAYER_BLACKJACK" };
     expect(payoutForBlackjack(natural, 100)).toBe(250);
   });
+
+  it("keeps odd VC natural returns integer-only", () => {
+    const natural: BlackjackState = { deck: [], playerCards: [card("A"), card("K")], dealerCards: [card("9"), card("7")], wager: 25, doubled: false, phase: "PLAYER_BLACKJACK" };
+    expect(payoutForBlackjack(natural, 25)).toBe(62);
+    expect(Number.isSafeInteger(payoutForBlackjack(natural, 25))).toBe(true);
+  });
 });

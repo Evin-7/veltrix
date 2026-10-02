@@ -2,6 +2,10 @@
 
 import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useState } from "react";
+import { useEffect, useRef } from "react";
+import { VeltrixSelect } from "@/components/ui/veltrix-select";
+import { requestJsonEnvelope, isAbortError } from "@/lib/api-client";
+import { errorMessage as safeErrorMessage } from "@/lib/app-error";
 import type {
   WalletTransactionTypeValue,
   WalletTransactionView,
@@ -56,8 +60,14 @@ export function TransactionsTable({
   const [type, setType] = useState<"" | WalletTransactionTypeValue>("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   async function load(nextPage: number, nextType = type) {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
     setIsLoading(true);
     setErrorMessage(null);
     try {
@@ -66,26 +76,14 @@ export function TransactionsTable({
         pageSize: String(meta.pageSize),
       });
       if (nextType) params.set("type", nextType);
-      const response = await fetch(`/api/v1/wallet/transactions?${params}`);
-      const payload = (await response.json()) as {
-        data?: WalletTransactionView[];
-        meta?: typeof initialMeta;
-        error?: { message?: string };
-      };
-      if (!response.ok || !payload.data || !payload.meta) {
-        setErrorMessage(
-          payload.error?.message ?? "We could not load transactions.",
-        );
-        return;
-      }
-      setTransactions(payload.data);
-      setMeta(payload.meta);
-    } catch {
-      setErrorMessage(
-        "The service is unavailable right now. Please try again.",
-      );
+      const result = await requestJsonEnvelope<WalletTransactionView[], typeof initialMeta>(`/api/v1/wallet/transactions?${params}`, { signal: controller.signal });
+      if (!result.meta) throw new Error("Missing transaction metadata");
+      setTransactions(result.data);
+      setMeta(result.meta);
+    } catch (error) {
+      if (!isAbortError(error)) setErrorMessage(safeErrorMessage(error, "NETWORK_ERROR"));
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) setIsLoading(false);
     }
   }
 
@@ -97,33 +95,22 @@ export function TransactionsTable({
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <label className="block max-w-xs flex-1">
-          <span className="sr-only">Filter transactions</span>
-          <select
-            className="focus-ring h-11 w-full rounded-[var(--radius-control)] border border-border bg-surface-hover/60 px-3 text-sm text-muted-strong outline-none hover:border-border-strong"
-            onChange={(event) =>
-              changeType(event.target.value as "" | WalletTransactionTypeValue)
-            }
-            value={type}
-          >
-            {filterOptions.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <VeltrixSelect
+          ariaLabel="Filter transactions"
+          className="w-full max-w-xs flex-1"
+          onValueChange={(nextType) => changeType(nextType as "" | WalletTransactionTypeValue)}
+          options={filterOptions}
+          value={type}
+        />
         <p className="text-xs font-semibold text-muted">
           {meta.total.toLocaleString("en-US")} entries
         </p>
       </div>
       {errorMessage ? (
-        <p
-          aria-live="polite"
-          className="mt-5 text-xs font-semibold text-danger"
-        >
-          {errorMessage}
-        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-3" role="alert">
+          <p aria-live="polite" className="text-xs font-semibold text-danger">{errorMessage}</p>
+          <button className="focus-ring rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" onClick={() => void load(meta.page)} type="button">Try again</button>
+        </div>
       ) : null}
       <div className="relative mt-5 border-y border-border">
         {isLoading ? (

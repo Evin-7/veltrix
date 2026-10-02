@@ -11,10 +11,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    "border-primary/60 bg-primary text-background hover:border-primary-hover hover:bg-primary-hover",
-  secondary:
-    "border-border-strong bg-surface-hover/50 text-foreground hover:border-border-strong hover:bg-surface-hover",
+  primary: "button-primary",
+  secondary: "button-secondary",
   ghost:
     "border-transparent bg-transparent text-foreground-subtle hover:bg-surface-hover hover:text-foreground",
   quiet:
@@ -37,7 +35,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-control)] border font-semibold tracking-[-0.01em] disabled:cursor-not-allowed disabled:opacity-50",
+        "focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-control)] border font-semibold tracking-[-0.01em] disabled:cursor-not-allowed disabled:opacity-100",
         variantClasses[variant],
         sizeClasses[size],
         className,

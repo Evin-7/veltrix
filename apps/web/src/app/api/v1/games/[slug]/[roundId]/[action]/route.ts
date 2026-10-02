@@ -6,12 +6,14 @@ import { assertSameOrigin } from "@/server/http/security";
 import { blackjackAction, requireIdempotencyKey } from "@/server/gameplay/service";
 import { uuidSchema } from "@/server/users/schemas";
 import { gameplayModeForSlug } from "@/server/gameplay/constants";
+import { enforceMutationRateLimit } from "@/server/http/rate-limit";
 
 export const runtime = "nodejs";
 type RouteProps = { params: Promise<{ slug: string; roundId: string; action: string }> };
 
 export async function POST(request: Request, { params }: RouteProps) {
   try {
+    await enforceMutationRateLimit(request, "gameplay");
     assertSameOrigin(request);
     const user = requireRole(await requireAuth(), ["PLAYER"]);
     const { slug, roundId, action } = await params;

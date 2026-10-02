@@ -13,4 +13,9 @@ describe("auth schemas", () => {
   it("accepts login credentials and normalizes email", () => {
     expect(loginSchema.parse({ email: "PLAYER@Example.com", password: "secret" }).email).toBe("player@example.com");
   });
+
+  it("rejects unexpected credential fields", () => {
+    expect(loginSchema.safeParse({ email: "player@example.com", password: "secret", role: "SUPER_ADMIN" }).success).toBe(false);
+    expect(registerSchema.safeParse({ email: "player@example.com", username: "player", password: "a-secure-password", role: "SUPER_ADMIN" }).success).toBe(false);
+  });
 });

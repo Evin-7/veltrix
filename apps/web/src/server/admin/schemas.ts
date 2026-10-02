@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const pageSchema = z.coerce.number().int().min(1).default(1);
+const pageSchema = z.coerce.number().int().min(1).max(10_000).default(1);
 const pageSizeSchema = z.coerce.number().int().min(1).max(100).default(25);
 
 export const adminListSchema = z.object({ page: pageSchema, pageSize: pageSizeSchema });

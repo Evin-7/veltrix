@@ -78,10 +78,10 @@ export function ConfirmationDialog({
           </button>
           <button
             className={cn(
-              "focus-ring min-h-11 rounded-[var(--radius-control)] px-4 text-sm font-bold",
+              "focus-ring min-h-11 rounded-[var(--radius-control)] px-4 text-sm",
               danger
-                ? "bg-danger text-white hover:brightness-110"
-                : "bg-primary text-background hover:bg-primary-hover",
+                ? "button-danger"
+                : "button-primary",
             )}
             disabled={busy}
             onClick={onConfirm}

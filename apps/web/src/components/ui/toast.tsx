@@ -37,7 +37,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     if (lastToast.current?.message === message && now - lastToast.current.at < 500) return;
     lastToast.current = { message, at: now };
     const id = nextId.current++;
-    setToasts((current) => [...current.slice(-2), { card: options.card, id, message, tone, variant: options.variant ?? "default" }]);
+    const premium = options.variant ?? (tone === "error" ? "premium" : "default");
+    const card = options.card ?? (tone === "error" ? { rank: "J" as const, suit: "♠" as const } : undefined);
+    setToasts((current) => [...current.slice(-2), { card, id, message, tone, variant: premium }]);
     timers.current.set(id, setTimeout(() => dismiss(id), 3200));
   }, [dismiss]);
 

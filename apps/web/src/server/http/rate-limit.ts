@@ -5,8 +5,8 @@ import { logger } from "@/server/observability/logger";
 import { AppError } from "./errors";
 
 type RateLimitEntry = { count: number; resetAt: number };
-type AuthAction = "login" | "register";
-type MutationAction = "daily-reward" | "profile" | "favourite" | "recent" | "promotion-claim" | "responsible-gaming" | "notifications";
+type AuthAction = "login" | "register" | "oauth";
+type MutationAction = "daily-reward" | "profile" | "favourite" | "recent" | "promotion-claim" | "responsible-gaming" | "notifications" | "gameplay";
 type AdminAction = "read" | "mutation";
 
 const entries = new Map<string, RateLimitEntry>();
@@ -76,11 +76,12 @@ async function enforceRateLimit(request: Request, action: string, maxRequests: n
 }
 
 export function enforceAuthRateLimit(request: Request, action: AuthAction) {
-  return enforceRateLimit(request, `auth:${action}`, action === "login" ? 10 : 5, "Too many attempts. Please try again shortly.");
+  const limits = { login: 10, register: 5, oauth: 20 } as const;
+  return enforceRateLimit(request, `auth:${action}`, limits[action], "Too many attempts. Please try again shortly.");
 }
 
 export function enforceMutationRateLimit(request: Request, action: MutationAction) {
-  const limits = { "daily-reward": 6, profile: 12, favourite: 60, recent: 30, "promotion-claim": 30, "responsible-gaming": 20, notifications: 60 } as const;
+  const limits = { "daily-reward": 6, profile: 12, favourite: 60, recent: 30, "promotion-claim": 30, "responsible-gaming": 20, notifications: 60, gameplay: 120 } as const;
   return enforceRateLimit(request, `mutation:${action}`, limits[action], "Too many requests. Please try again shortly.");
 }
 

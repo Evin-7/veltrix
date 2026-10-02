@@ -5,6 +5,7 @@ import { assertSameOrigin } from "@/server/http/security";
 import { enforceMutationRateLimit } from "@/server/http/rate-limit";
 import { requireIdempotencyKey } from "@/server/gameplay/service";
 import { claimPromotion } from "@/server/promotions/service";
+import { promotionIdSchema } from "@/server/promotions/schemas";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
     assertSameOrigin(request);
     const user = requireRole(await requireAuth(), ["PLAYER"]);
     const { promotionId } = await params;
-    return jsonData(await claimPromotion(user.id, promotionId, requireIdempotencyKey(request.headers.get("idempotency-key"))));
+    return jsonData(await claimPromotion(user.id, promotionIdSchema.parse(promotionId), requireIdempotencyKey(request.headers.get("idempotency-key"))));
   } catch (error) {
     return jsonError(error);
   }

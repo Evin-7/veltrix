@@ -4,6 +4,8 @@ import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { requestJson } from "@/lib/api-client";
+import { errorMessage as safeErrorMessage } from "@/lib/app-error";
 
 type ProfileFormProps = {
   initialDisplayName: string;
@@ -27,30 +29,19 @@ export function ProfileForm({
     setMessage(null);
     setErrorMessage(null);
     try {
-      const response = await fetch("/api/v1/users/me", {
+      await requestJson("/api/v1/users/me", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           displayName: displayName.trim() || null,
           avatarUrl: avatarUrl.trim() || null,
         }),
       });
-      const payload = (await response.json()) as {
-        error?: { message?: string };
-      };
-      if (!response.ok) {
-        setErrorMessage(
-          payload.error?.message ?? "We could not save your profile.",
-        );
-        return;
-      }
       setMessage("Profile saved.");
       showToast("Profile saved", "success");
-    } catch {
-      setErrorMessage(
-        "The service is unavailable right now. Please try again.",
-      );
-      showToast("Couldn’t save profile", "error");
+    } catch (error) {
+      const message = safeErrorMessage(error, "NETWORK_ERROR");
+      setErrorMessage(message);
+      showToast(message, "error");
     } finally {
       setIsSaving(false);
     }

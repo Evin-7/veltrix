@@ -10,6 +10,9 @@ import { cn } from "@/lib/cn";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { ThemeMenu } from "@/components/theme/theme-menu";
 import { VeltrixLogo } from "@/components/ui/veltrix-logo";
+import { requestJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/app-error";
+import { useToast } from "@/components/ui/toast";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -18,7 +21,7 @@ const navItems = [
   { label: "Rewards", href: "/rewards" },
 ];
 
-type HeaderProps = { initialUser: SafeUser | null; initialWallet: WalletSummary | null };
+type HeaderProps = { initialUser: SafeUser | null; initialWallet: WalletSummary | null; initialWalletError?: boolean };
 
 function userLabel(user: SafeUser) {
   return user.profile?.displayName || user.profile?.username || user.email;
@@ -28,7 +31,7 @@ function initials(user: SafeUser) {
   return userLabel(user).slice(0, 2).toUpperCase();
 }
 
-export function Header({ initialUser, initialWallet }: HeaderProps) {
+export function Header({ initialUser, initialWallet, initialWalletError = false }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const accountMenuRef = useRef<HTMLDivElement>(null);
@@ -36,9 +39,12 @@ export function Header({ initialUser, initialWallet }: HeaderProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isRefreshingWallet, setIsRefreshingWallet] = useState(false);
+  const { showToast } = useToast();
   const user = initialUser;
   const realtime = useRealtime();
   const liveBalance = user?.role === "PLAYER" ? realtime.walletBalance : initialWallet?.balance;
+  const hasWalletSurface = Boolean(initialWallet || realtime.walletAvailable || initialWalletError);
 
   function closeTransientMenus() {
     setIsAccountMenuOpen(false);
@@ -89,11 +95,28 @@ export function Header({ initialUser, initialWallet }: HeaderProps) {
     closeTransientMenus();
     setIsLoggingOut(true);
     try {
-      await fetch("/api/v1/auth/logout", { method: "POST" });
+      await requestJson("/api/v1/auth/logout", { method: "POST" });
       router.refresh();
+    } catch (error) {
+      showToast(errorMessage(error, "NETWORK_ERROR"), "error");
     } finally {
       setIsLoggingOut(false);
     }
+  }
+
+  async function refreshWallet() {
+    if (isRefreshingWallet) return;
+    setIsRefreshingWallet(true);
+    try {
+      await realtime.refreshWallet();
+    } finally {
+      setIsRefreshingWallet(false);
+    }
+  }
+
+  function walletLabel() {
+    if (typeof liveBalance === "number") return `${liveBalance.toLocaleString("en-US")} VC`;
+    return isRefreshingWallet ? "Checking…" : "Balance unavailable";
   }
 
   return (
@@ -112,10 +135,10 @@ export function Header({ initialUser, initialWallet }: HeaderProps) {
 
         <div className="hidden items-center gap-2 sm:flex">
           <ThemeMenu />
-          {user?.role === "PLAYER" ? <Link aria-label="Notifications" className="focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-surface-hover hover:text-ink" href="/notifications" onClick={closeTransientMenus}><Bell size={17} strokeWidth={1.8} />{realtime.unreadNotifications > 0 ? <span className="absolute right-[7px] top-[6px] grid min-h-4 min-w-4 place-items-center rounded-full bg-amber px-1 text-[9px] font-bold text-[#17110a]">{realtime.unreadNotifications > 9 ? "9+" : realtime.unreadNotifications}</span> : null}</Link> : null}
+          {user?.role === "PLAYER" ? <Link aria-label="Notifications" className="focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-surface-hover hover:text-ink" href="/notifications" onClick={closeTransientMenus}><Bell size={17} strokeWidth={1.8} />{realtime.unreadNotifications > 0 ? <span className="absolute right-[7px] top-[6px] grid min-h-4 min-w-4 place-items-center rounded-full bg-amber px-1 text-[9px] font-bold text-background">{realtime.unreadNotifications > 9 ? "9+" : realtime.unreadNotifications}</span> : null}</Link> : null}
           {user ? (
             <>
-              {initialWallet ? <Link className="focus-ring inline-flex items-center gap-2 rounded-full border border-mint/20 bg-mint/10 px-3 py-2 text-xs font-semibold text-mint hover:border-mint/35 hover:bg-mint/15" href="/wallet" onClick={closeTransientMenus}><span className="h-1.5 w-1.5 rounded-full bg-mint" />{liveBalance?.toLocaleString("en-US")} VC</Link> : null}
+              {hasWalletSurface ? <Link className="focus-ring inline-flex items-center gap-2 rounded-full border border-mint/20 bg-mint/10 px-3 py-2 text-xs font-semibold text-mint hover:border-mint/35 hover:bg-mint/15" href="/wallet" onClick={closeTransientMenus}><span className="h-1.5 w-1.5 rounded-full bg-mint" />{walletLabel()}</Link> : null}
               <div className="relative" ref={accountMenuRef}>
                 <button
                   aria-controls="veltrix-account-menu"
@@ -137,7 +160,7 @@ export function Header({ initialUser, initialWallet }: HeaderProps) {
                   <p className="truncate px-2 pb-3 text-[11px] text-muted">{user.email}</p>
                   <div className="grid gap-1 border-y border-border py-2">
                     <Link className="focus-ring flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/profile" onClick={closeTransientMenus}>Profile</Link>
-                    {initialWallet ? <Link className="focus-ring flex items-center justify-between rounded-xl px-2 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/wallet" onClick={closeTransientMenus}><span>Wallet</span><span className="text-mint">{liveBalance?.toLocaleString("en-US")} VC</span></Link> : null}
+                    {hasWalletSurface ? <Link className="focus-ring flex items-center justify-between rounded-xl px-2 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/wallet" onClick={closeTransientMenus}><span>Wallet</span><span className="text-mint">{walletLabel()}</span></Link> : null}
                     <Link className="focus-ring flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/transactions" onClick={closeTransientMenus}>Transactions</Link>
                     <Link className="focus-ring flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/favourites" onClick={closeTransientMenus}>Favourites</Link>
                     <Link className="focus-ring flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/responsible-gaming" onClick={closeTransientMenus}>Responsible gaming</Link>
@@ -148,7 +171,7 @@ export function Header({ initialUser, initialWallet }: HeaderProps) {
               </div>
             </>
           ) : (
-            <><Link className="focus-ring inline-flex h-10 items-center gap-2 rounded-full px-3 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/login" onClick={closeTransientMenus}>Log in</Link><Link className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-amber/50 bg-amber px-4 text-xs font-semibold text-[#16120b] hover:bg-amber-bright" href="/register" onClick={closeTransientMenus}>Create account</Link></>
+            <><Link className="focus-ring inline-flex h-10 items-center gap-2 rounded-full px-3 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/login" onClick={closeTransientMenus}>Log in</Link><Link className="button-primary focus-ring inline-flex h-10 items-center gap-2 rounded-full px-4 text-xs" href="/register" onClick={closeTransientMenus}>Create account</Link></>
           )}
         </div>
 
@@ -158,7 +181,7 @@ export function Header({ initialUser, initialWallet }: HeaderProps) {
       {isMenuOpen ? (
         <div className="border-t border-border bg-surface/90 px-3 pb-4 pt-2 lg:hidden" id="veltrix-mobile-navigation"><nav aria-label="Mobile navigation" className="page-shell flex flex-col gap-1">
           {navItems.map((item) => <Link className="focus-ring rounded-xl px-3 py-3 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href={item.href} key={item.label} onClick={closeTransientMenus}>{item.label}</Link>)}
-          {user ? <><div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-surface-hover/60 px-3 py-3"><span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#e8b86a] to-[#a86246] text-[10px] font-bold text-[#17110a]" style={user.profile?.avatarUrl ? { backgroundImage: `url(\"${user.profile.avatarUrl}\")`, backgroundPosition: "center", backgroundSize: "cover" } : undefined}>{user.profile?.avatarUrl ? <span className="sr-only">{initials(user)}</span> : initials(user)}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold text-ink">{userLabel(user)}</span><span className="block truncate text-xs text-muted">{user.email}</span></span></div>{initialWallet ? <Link className="mt-2 flex min-h-11 items-center justify-between rounded-xl border border-mint/20 bg-mint/10 px-3 text-sm font-semibold text-mint" href="/wallet" onClick={closeTransientMenus}><span>Veltrix balance</span><span>{liveBalance?.toLocaleString("en-US")} VC</span></Link> : null}<div className="mt-2 grid grid-cols-2 gap-2"><Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/profile" onClick={closeTransientMenus}>Profile</Link>{initialWallet ? <Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/transactions" onClick={closeTransientMenus}>Transactions</Link> : null}<Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/favourites" onClick={closeTransientMenus}>Favourites</Link><Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/responsible-gaming" onClick={closeTransientMenus}>Responsible gaming</Link></div><button className="focus-ring mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" disabled={isLoggingOut} onClick={logout} type="button">{isLoggingOut ? "Signing out…" : "Log out"}</button></> : <div className="mt-2 grid gap-2"><Link className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/login" onClick={closeTransientMenus}>Log in</Link><Link className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-amber/50 bg-amber text-sm font-semibold text-[#16120b] hover:bg-amber-bright" href="/register" onClick={closeTransientMenus}>Create account</Link></div>}
+          {user ? <><div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-surface-hover/60 px-3 py-3"><span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#e8b86a] to-[#a86246] text-[10px] font-bold text-[#17110a]" style={user.profile?.avatarUrl ? { backgroundImage: `url(\"${user.profile.avatarUrl}\")`, backgroundPosition: "center", backgroundSize: "cover" } : undefined}>{user.profile?.avatarUrl ? <span className="sr-only">{initials(user)}</span> : initials(user)}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold text-ink">{userLabel(user)}</span><span className="block truncate text-xs text-muted">{user.email}</span></span></div>{hasWalletSurface ? <div className="mt-2 flex min-h-11 items-center justify-between rounded-xl border border-mint/20 bg-mint/10 px-3 text-sm font-semibold text-mint"><Link className="min-w-0 truncate" href="/wallet" onClick={closeTransientMenus}>Veltrix balance</Link><span className="ml-3 shrink-0">{walletLabel()}</span></div> : null}{initialWalletError && !realtime.walletAvailable ? <button className="mt-2 w-full text-left text-xs font-semibold text-danger hover:text-ink" disabled={isRefreshingWallet} onClick={refreshWallet} type="button">{isRefreshingWallet ? "Checking wallet…" : "Balance unavailable · Try again"}</button> : null}<div className="mt-2 grid grid-cols-2 gap-2"><Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/profile" onClick={closeTransientMenus}>Profile</Link>{hasWalletSurface ? <Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/transactions" onClick={closeTransientMenus}>Transactions</Link> : null}<Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/favourites" onClick={closeTransientMenus}>Favourites</Link><Link className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/responsible-gaming" onClick={closeTransientMenus}>Responsible gaming</Link></div><button className="focus-ring mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" disabled={isLoggingOut} onClick={logout} type="button">{isLoggingOut ? "Signing out…" : "Log out"}</button></> : <div className="mt-2 grid gap-2"><Link className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-border bg-surface-hover/60 text-sm font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" href="/login" onClick={closeTransientMenus}>Log in</Link><Link className="button-primary focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 text-sm" href="/register" onClick={closeTransientMenus}>Create account</Link></div>}
         </nav></div>
       ) : null}
     </header>

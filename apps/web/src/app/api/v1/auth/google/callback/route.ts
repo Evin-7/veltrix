@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { authenticateGoogleUser } from "@/server/auth/service";
 import { createSession, revokeSession, SESSION_COOKIE_NAME, setSessionCookie } from "@/server/auth/session";
 import { getGoogleOAuthConfig, GOOGLE_OAUTH_COOKIE, googleOAuthCookieOptions, readGoogleOAuthState, safeCompare } from "@/server/auth/google";
+import { enforceAuthRateLimit } from "@/server/http/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,12 @@ function loginRedirect(request: Request, error: string, next = "/") {
 }
 
 export async function GET(request: Request) {
+  try {
+    await enforceAuthRateLimit(request, "oauth");
+  } catch {
+    return loginRedirect(request, "rate_limited");
+  }
+
   const requestUrl = new URL(request.url);
   const oauthState = readGoogleOAuthState((await cookies()).get(GOOGLE_OAUTH_COOKIE)?.value);
   if (!oauthState || !safeCompare(requestUrl.searchParams.get("state") ?? "", oauthState.state)) {

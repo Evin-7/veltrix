@@ -1,15 +1,14 @@
 "use client";
 
 import {
-  ChevronDown,
   Filter,
   Search,
-  SlidersHorizontal,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { GameCard } from "@/components/games/game-card";
 import { Button } from "@/components/ui/button";
+import { VeltrixSelect } from "@/components/ui/veltrix-select";
 import { filterGames } from "@/features/games/filter";
 import {
   gameCategories,
@@ -80,25 +79,16 @@ export function GameCatalog({
           <div className="flex gap-2">
             <label className="relative min-w-0 flex-1 sm:min-w-[155px]">
               <span className="sr-only">Sort games</span>
-              <SlidersHorizontal
-                aria-hidden="true"
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground-muted"
-                size={15}
-                strokeWidth={1.8}
-              />
-              <select
-                className="focus-ring h-12 w-full appearance-none rounded-[var(--radius-control)] border border-border bg-surface-hover/40 pl-10 pr-9 text-xs font-semibold text-foreground-subtle outline-none hover:border-border-strong focus:border-primary/50"
-                onChange={(event) => setSort(event.target.value as GameSort)}
+              <VeltrixSelect
+                ariaLabel="Sort games"
+                className="w-full"
+                onValueChange={(nextSort) => setSort(nextSort as GameSort)}
+                options={[
+                  { label: "Popular", value: "popular" },
+                  { label: "Newest", value: "newest" },
+                  { label: "A–Z", value: "name" },
+                ]}
                 value={sort}
-              >
-                <option value="popular">Sort: Popular</option>
-                <option value="newest">Sort: Newest</option>
-                <option value="name">Sort: A–Z</option>
-              </select>
-              <ChevronDown
-                aria-hidden="true"
-                className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-foreground-muted"
-                size={14}
               />
             </label>
             <Button
@@ -137,18 +127,15 @@ export function GameCatalog({
           <span className="mb-2 block text-xs font-semibold text-foreground-muted">
             Provider
           </span>
-          <select
-            className="field focus-ring"
-            onChange={(event) => setProvider(event.target.value)}
+          <VeltrixSelect
+            ariaLabel="Filter games by provider"
+            onValueChange={setProvider}
+            options={[
+              { label: "All providers", value: "All" },
+              ...providers.map((item) => ({ label: item.name, value: item.slug })),
+            ]}
             value={provider}
-          >
-            <option value="All">All providers</option>
-            {providers.map((item) => (
-              <option key={item.id} value={item.slug}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          />
         </label>
       </div>
       <div className="mt-8 flex items-center justify-between gap-3">
@@ -162,18 +149,17 @@ export function GameCatalog({
         <div className="hidden items-center gap-3 lg:flex">
           <label className="flex items-center gap-2 text-xs font-semibold text-foreground-muted">
             <span>Provider</span>
-            <select
-              className="focus-ring h-9 rounded-[var(--radius-control)] border border-border bg-surface-hover/40 px-3 text-xs text-foreground-subtle outline-none hover:border-border-strong"
-              onChange={(event) => setProvider(event.target.value)}
+            <VeltrixSelect
+              ariaLabel="Filter games by provider"
+              className="min-w-[155px]"
+              onValueChange={setProvider}
+              options={[
+                { label: "All providers", value: "All" },
+                ...providers.map((item) => ({ label: item.name, value: item.slug })),
+              ]}
+              size="sm"
               value={provider}
-            >
-              <option value="All">All providers</option>
-              {providers.map((item) => (
-                <option key={item.id} value={item.slug}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
+            />
           </label>
           {hasFilters ? (
             <button

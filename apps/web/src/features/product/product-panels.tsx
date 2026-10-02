@@ -11,6 +11,9 @@ import {
   Stat,
 } from "@/components/ui/layout-primitives";
 import { useToast } from "@/components/ui/toast";
+import { requestJson } from "@/lib/api-client";
+import { errorMessage as safeErrorMessage } from "@/lib/app-error";
+import { emitWalletUpdate } from "@/lib/wallet-sync";
 
 type Promotion = {
   id: string;
@@ -67,18 +70,6 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function errorText(payload: unknown, fallback: string) {
-  return typeof payload === "object" &&
-    payload &&
-    "error" in payload &&
-    typeof payload.error === "object" &&
-    payload.error &&
-    "message" in payload.error &&
-    typeof payload.error.message === "string"
-    ? payload.error.message
-    : fallback;
-}
-
 export function PromotionsPanel({
   initialPromotions,
 }: {
@@ -93,31 +84,24 @@ export function PromotionsPanel({
     setBusy(promotionId);
     setMessage(null);
     try {
-      const response = await fetch(`/api/v1/promotions/${promotionId}/claim`, {
+      const payload = await requestJson<{ newBalance?: number }>(`/api/v1/promotions/${promotionId}/claim`, {
         method: "POST",
         headers: {
           "Idempotency-Key": `promotion-ui-${promotionId}-${crypto.randomUUID()}`,
         },
       });
-      const payload = (await response.json()) as unknown;
-      if (!response.ok)
-        throw new Error(
-          errorText(payload, "The promotion could not be claimed."),
-        );
       setPromotions((items) =>
         items.map((item) =>
           item.id === promotionId ? { ...item, claimed: true } : item,
         ),
       );
       setMessage("Reward added to your wallet.");
+      if (typeof payload.newBalance === "number") emitWalletUpdate(payload.newBalance);
       showToast("Promotion reward claimed", "success");
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "The promotion could not be claimed.",
-      );
-      showToast("Couldn’t claim promotion", "error");
+      const message = safeErrorMessage(error, "CONFLICT");
+      setMessage(message);
+      showToast(message, "error");
     } finally {
       setBusy(null);
     }
@@ -156,7 +140,7 @@ export function PromotionsPanel({
                 </p>
               </div>
               <button
-                className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-control)] border border-amber/45 bg-amber px-4 text-xs font-bold text-[#17110a] disabled:cursor-not-allowed disabled:opacity-50"
+                className="button-primary focus-ring inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-control)] px-4 text-xs disabled:cursor-not-allowed"
                 disabled={promotion.claimed || busy === promotion.id}
                 onClick={() => claim(promotion.id)}
               >
@@ -197,10 +181,6 @@ export function RewardsPanel({ initial }: { initial: RewardOverview }) {
   return (
     <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="rewards-progress-focus">
-        <div
-          aria-hidden="true"
-          className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-amber/10 blur-3xl"
-        />
         <div className="relative">
           <div className="flex items-start justify-between">
             <div>
@@ -320,19 +300,10 @@ export function ResponsibleGamingPanel({
   const [reminder, setReminder] = useState(
     String(settings.sessionReminderMinutes),
   );
+  const { showToast } = useToast();
 
   async function request(path: string, options: RequestInit = {}) {
-    const response = await fetch(path, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers ?? {}),
-      },
-    });
-    const payload = (await response.json()) as unknown;
-    if (!response.ok)
-      throw new Error(errorText(payload, "The setting could not be updated."));
-    return payload as { data: Settings };
+    return requestJson<Settings>(path, options);
   }
 
   async function save() {
@@ -347,15 +318,12 @@ export function ResponsibleGamingPanel({
           maxWager: max ? Number(max) : null,
         }),
       });
-      setSettings(payload.data);
-      setStatus((current) => ({ ...current, settings: payload.data }));
+      setSettings(payload);
+      setStatus((current) => ({ ...current, settings: payload }));
       setMessage("Your settings are active.");
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "The setting could not be updated.",
-      );
+      setMessage(safeErrorMessage(error, "BAD_REQUEST"));
+      showToast(safeErrorMessage(error, "BAD_REQUEST"), "error");
     } finally {
       setBusy(false);
     }
@@ -376,8 +344,8 @@ export function ResponsibleGamingPanel({
           body: JSON.stringify(isCoolOff ? { hours: 24 } : { days: 7 }),
         },
       );
-      setSettings(payload.data);
-      setStatus((current) => ({ ...current, settings: payload.data }));
+      setSettings(payload);
+      setStatus((current) => ({ ...current, settings: payload }));
       setMessage(
         isCoolOff
           ? "A 24-hour cool-off is active."
@@ -385,11 +353,8 @@ export function ResponsibleGamingPanel({
       );
       setPendingAction(null);
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "The setting could not be updated.",
-      );
+      setMessage(safeErrorMessage(error, "BAD_REQUEST"));
+      showToast(safeErrorMessage(error, "BAD_REQUEST"), "error");
     } finally {
       setBusy(false);
     }
@@ -467,7 +432,7 @@ export function ResponsibleGamingPanel({
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <button
-            className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] bg-primary px-5 text-xs font-bold text-background hover:bg-primary-hover disabled:opacity-50"
+            className="button-primary focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] px-5 text-xs"
             disabled={busy}
             onClick={save}
             type="button"
@@ -527,7 +492,7 @@ export function ResponsibleGamingPanel({
             label="24-hour cool-off"
             action={
               <button
-                className="focus-ring min-h-11 rounded-[var(--radius-control)] border border-amber/40 px-4 text-xs font-bold text-amber-bright hover:bg-amber/10 disabled:opacity-50"
+                className="button-secondary focus-ring min-h-11 rounded-[var(--radius-control)] px-4 text-xs disabled:cursor-not-allowed"
                 disabled={busy}
                 onClick={() => setPendingAction("coolOff")}
                 type="button"
@@ -597,26 +562,32 @@ export function NotificationsPanel({
 }) {
   const [items, setItems] = useState(initialNotifications);
   const [unread, setUnread] = useState(initialUnread);
+  const [busy, setBusy] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   async function mark(id: string) {
-    const response = await fetch(`/api/v1/notifications/${id}/read`, {
-      method: "PATCH",
-    });
-    if (response.ok) {
+    if (busy) return;
+    setBusy(id);
+    try {
+      await requestJson(`/api/v1/notifications/${id}/read`, { method: "PATCH" });
       setItems((current) =>
         current.map((item) =>
           item.id === id ? { ...item, readAt: new Date().toISOString() } : item,
         ),
       );
       setUnread((current) => Math.max(0, current - 1));
+    } catch (error) {
+      showToast(safeErrorMessage(error, "NETWORK_ERROR"), "error");
+    } finally {
+      setBusy(null);
     }
   }
 
   async function markAll() {
-    const response = await fetch("/api/v1/notifications/read-all", {
-      method: "POST",
-    });
-    if (response.ok) {
+    if (busy) return;
+    setBusy("all");
+    try {
+      await requestJson("/api/v1/notifications/read-all", { method: "POST" });
       setItems((current) =>
         current.map((item) => ({
           ...item,
@@ -624,6 +595,10 @@ export function NotificationsPanel({
         })),
       );
       setUnread(0);
+    } catch (error) {
+      showToast(safeErrorMessage(error, "NETWORK_ERROR"), "error");
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -636,7 +611,8 @@ export function NotificationsPanel({
       >
         <button
           className="focus-ring rounded-[var(--radius-control)] border border-border px-4 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink"
-          onClick={markAll}
+          disabled={busy !== null}
+          onClick={() => void markAll()}
           type="button"
         >
           Mark all read
@@ -647,6 +623,7 @@ export function NotificationsPanel({
           <button
             className={`focus-ring flex w-full items-start gap-4 border-b border-border py-5 text-left transition last:border-b-0 ${item.readAt ? "" : "bg-amber/[0.05]"}`}
             key={item.id}
+            disabled={busy !== null}
             onClick={() => !item.readAt && void mark(item.id)}
             type="button"
           >
@@ -656,7 +633,7 @@ export function NotificationsPanel({
                   {item.title}
                 </span>
                 {!item.readAt ? (
-                  <span className="rounded-full bg-amber px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#17110a]">
+                  <span className="rounded-full bg-amber px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-background">
                     New
                   </span>
                 ) : null}

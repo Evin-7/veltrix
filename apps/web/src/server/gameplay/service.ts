@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { Prisma, type GameActionType, type GameRound, type GameType } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
-import { badRequest, conflict, notFound } from "@/server/http/errors";
+import { badRequest, conflict, notFound, roundAlreadySettled } from "@/server/http/errors";
 import { assertGameplayAllowed } from "@/server/responsible-gaming/service";
 import { awardGameplayXp } from "@/server/rewards/service";
 import { calculateGameplayXp } from "@/server/rewards/constants";
@@ -208,7 +208,7 @@ export async function blackjackAction(userId: string, roundId: string, action: "
     if (round.gameType !== "BLACKJACK") throw conflict("This round is not a blackjack hand.");
     const duplicate = await existingAction(tx, { idempotencyKey, userId, type: actionType, hash });
     if (duplicate) return duplicate;
-    if (round.status !== "ACTIVE") throw conflict("This blackjack hand is no longer active.");
+    if (round.status !== "ACTIVE") throw roundAlreadySettled("This blackjack hand is no longer active.");
     const wallet = await lockWallet(tx, userId);
     const session = await tx.gameSession.findUniqueOrThrow({ where: { id: round.sessionId } });
     const state = parseBlackjackState(round);

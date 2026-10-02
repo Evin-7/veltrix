@@ -5,12 +5,14 @@ import { assertSameOrigin } from "@/server/http/security";
 import { dealBaccaratRound, dealBlackjackRound, requireIdempotencyKey } from "@/server/gameplay/service";
 import { baccaratDealSchema, wagerSchema } from "@/server/gameplay/schemas";
 import { gameplayModeForSlug } from "@/server/gameplay/constants";
+import { enforceMutationRateLimit } from "@/server/http/rate-limit";
 
 export const runtime = "nodejs";
 type RouteProps = { params: Promise<{ slug: string }> };
 
 export async function POST(request: Request, { params }: RouteProps) {
   try {
+    await enforceMutationRateLimit(request, "gameplay");
     assertSameOrigin(request);
     const user = requireRole(await requireAuth(), ["PLAYER"]);
     const { slug } = await params;

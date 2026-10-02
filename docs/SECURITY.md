@@ -44,13 +44,13 @@ The game rules and RNG source are unit-testable with deterministic injected sour
 
 ## Request and error handling
 
-Zod validates request bodies and query parameters. Errors map to stable status codes and error codes; Prisma internals and stack traces are not exposed. Server logs intentionally record only a generic internal-error marker for unexpected API failures.
+Zod validates request bodies and query parameters. JSON mutation bodies must use a JSON content type and are capped at 64 KiB before parsing. Errors map to stable status codes and error codes; Prisma internals and stack traces are not exposed. Server logs intentionally record only a generic internal-error marker for unexpected API failures.
 
-Login, registration, profile, favourite, recent-activity, gameplay-adjacent mutations, product mutations, and admin routes use bounded rate limits. Local development falls back to a small in-memory limiter; production requires the paired `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` variables and uses atomic Redis counters with a 60-second expiry. If the shared store is unavailable, production fails closed with a generic retryable error instead of silently reverting to process-local protection.
+State-changing browser requests require matching `Origin` or `Referer` provenance against the configured application origin; conflicting or missing provenance is rejected. Admin requests use the configured admin origin. Login, registration, OAuth start/callback, profile, favourite, recent-activity, gameplay, product mutations, and admin routes use bounded rate limits. Local development falls back to a small in-memory limiter; production requires the paired `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` variables and uses atomic Redis counters with a 60-second expiry. If the shared store is unavailable, production fails closed with a generic retryable error instead of silently reverting to process-local protection.
 
 ## Headers and secrets
 
-Next adds `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-DNS-Prefetch-Control`, and `X-Permitted-Cross-Domain-Policies`. API responses carry a correlation-friendly `X-Request-ID`, and unexpected failures are emitted as structured JSON without request bodies, cookies, stack traces, or secrets. `DATABASE_URL`, `AUTH_SECRET`, seed password overrides, and production rate-limit credentials come only from environment variables. `.env` and `.env.local` are ignored and must never be committed.
+Next adds `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-DNS-Prefetch-Control`, and `X-Permitted-Cross-Domain-Policies`. Production HTML receives a per-request nonce CSP with `strict-dynamic`, no `unsafe-eval`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and `frame-ancestors 'none'`; API responses are explicitly `private, no-store`. Production also emits HSTS and the admin CSP allowlists its configured API origin for `connect-src`. API responses carry a correlation-friendly `X-Request-ID`, and unexpected failures are emitted as structured JSON without request bodies, cookies, stack traces, or secrets. `DATABASE_URL`, `AUTH_SECRET`, seed password overrides, and production rate-limit credentials come only from environment variables. `.env` and `.env.local` are ignored and must never be committed.
 
 For Neon, `DATABASE_URL` contains the pooled application connection and `DIRECT_DATABASE_URL` contains the direct migration/seed connection. Both contain credentials and must remain local secrets. The repository includes only placeholders in `.env.example` and `apps/admin/.env.example`; no real Neon URL is tracked.
 
@@ -77,3 +77,11 @@ The seed contains fictional local fallback account passwords only for developmen
 ## Scope
 
 Veltrix does not process money, payments, crypto, deposits, withdrawals, purchases, transfers, redemptions, or real-money wagers. Promotions, VIP tiers, and responsible-gaming controls operate only on fictional VC. The game engines are portfolio-grade demonstrations and are not certified real-money gambling software.
+
+## Deployment rules
+
+- Production `APP_URL` and `ADMIN_APP_URL` must use HTTPS. `DATABASE_URL` must be a PostgreSQL URL; Upstash URLs must use HTTPS.
+- Keep `DIRECT_DATABASE_URL` in the trusted migration/seed environment only. It is not read by request handlers and must never be exposed as a `NEXT_PUBLIC_` variable.
+- Use separate Neon branches/databases for development, preview, and production. Do not run seed, reset, `db push`, or destructive migration commands from a public web request.
+- The current Google flow verifies the ID token signature, audience, nonce, `sub`, and `email_verified` before linking. For a stricter production identity policy, replace automatic verified-email linking with an authenticated explicit account-linking flow.
+- The Google client secret supplied during development should be treated as exposed through the conversation and rotated before any public deployment. Rotation is intentionally not automated by this repository.

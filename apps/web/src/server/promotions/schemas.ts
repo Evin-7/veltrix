@@ -27,7 +27,7 @@ export const promotionUpdateSchema = promotionFields.partial().omit({ slug: true
   if (value.startAt && value.endAt && value.endAt <= value.startAt) context.addIssue({ code: "custom", path: ["endAt"], message: "End time must be after start time." });
 });
 
-export const promotionListSchema = z.object({ page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(50).default(20) });
+export const promotionListSchema = z.object({ page: z.coerce.number().int().min(1).max(10_000).default(1), pageSize: z.coerce.number().int().min(1).max(50).default(20) });
 export const promotionIdSchema = z.string().uuid();
 
 export type PromotionCreateInput = z.infer<typeof promotionCreateSchema>;

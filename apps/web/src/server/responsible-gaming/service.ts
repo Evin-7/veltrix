@@ -1,7 +1,7 @@
 import "server-only";
 import { Prisma, type ResponsibleGamingSetting } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
-import { badRequest, conflict, forbidden } from "@/server/http/errors";
+import { conflict, coolOffActive, dailyLimitReached, maxWagerExceeded, selfExcluded } from "@/server/http/errors";
 import { createNotification } from "@/server/notifications/service";
 import { writeAuditLog } from "@/server/admin/audit";
 import { lockWallet } from "@/server/wallet/ledger";
@@ -67,17 +67,17 @@ export async function assertGameplayAllowed(tx: Prisma.TransactionClient, userId
   const settings = await tx.responsibleGamingSetting.findUnique({ where: { userId } });
   if (!settings) return;
   const now = new Date();
-  if (settings.selfExcludedUntil && settings.selfExcludedUntil > now) throw forbidden("Gameplay is unavailable while self-exclusion is active.");
-  if (settings.coolOffUntil && settings.coolOffUntil > now) throw forbidden("Gameplay is unavailable during your cool-off period.");
+  if (settings.selfExcludedUntil && settings.selfExcludedUntil > now) throw selfExcluded();
+  if (settings.coolOffUntil && settings.coolOffUntil > now) throw coolOffActive();
   const effectiveMax = Math.min(platformMaxWager, settings.maxWager ?? platformMaxWager);
-  if (wager > effectiveMax) throw badRequest(`This wager exceeds your configured maximum of ${effectiveMax} VC.`);
+  if (wager > effectiveMax) throw maxWagerExceeded();
   if (!settings.dailyWagerLimit || wager <= 0) return;
   const start = utcDayStart(now);
   const next = new Date(start);
   next.setUTCDate(next.getUTCDate() + 1);
   const aggregate = await tx.walletTransaction.aggregate({ where: { userId, type: "GAME_WAGER", createdAt: { gte: start, lt: next } }, _sum: { amount: true } });
   const used = Math.abs(aggregate._sum.amount ?? 0);
-  if (used + wager > settings.dailyWagerLimit) throw badRequest(`This wager would exceed your daily VC limit. Remaining today: ${Math.max(0, settings.dailyWagerLimit - used)} VC.`);
+  if (used + wager > settings.dailyWagerLimit) throw dailyLimitReached();
 }
 
 export async function getResponsibleGamingStatus(userId: string) {

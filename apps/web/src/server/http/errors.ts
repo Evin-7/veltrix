@@ -24,6 +24,13 @@ export const forbidden = (message = "You do not have permission to perform this 
 export const badRequest = (message = "The request is invalid.") => new AppError(400, "BAD_REQUEST", message);
 export const notFound = (message = "The requested resource was not found.") => new AppError(404, "NOT_FOUND", message);
 export const conflict = (message = "The request conflicts with existing data.") => new AppError(409, "CONFLICT", message);
+export const insufficientBalance = (message = "The wallet does not have enough VC for this operation.") => new AppError(409, "INSUFFICIENT_BALANCE", message);
+export const invalidWager = (message = "Choose a valid wager and try again.") => new AppError(400, "INVALID_WAGER", message);
+export const roundAlreadySettled = (message = "This round is already settled.") => new AppError(409, "ROUND_ALREADY_SETTLED", message);
+export const selfExcluded = (message = "Gameplay is unavailable while self-exclusion is active.") => new AppError(403, "SELF_EXCLUDED", message);
+export const coolOffActive = (message = "Gameplay is unavailable during your cool-off period.") => new AppError(403, "COOL_OFF_ACTIVE", message);
+export const dailyLimitReached = (message = "Your daily play limit has been reached.") => new AppError(403, "DAILY_LIMIT_REACHED", message);
+export const maxWagerExceeded = (message = "That wager is above your current maximum.") => new AppError(400, "MAX_WAGER_EXCEEDED", message);
 
 export function jsonData<T>(data: T, init?: ResponseInit) {
   return Response.json({ data }, init);
@@ -57,9 +64,48 @@ export function jsonError(error: unknown, requestId = randomUUID()) {
   return withRequestId(Response.json({ error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred." } }, { status: 500 }), requestId);
 }
 
-export async function readJson(request: Request) {
+const MAX_JSON_BODY_BYTES = 64 * 1024;
+
+async function readBodyWithinLimit(request: Request) {
+  const declaredLength = request.headers.get("content-length");
+  if (declaredLength !== null) {
+    const length = Number(declaredLength);
+    if (!Number.isSafeInteger(length) || length < 0) throw new AppError(400, "INVALID_CONTENT_LENGTH", "Request content length is invalid.");
+    if (length > MAX_JSON_BODY_BYTES) throw new AppError(413, "REQUEST_TOO_LARGE", "Request body is too large.");
+  }
+
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let body = "";
+  let bytes = 0;
+
   try {
-    return await request.json();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_JSON_BODY_BYTES) {
+        await reader.cancel();
+        throw new AppError(413, "REQUEST_TOO_LARGE", "Request body is too large.");
+      }
+      body += decoder.decode(value, { stream: true });
+    }
+    return body + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export async function readJson(request: Request) {
+  const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+  if (contentType !== "application/json" && !contentType?.endsWith("+json")) {
+    throw new AppError(415, "UNSUPPORTED_MEDIA_TYPE", "Request content type must be JSON.");
+  }
+
+  const body = await readBodyWithinLimit(request);
+  try {
+    return JSON.parse(body) as unknown;
   } catch {
     throw new AppError(400, "INVALID_JSON", "Request body must be valid JSON.");
   }

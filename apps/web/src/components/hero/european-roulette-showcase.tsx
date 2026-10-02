@@ -33,7 +33,7 @@ export function EuropeanRouletteShowcase() {
         <div aria-hidden="true" className="roulette-wheel-wrap">
           <div className="roulette-wheel-shadow" />
           <div className="roulette-wheel">
-            <div className="roulette-wheel-rim"><div className="roulette-wheel-track">{wheelNumbers.map((number, index) => <span className={`roulette-pocket ${numberTone(number)}`} key={number} style={{ "--pocket-angle": `${(index * 360) / wheelNumbers.length}deg` } as CSSProperties}>{number}</span>)}</div><div className="roulette-wheel-inner"><VeltrixLogo alt="" className="roulette-wheel-wordmark" /><span className="roulette-wheel-pin" /></div></div>
+            <div className="roulette-wheel-rim"><div className="roulette-wheel-track">{wheelNumbers.map((number, index) => <span className={`roulette-pocket ${numberTone(number)}`} key={number} style={{ "--pocket-angle": `${(index * 360) / wheelNumbers.length}deg` } as CSSProperties}>{number}</span>)}</div><div className="roulette-wheel-inner"><VeltrixLogo alt="" className="roulette-wheel-wordmark" surface="dark" /><span className="roulette-wheel-pin" /></div></div>
           </div>
         </div>
       </div>

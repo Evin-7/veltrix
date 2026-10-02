@@ -1,5 +1,5 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { conflict, notFound } from "../http/errors";
+import { conflict, insufficientBalance, notFound } from "../http/errors";
 
 export const MAX_VC_BALANCE = 2_000_000_000;
 
@@ -23,7 +23,7 @@ export function calculateWalletBalance(balanceBefore: number, amount: number) {
   }
 
   const balanceAfter = balanceBefore + amount;
-  if (balanceAfter < 0) throw conflict("The wallet does not have enough VC for this operation.");
+  if (balanceAfter < 0) throw insufficientBalance();
   if (balanceAfter > MAX_VC_BALANCE) throw conflict("The wallet balance exceeds the allowed VC limit.");
   return balanceAfter;
 }

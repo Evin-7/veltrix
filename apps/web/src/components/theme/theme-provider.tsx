@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 export type ThemePreference = "system" | "light" | "dark";
 type ResolvedTheme = "light" | "dark";
 const STORAGE_KEY = "veltrix-theme";
+const themeListeners = new Set<() => void>();
 
 type ThemeContextValue = { theme: ThemePreference; resolvedTheme: ResolvedTheme; setTheme: (theme: ThemePreference) => void };
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -20,14 +21,25 @@ function applyTheme(theme: ThemePreference) {
   document.documentElement.style.colorScheme = resolved;
 }
 
-function getInitialPreference(): ThemePreference {
-  if (typeof window === "undefined") return "system";
+function getStoredPreference(): ThemePreference {
   const stored = window.localStorage.getItem(STORAGE_KEY);
   return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
 }
 
+function subscribeToTheme(listener: () => void) {
+  themeListeners.add(listener);
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) listener();
+  };
+  window.addEventListener("storage", handleStorage);
+  return () => {
+    themeListeners.delete(listener);
+    window.removeEventListener("storage", handleStorage);
+  };
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemePreference>(getInitialPreference);
+  const theme = useSyncExternalStore(subscribeToTheme, getStoredPreference, (): ThemePreference => "system");
   const [systemTick, setSystemTick] = useState(0);
   const resolvedTheme = useMemo(() => {
     if (theme !== "system") return theme;
@@ -36,6 +48,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [systemTick, theme]);
 
   useEffect(() => {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (theme === "system" && stored && stored !== "system" && (stored === "light" || stored === "dark")) {
+      themeListeners.forEach((listener) => listener());
+      return;
+    }
+
     applyTheme(theme);
 
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -50,8 +68,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   function setTheme(nextTheme: ThemePreference) {
-    setThemeState(nextTheme);
     window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    themeListeners.forEach((listener) => listener());
     applyTheme(nextTheme);
   }
 

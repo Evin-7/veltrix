@@ -6,6 +6,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
+import { requestJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/app-error";
+import { beginRouteTransition } from "@/lib/route-transition";
 
 type GameActionsProps = {
   gameName: string;
@@ -24,6 +27,7 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
   const { showToast } = useToast();
 
   function redirectToLogin() {
+    beginRouteTransition("/login");
     router.push(`/login?next=${encodeURIComponent(`/casino/${gameSlug}`)}`);
   }
 
@@ -36,20 +40,17 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
     setIsFavouritePopping(nextValue);
     setIsSavingFavourite(true);
     try {
-      const response = await fetch(`/api/v1/games/${gameSlug}/favourite`, { method: nextValue ? "POST" : "DELETE" });
-      if (response.status === 401) { setIsFavourite(previousValue); setIsFavouritePopping(false); return redirectToLogin(); }
-      if (!response.ok) throw new Error("Favourite update failed");
-      const payload = (await response.json()) as { data?: { isFavourite?: boolean } };
-      const savedValue = Boolean(payload.data?.isFavourite);
+      const payload = await requestJson<{ isFavourite?: boolean }>(`/api/v1/games/${gameSlug}/favourite`, { method: nextValue ? "POST" : "DELETE" });
+      const savedValue = Boolean(payload.isFavourite);
       setIsFavourite(savedValue);
       setIsFavouritePopping(savedValue);
       window.dispatchEvent(new CustomEvent("veltrix:favourite-changed", { detail: { slug: gameSlug, isFavourite: savedValue } }));
       showToast(savedValue ? "Added to favourites" : "Removed from favourites", "success", { card: savedValue ? { rank: "K", suit: "♥" } : { rank: "J", suit: "♠" }, variant: "premium" });
-    } catch {
+    } catch (error) {
       setIsFavourite(previousValue);
       setIsFavouritePopping(false);
-      setMessage("We could not update favourites right now.");
-      showToast("Couldn’t update favourites", "error");
+      setMessage(errorMessage(error, "CONFLICT"));
+      showToast(errorMessage(error, "CONFLICT"), "error");
     } finally {
       setIsSavingFavourite(false);
     }
@@ -59,6 +60,7 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
     if (!isAuthenticated) return redirectToLogin();
     setMessage(null);
     setIsLaunching(true);
+    beginRouteTransition(`/casino/${gameSlug}/play`);
     router.push(`/casino/${gameSlug}/play`);
   }
 
@@ -68,8 +70,8 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
         <Button disabled={isLaunching} onClick={launchGame} size="lg" variant="primary">
           {isLaunching ? <LoaderCircle className="animate-spin" size={17} /> : null} {isLaunching ? "Opening…" : "Play"}
         </Button>
-        <Button aria-label={isFavourite ? `Remove ${gameName} from favourites` : `Add ${gameName} to favourites`} aria-pressed={isFavourite} disabled={isSavingFavourite} onClick={toggleFavourite} size="lg" variant="secondary">
-          <Heart className={cn(isFavourite ? "text-favorite" : "text-foreground-muted", isFavouritePopping && "favorite-heart-pop")} fill={isFavourite ? "currentColor" : "none"} size={17} /> {isFavourite ? "Saved" : "Favourite"}
+        <Button aria-label={isSavingFavourite ? "Saving favourite" : isFavourite ? `Remove ${gameName} from favourites` : `Add ${gameName} to favourites`} aria-pressed={isFavourite} disabled={isSavingFavourite} onClick={toggleFavourite} size="lg" variant="secondary">
+          {isSavingFavourite ? <LoaderCircle className="animate-spin" size={17} /> : <Heart className={cn(isFavourite ? "text-favorite" : "text-foreground-muted", isFavouritePopping && "favorite-heart-pop")} fill={isFavourite ? "currentColor" : "none"} size={17} />} {isSavingFavourite ? "Saving…" : isFavourite ? "Saved" : "Favourite"}
         </Button>
       </div>
       <p className="mt-3 min-h-5 text-xs font-semibold text-mint" aria-live="polite">{message}</p>

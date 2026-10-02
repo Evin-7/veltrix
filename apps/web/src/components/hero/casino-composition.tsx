@@ -47,7 +47,7 @@ export function CasinoComposition() {
       <div className="hero-composition-stage" ref={stageRef}>
         <div className="hero-wheel">
           <div className="hero-wheel-core">
-            <VeltrixLogo alt="" className="hero-wheel-logo" />
+            <VeltrixLogo alt="" className="hero-wheel-logo" surface="dark" />
             <span className="hero-wheel-subtitle">ORIGINAL COLLECTION</span>
           </div>
         </div>

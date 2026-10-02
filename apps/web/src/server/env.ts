@@ -1,17 +1,29 @@
 import "server-only";
 import { z } from "zod";
 
+const postgresUrl = z.string().url().refine((value) => /^postgres(?:ql)?:\/\//i.test(value), "Must be a PostgreSQL connection URL.");
+const httpsUrl = z.string().url().refine((value) => new URL(value).protocol === "https:", "Must use HTTPS.");
+
 const environmentSchema = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: postgresUrl,
   AUTH_SECRET: z.string().min(32),
   APP_URL: z.string().url(),
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   ADMIN_APP_URL: z.string().url().default("http://localhost:3001"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_URL: httpsUrl.optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 }).superRefine((environment, context) => {
+  if (environment.NODE_ENV === "production") {
+    if (new URL(environment.APP_URL).protocol !== "https:") {
+      context.addIssue({ code: "custom", path: ["APP_URL"], message: "Production APP_URL must use HTTPS." });
+    }
+    if (new URL(environment.ADMIN_APP_URL).protocol !== "https:") {
+      context.addIssue({ code: "custom", path: ["ADMIN_APP_URL"], message: "Production ADMIN_APP_URL must use HTTPS." });
+    }
+  }
+
   const hasUrl = Boolean(environment.UPSTASH_REDIS_REST_URL);
   const hasToken = Boolean(environment.UPSTASH_REDIS_REST_TOKEN);
   if (hasUrl !== hasToken) {

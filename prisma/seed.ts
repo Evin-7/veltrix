@@ -130,8 +130,8 @@ async function main() {
   if (superAdmin) {
     await prisma.promotion.upsert({
       where: { slug: "veltrix-welcome-season" },
-      update: { title: "Veltrix Welcome Season", description: "A fictional-credit welcome reward for exploring the Veltrix demo world.", startAt: new Date("2026-01-01T00:00:00.000Z"), endAt: new Date("2099-01-01T00:00:00.000Z"), status: "ACTIVE", rewardVC: 750, eligibility: {} },
-      create: { title: "Veltrix Welcome Season", slug: "veltrix-welcome-season", description: "A fictional-credit welcome reward for exploring the Veltrix demo world.", startAt: new Date("2026-01-01T00:00:00.000Z"), endAt: new Date("2099-01-01T00:00:00.000Z"), status: "ACTIVE", rewardVC: 750, eligibility: {}, createdById: superAdmin.id },
+      update: { title: "Veltrix Welcome Season", description: "A welcome reward for discovering the Veltrix collection and settling into a new ritual.", startAt: new Date("2026-01-01T00:00:00.000Z"), endAt: new Date("2099-01-01T00:00:00.000Z"), status: "ACTIVE", rewardVC: 750, eligibility: {} },
+      create: { title: "Veltrix Welcome Season", slug: "veltrix-welcome-season", description: "A welcome reward for discovering the Veltrix collection and settling into a new ritual.", startAt: new Date("2026-01-01T00:00:00.000Z"), endAt: new Date("2099-01-01T00:00:00.000Z"), status: "ACTIVE", rewardVC: 750, eligibility: {}, createdById: superAdmin.id },
     });
   }
 

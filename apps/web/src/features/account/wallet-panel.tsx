@@ -8,6 +8,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SectionHeader, Stat } from "@/components/ui/layout-primitives";
 import { useToast } from "@/components/ui/toast";
+import { requestJson } from "@/lib/api-client";
+import { errorMessage as safeErrorMessage } from "@/lib/app-error";
+import { emitWalletUpdate } from "@/lib/wallet-sync";
 import type {
   WalletSummary,
   WalletTransactionView,
@@ -67,35 +70,20 @@ export function WalletPanel({
     setErrorMessage(null);
     setIsClaiming(true);
     try {
-      const response = await fetch("/api/v1/rewards/daily", { method: "POST" });
-      if (!response.ok) {
-        setErrorMessage("The daily reward could not be claimed right now.");
-        return;
-      }
-      const [walletResponse, transactionResponse, statusResponse] =
-        await Promise.all([
-          fetch("/api/v1/wallet"),
-          fetch("/api/v1/wallet/transactions?page=1&pageSize=4"),
-          fetch("/api/v1/rewards/daily"),
-        ]);
-      const walletPayload = (await walletResponse.json()) as {
-        data: WalletSummary;
-      };
-      const transactionPayload = (await transactionResponse.json()) as {
-        data: WalletTransactionView[];
-      };
-      const statusPayload = (await statusResponse.json()) as {
-        data: DailyStatus;
-      };
-      setWallet(walletPayload.data);
-      setTransactions(transactionPayload.data);
-      setDailyStatus(statusPayload.data);
+      const reward = await requestJson<DailyStatus & { balance: number }>("/api/v1/rewards/daily", { method: "POST" });
+      setWallet((current) => ({ ...current, balance: reward.balance }));
+      setDailyStatus({ amount: reward.amount, claimed: reward.claimed, available: false, nextEligibleAt: reward.nextEligibleAt });
+      emitWalletUpdate(reward.balance);
       showToast("Daily reward claimed", "success");
-    } catch {
-      setErrorMessage(
-        "The service is unavailable right now. Please try again.",
-      );
-      showToast("Couldn’t claim daily reward", "error");
+      try {
+        setTransactions(await requestJson<WalletTransactionView[]>("/api/v1/wallet/transactions?page=1&pageSize=4"));
+      } catch {
+        setErrorMessage("Reward claimed. Recent activity will refresh shortly.");
+      }
+    } catch (error) {
+      const message = safeErrorMessage(error, "NETWORK_ERROR");
+      setErrorMessage(message);
+      showToast(message, "error");
     } finally {
       setIsClaiming(false);
     }
@@ -104,10 +92,6 @@ export function WalletPanel({
   return (
     <div>
       <section className="wallet-balance-focus">
-        <div
-          aria-hidden="true"
-          className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-mint/10 blur-3xl"
-        />
         <div className="relative">
           <div className="flex items-start justify-between gap-4">
             <div>

@@ -4,11 +4,13 @@ import { requireRole } from "@/server/auth/authorization";
 import { assertSameOrigin } from "@/server/http/security";
 import { requireIdempotencyKey, spinRouletteRound } from "@/server/gameplay/service";
 import { rouletteSpinSchema } from "@/server/gameplay/schemas";
+import { enforceMutationRateLimit } from "@/server/http/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    await enforceMutationRateLimit(request, "gameplay");
     assertSameOrigin(request);
     const user = requireRole(await requireAuth(), ["PLAYER"]);
     const input = rouletteSpinSchema.parse(await readJson(request));

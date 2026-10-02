@@ -1,8 +1,11 @@
 "use client";
 
 import { CircleDot, Crown, Diamond, Gem, LoaderCircle, RefreshCw, Star, Volume2, VolumeX, Zap, type LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { requestJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/app-error";
+import { emitWalletUpdate } from "@/lib/wallet-sync";
 import { useGameAudio } from "./game-audio";
 
 const wagers = [10, 25, 50, 100, 250, 500] as const;
@@ -44,13 +47,6 @@ const paylinePaths: Record<number, string> = { 1: "M 8 16 L 92 16", 2: "M 8 50 L
 function formatVc(value: number) { return `${value.toLocaleString("en-US")} VC`; }
 function idempotencyKey(scope: string) { return `${scope}:${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Date.now()}`; }
 
-async function requestJson<T>(url: string, options: RequestInit = {}) {
-  const response = await fetch(url, { ...options, headers: { "content-type": "application/json", ...(options.headers ?? {}) } });
-  const payload = (await response.json().catch(() => ({}))) as { data?: T; error?: { message?: string } };
-  if (!response.ok) throw new Error(payload.error?.message ?? "The spin could not be completed.");
-  return payload.data as T;
-}
-
 function RelicSymbol({ symbol, highlighted = false }: { symbol: SlotSymbol; highlighted?: boolean }) {
   const art = symbolArt[symbol];
   const Icon = art.Icon;
@@ -73,17 +69,19 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
   const [history, setHistory] = useState<SlotResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const animationTimer = useRef<number | null>(null);
   const { enabled: sound, setEnabled, play } = useGameAudio();
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => () => { if (animationTimer.current !== null) window.clearTimeout(animationTimer.current); }, []);
 
   async function spin() {
     if (isSubmitting) return;
     setError(null); setIsSubmitting(true); setIsAnimating(true); play("slot-spin-start");
     try {
       const next = await requestJson<SlotResult>("/api/v1/games/neon-relics/spin", { method: "POST", headers: { "Idempotency-Key": idempotencyKey("slots-spin") }, body: JSON.stringify({ wager }) });
-      setResult(next); setReels(next.reels); setBalance(next.newBalance); setHistory((current) => [next, ...current].slice(0, 5)); next.reels.forEach((_, reelIndex) => play("slot-reel-stop", { delayMs: reelIndex * 110 })); play(next.payout >= next.wager * 8 ? "slot-big-win" : next.payout > 0 ? "slot-win" : "slot-no-win", { delayMs: 620 });
-      window.setTimeout(() => setIsAnimating(false), 720);
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "The spin could not be completed."); setIsAnimating(false); } finally { setIsSubmitting(false); }
+      setResult(next); setReels(next.reels); setBalance(next.newBalance); emitWalletUpdate(next.newBalance); setHistory((current) => [next, ...current].slice(0, 5)); next.reels.forEach((_, reelIndex) => play("slot-reel-stop", { delayMs: reelIndex * 110 })); play(next.payout >= next.wager * 8 ? "slot-big-win" : next.payout > 0 ? "slot-win" : "slot-no-win", { delayMs: 620 });
+      animationTimer.current = window.setTimeout(() => setIsAnimating(false), 720);
+    } catch (caught) { setError(errorMessage(caught, "INVALID_WAGER")); setIsAnimating(false); } finally { setIsSubmitting(false); }
   }
 
   const highlighted = (reelIndex: number, rowIndex: number) => Boolean(result?.winningLines.some((line) => paylineRows[line.line]?.[reelIndex] === rowIndex));

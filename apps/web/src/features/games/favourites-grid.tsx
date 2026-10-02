@@ -41,7 +41,7 @@ export function FavouritesGrid({ initialGames }: { initialGames: Game[] }) {
           Save games using the heart icon and they&apos;ll appear here.
         </p>
         <Link
-          className="focus-ring mt-7 inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] border border-primary/60 bg-primary px-5 text-sm font-semibold text-background hover:border-primary-hover hover:bg-primary-hover"
+          className="button-primary focus-ring mt-7 inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] px-5 text-sm"
           href="/casino"
         >
           Explore casino

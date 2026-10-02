@@ -60,12 +60,12 @@ export default async function Home() {
 
   return (
     <main>
-      <section className="home-hero page-shell relative overflow-hidden">
+      <section className="home-hero">
         <div
           aria-hidden="true"
           className="hero-mesh pointer-events-none absolute inset-0 opacity-70"
         />
-        <div className="home-hero-inner relative grid items-center gap-8 lg:grid-cols-[1fr_0.78fr] lg:gap-14">
+        <div className="home-hero-inner relative z-10 grid items-center gap-8 lg:grid-cols-[1fr_0.78fr] lg:gap-14">
           <div className="max-w-2xl">
             <Badge tone="mint">
               <span className="h-1.5 w-1.5 rounded-full bg-mint" /> The Veltrix
@@ -80,13 +80,13 @@ export default async function Home() {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link
-                className="focus-ring inline-flex min-h-12 items-center justify-center rounded-full border border-primary/60 bg-primary px-5 text-sm font-semibold text-background hover:border-primary-hover hover:bg-primary-hover"
+                className="button-primary focus-ring inline-flex min-h-12 items-center justify-center rounded-full px-5 text-sm"
                 href="/casino"
               >
                 Explore the lobby
               </Link>
               <Link
-                className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-border bg-surface/60 px-5 text-sm font-semibold text-foreground-subtle hover:bg-surface-hover hover:text-foreground"
+                className="button-secondary focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-sm"
                 href="/rewards"
               >
                 View rewards
@@ -149,10 +149,10 @@ export default async function Home() {
       </section>
 
       <section className="page-shell player-section--large border-t border-border pt-8">
-        <div className="relative overflow-hidden">
+        <div className="home-cta-section">
           <div
             aria-hidden="true"
-            className="absolute right-[-5%] top-[-120%] h-[540px] w-[540px] rounded-full border border-primary/10 bg-primary/5"
+            className="home-cta-atmosphere"
           />
           <div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
@@ -167,13 +167,13 @@ export default async function Home() {
             </div>
             <div className="flex flex-wrap gap-3">
               <Link
-                className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] border border-primary/55 bg-primary px-4 text-xs font-bold text-background"
+                className="button-primary focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] px-4 text-xs"
                 href="/promotions"
               >
                 See promotions
               </Link>
               <Link
-                className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] border border-border px-4 text-xs font-semibold text-foreground-subtle hover:bg-surface-hover"
+                className="button-secondary focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] px-4 text-xs"
                 href="/responsible-gaming"
               >
                 Play responsibly
