@@ -69,7 +69,6 @@ export function ProfileForm({
           className="field focus-ring"
           maxLength={500}
           onChange={(event) => setAvatarUrl(event.target.value)}
-          placeholder="https://…"
           type="url"
           value={avatarUrl}
         />

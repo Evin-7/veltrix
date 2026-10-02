@@ -59,9 +59,8 @@ export function GameCatalog({
               strokeWidth={1.8}
             />
             <input
-              className="focus-ring h-12 w-full rounded-[var(--radius-control)] border border-border bg-surface-hover/40 pl-11 pr-10 text-sm text-foreground outline-none placeholder:text-foreground-muted/70 hover:border-border-strong focus:border-primary/50"
+              className="focus-ring h-12 w-full rounded-[var(--radius-control)] border border-border bg-surface-hover/40 pl-11 pr-10 text-sm text-foreground outline-none hover:border-border-strong focus:border-primary/50"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by game or provider"
               type="search"
               value={query}
             />

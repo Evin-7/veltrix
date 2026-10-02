@@ -35,7 +35,7 @@ export function GameCard({ game, compact = false, initialIsFavourite = false }: 
       setIsFavourite(savedValue);
       setIsFavouritePopping(savedValue);
       window.dispatchEvent(new CustomEvent("veltrix:favourite-changed", { detail: { slug: game.slug, isFavourite: savedValue } }));
-      showToast(savedValue ? "Added to favourites" : "Removed from favourites", "success", { card: savedValue ? { rank: "K", suit: "♥" } : { rank: "J", suit: "♠" }, variant: "premium" });
+      showToast(savedValue ? "Added to favourites" : "Removed from favourites", "success");
     } catch (error) {
       setIsFavourite(previousValue);
       setIsFavouritePopping(false);

@@ -405,7 +405,6 @@ export function ResponsibleGamingPanel({
                 className="field"
                 min="1"
                 type="number"
-                placeholder="No limit"
                 value={daily}
                 onChange={(event) => setDaily(event.target.value)}
               />
@@ -423,7 +422,6 @@ export function ResponsibleGamingPanel({
                 min="1"
                 max="500"
                 type="number"
-                placeholder="Platform maximum"
                 value={max}
                 onChange={(event) => setMax(event.target.value)}
               />

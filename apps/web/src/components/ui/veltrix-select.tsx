@@ -17,7 +17,6 @@ type VeltrixSelectProps = {
   error?: boolean;
   onValueChange: (value: string) => void;
   options: readonly VeltrixSelectOption[];
-  placeholder?: string;
   size?: "sm" | "md";
   value: string;
 };
@@ -50,7 +49,7 @@ function firstEnabledIndex(options: readonly VeltrixSelectOption[]) {
   return options.findIndex((option) => !option.disabled);
 }
 
-export function VeltrixSelect({ ariaLabel, className = "", disabled = false, error = false, onValueChange, options, placeholder = "Select an option", size = "md", value }: VeltrixSelectProps) {
+export function VeltrixSelect({ ariaLabel, className = "", disabled = false, error = false, onValueChange, options, size = "md", value }: VeltrixSelectProps) {
   const selectId = useId().replace(/:/g, "");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -188,7 +187,7 @@ export function VeltrixSelect({ ariaLabel, className = "", disabled = false, err
 
   return <div className={`veltrix-select veltrix-select--${size} ${className}`} data-disabled={disabled || undefined} data-error={error || undefined} data-open={open || undefined}>
     <button aria-activedescendant={open ? activeOptionId : undefined} aria-controls={`${selectId}-menu`} aria-expanded={open} aria-haspopup="listbox" aria-label={ariaLabel} className="veltrix-select-trigger focus-ring" disabled={disabled} onClick={() => open ? closeMenu() : openMenu()} onKeyDown={handleTriggerKeyDown} ref={triggerRef} role="combobox" type="button">
-      <span className={`veltrix-select-trigger-label${selectedOption ? "" : " is-placeholder"}`}>{selectedOption?.label ?? placeholder}</span>
+      <span className="veltrix-select-trigger-label">{selectedOption?.label ?? ""}</span>
       <ChevronDown aria-hidden="true" className="veltrix-select-chevron" size={size === "sm" ? 14 : 16} strokeWidth={1.8} />
     </button>
     {typeof document !== "undefined" && menu ? createPortal(menu, document.body) : null}

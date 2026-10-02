@@ -150,10 +150,6 @@ export default async function Home() {
 
       <section className="page-shell player-section--large border-t border-border pt-8">
         <div className="home-cta-section">
-          <div
-            aria-hidden="true"
-            className="home-cta-atmosphere"
-          />
           <div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <Badge tone="amber">Welcome season</Badge>
