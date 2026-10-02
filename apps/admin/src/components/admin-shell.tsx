@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
-import { Activity, CircleDollarSign, FileClock, Gamepad2, LayoutDashboard, LogOut, Menu, Settings, Shield, Sparkles, Trophy, Users, X } from "lucide-react";
+import { Activity, CircleDollarSign, FileClock, Gamepad2, LayoutDashboard, LogOut, Menu, Settings, Shield, TicketPercent, Trophy, Users, X } from "lucide-react";
 import { apiFetch, type ApiError } from "@/lib/api";
 import { AdminThemeMenu } from "@/components/theme-menu";
 import { AdminVeltrixLogo } from "@/components/veltrix-logo";
@@ -18,7 +18,7 @@ const nav = [
   { label: "Games", href: "/games", icon: Gamepad2 },
   { label: "Game Sessions", href: "/game-sessions", icon: Activity },
   { label: "Transactions", href: "/transactions", icon: CircleDollarSign },
-  { label: "Promotions", href: "/promotions", icon: Sparkles },
+  { label: "Promotions", href: "/promotions", icon: TicketPercent },
   { label: "Rewards", href: "/rewards", icon: Trophy },
   { label: "Responsible gaming", href: "/responsible-gaming", icon: Shield },
   { label: "Audit Logs", href: "/audit-logs", icon: FileClock },
