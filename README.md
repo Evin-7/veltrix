@@ -30,6 +30,19 @@ Phase 6 adds product systems around the existing server-authoritative games:
 
 REST and PostgreSQL remain authoritative. The realtime stream is a convenience for display updates and never controls wallet integrity. Veltrix still has no real-money play, deposits, withdrawals, payment, crypto, purchasable VC, or cash-out.
 
+## Current player platform
+
+The current player-facing experience also includes:
+
+- a responsive casino catalogue with search, category/provider filters, favourites, recent activity, and game detail pages
+- server-authoritative Neon Relics, slots, blackjack, European roulette, baccarat, dice, and arcade-style Neon Paddock gameplay
+- reusable game routes and settlement orchestration with idempotent wallet mutations
+- optional Google sign-in using signed OAuth state, PKCE, secure internal return paths, and provider-account linking
+- a shared browser Web Audio system with persistent sound preferences, game-specific feedback, subtle arcade ambience, and no autoplay
+- responsive light/dark/system themes, a shared player design system, full-bleed page composition, and accessible loading/feedback states
+
+All gameplay remains fictional VC play. The project does not provide real-money gambling, deposits, withdrawals, cash value, or regulatory licensing.
+
 ## Phase 3 scope
 
 Phase 1 and Phase 2 remain intact. Phase 3 adds:
@@ -63,6 +76,7 @@ Veltrix Credits (VC) are fictional demonstration credits. They have no monetary 
 - Argon2id password hashing
 - Vitest
 - npm workspaces
+- Google Auth Library for optional OAuth sign-in
 
 Prisma 6.12 is pinned intentionally because the current Prisma 6.13+ CLI dependency tree reports a high-severity `deepmerge-ts` advisory. The pinned version has a clean audit in this repository.
 
@@ -87,6 +101,14 @@ Replace `AUTH_SECRET` in both files with a random value of at least 32 character
 ```bash
 openssl rand -base64 32
 ```
+
+Google sign-in is optional. To enable it locally, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the web environment and register this callback URL with the Google OAuth web application:
+
+```text
+http://localhost:3000/api/v1/auth/google/callback
+```
+
+Both Google variables must be configured together. The client secret is server-only and must never be committed.
 
 Initialize the hosted Neon database with the committed migrations and idempotent seed:
 
