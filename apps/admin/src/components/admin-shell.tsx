@@ -51,11 +51,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/60 lg:hidden" />}
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-[#252d3d] bg-[#0d111a] px-5 py-6 transition-transform lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="mb-10 flex items-center justify-between px-2">
-          <div><AdminVeltrixLogo className="w-[164px]" priority /><div className="mt-2 pl-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#657188]">Control room</div></div>
+          <div><AdminVeltrixLogo className="w-[164px]" priority /></div>
           <button onClick={() => setMobileOpen(false)} className="text-[#8994aa] lg:hidden"><X size={20} /></button>
         </div>
         <nav className="admin-scrollbar flex-1 space-y-1 overflow-y-auto">
-          <div className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#556078]">Operations</div>
           {nav.map((item) => { const Icon = item.icon; const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <button key={item.href} onClick={() => { router.push(item.href); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${active ? "bg-[#15352f] font-semibold text-[#a3f8d2]" : "text-[#98a3b8] hover:bg-[#171d2a] hover:text-white"}`}><Icon size={17} className={active ? "text-[#83f5c5]" : "text-[#637089]"} /><span>{item.label}</span>{item.muted && <span className="ml-auto rounded-full border border-[#2b3547] px-2 py-0.5 text-[9px] uppercase tracking-wider text-[#637089]">Soon</span>}</button>; })}
         </nav>
         <div className="mt-4 border-t border-[#252d3d] pt-4">
