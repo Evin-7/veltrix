@@ -3,6 +3,7 @@
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { VeltrixSelect } from "@/components/ui/veltrix-select";
 import { isAbortError, requestJson } from "@/lib/api-client";
 import { errorMessage } from "@/lib/app-error";
@@ -57,19 +58,10 @@ function WagerSelector({
   );
 }
 
-function TableNote({
-  error,
-  message,
-}: {
-  error: string | null;
-  message: string | null;
-}) {
+function TableNote({ message }: { message: string | null }) {
   return (
-    <p
-      aria-live="polite"
-      className={`game-status-message text-xs font-semibold ${error ? "is-error" : ""}`}
-    >
-      {error ?? message}
+    <p aria-live="polite" className="game-status-message text-xs font-semibold">
+      {message}
     </p>
   );
 }
@@ -116,7 +108,7 @@ export function SlotsPanel({
   const [history, setHistory] = useState<SlotResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const animationTimer = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -128,7 +120,6 @@ export function SlotsPanel({
 
   async function spin() {
     if (isSubmitting) return;
-    setError(null);
     setIsSubmitting(true);
     setIsAnimating(true);
     play("slot-spin-start");
@@ -166,13 +157,14 @@ export function SlotsPanel({
           gameSlug,
           error: caught.message,
         });
-      setError(
+      showToast(
         errorMessage(
           caught,
           caught instanceof InvalidSlotOutcomeError
             ? "INTERNAL_ERROR"
             : "INVALID_WAGER",
         ),
+        "error",
       );
       setIsAnimating(false);
     } finally {
@@ -243,7 +235,6 @@ export function SlotsPanel({
             {isSubmitting ? "Spinning…" : "Spin reels"}
           </Button>
           <TableNote
-            error={error}
             message={result ? "Round settled and wallet updated." : null}
           />
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -348,7 +339,7 @@ export function RoulettePanel({
   const [history, setHistory] = useState<RouletteResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const animationTimer = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -360,7 +351,6 @@ export function RoulettePanel({
   const { play } = useGameAudio();
   async function spin() {
     if (isSubmitting) return;
-    setError(null);
     setIsSubmitting(true);
     setIsAnimating(true);
     play("roulette-spin");
@@ -391,7 +381,7 @@ export function RoulettePanel({
         700,
       );
     } catch (caught) {
-      setError(errorMessage(caught, "INVALID_WAGER"));
+      showToast(errorMessage(caught, "INVALID_WAGER"), "error");
       setIsAnimating(false);
     } finally {
       setIsSubmitting(false);
@@ -504,7 +494,6 @@ export function RoulettePanel({
             {isSubmitting ? "Spinning…" : "Spin wheel"}
           </Button>
           <TableNote
-            error={error}
             message={
               result
                 ? "Bet settled and wallet updated."
@@ -607,8 +596,8 @@ export function BlackjackPanel({
   const [wager, setWager] = useState<Wager>(100);
   const [hand, setHand] = useState<BlackjackHand | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [recovered, setRecovered] = useState(false);
+  const { showToast } = useToast();
   const { play } = useGameAudio();
   const playCards = (count: number, delay = 0) => {
     for (let index = 0; index < count; index += 1)
@@ -641,16 +630,15 @@ export function BlackjackPanel({
       })
       .catch((caught) => {
         if (active && !isAbortError(caught))
-          setError(errorMessage(caught, "NETWORK_ERROR"));
+          showToast(errorMessage(caught, "NETWORK_ERROR"), "error");
       });
     return () => {
       active = false;
       controller.abort();
     };
-  }, [gameSlug]);
+  }, [gameSlug, showToast]);
   async function deal() {
     if (isSubmitting) return;
-    setError(null);
     setRecovered(false);
     setIsSubmitting(true);
     play("chip-place");
@@ -673,14 +661,13 @@ export function BlackjackPanel({
         (next.playerCards.length + next.dealerCards.length) * 110 + 120,
       );
     } catch (caught) {
-      setError(errorMessage(caught, "INVALID_WAGER"));
+      showToast(errorMessage(caught, "INVALID_WAGER"), "error");
     } finally {
       setIsSubmitting(false);
     }
   }
   async function action(actionName: "hit" | "stand" | "double") {
     if (!hand || isSubmitting) return;
-    setError(null);
     setIsSubmitting(true);
     play(
       actionName === "hit"
@@ -715,7 +702,7 @@ export function BlackjackPanel({
       );
       playOutcome(next, 250);
     } catch (caught) {
-      setError(errorMessage(caught, "ROUND_ALREADY_SETTLED"));
+      showToast(errorMessage(caught, "ROUND_ALREADY_SETTLED"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -810,7 +797,6 @@ export function BlackjackPanel({
             </div>
           ) : null}
           <TableNote
-            error={error}
             message={
               hand
                 ? `${phaseLabel}${hand.payout ? ` · returned ${formatCurrency(hand.payout)}` : ""}`

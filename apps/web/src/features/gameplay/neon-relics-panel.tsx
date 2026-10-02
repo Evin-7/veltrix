@@ -3,6 +3,7 @@
 import { CircleDot, Crown, Diamond, Gem, LoaderCircle, Star, Zap, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { requestJson } from "@/lib/api-client";
 import { errorMessage } from "@/lib/app-error";
 import { formatCurrency } from "@/lib/currency";
@@ -70,17 +71,17 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
   const [isAnimating, setIsAnimating] = useState(false);
   const animationTimer = useRef<number | null>(null);
   const { play } = useGameAudio();
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   useEffect(() => () => { if (animationTimer.current !== null) window.clearTimeout(animationTimer.current); }, []);
 
   async function spin() {
     if (isSubmitting) return;
-    setError(null); setIsSubmitting(true); setIsAnimating(true); play("slot-spin-start");
+    setIsSubmitting(true); setIsAnimating(true); play("slot-spin-start");
     try {
       const next = parseNeonRelicsResult(await requestJson<SlotResult>("/api/v1/games/neon-relics/spin", { method: "POST", headers: { "Idempotency-Key": idempotencyKey("slots-spin") }, body: JSON.stringify({ wager }) }));
       setResult(next); setReels(next.reels); setBalance(next.newBalance); emitWalletUpdate(next.newBalance); setHistory((current) => [next, ...current].slice(0, 5)); next.reels.forEach((_, reelIndex) => play("slot-reel-stop", { delayMs: reelIndex * 110 })); play(next.payout >= next.wager * 8 ? "slot-big-win" : next.payout > 0 ? "slot-win" : "slot-no-win", { delayMs: 620 });
       animationTimer.current = window.setTimeout(() => setIsAnimating(false), 720);
-    } catch (caught) { if (caught instanceof InvalidSlotOutcomeError) console.error("[Veltrix] Invalid slot outcome", { gameSlug: "neon-relics", error: caught.message }); setError(errorMessage(caught, caught instanceof InvalidSlotOutcomeError ? "INTERNAL_ERROR" : "INVALID_WAGER")); setIsAnimating(false); } finally { setIsSubmitting(false); }
+    } catch (caught) { if (caught instanceof InvalidSlotOutcomeError) console.error("[Veltrix] Invalid slot outcome", { gameSlug: "neon-relics", error: caught.message }); showToast(errorMessage(caught, caught instanceof InvalidSlotOutcomeError ? "INTERNAL_ERROR" : "INVALID_WAGER"), "error"); setIsAnimating(false); } finally { setIsSubmitting(false); }
   }
 
   const highlighted = (reelIndex: number, rowIndex: number) => Boolean(result?.winningLines.some((line) => paylineRows[line.line]?.[reelIndex] === rowIndex));
@@ -99,7 +100,6 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
       <div className="slot-status-strip"><div><span>Balance</span><strong>{formatCurrency(balance)}</strong></div><div><span>Wager</span><strong>{formatCurrency(wager)}</strong></div><div><span>Last win</span><strong className={result?.payout ? "text-success" : ""}>{result ? result.payout > 0 ? formatCurrency(result.payout, { sign: "always" }) : "No win" : "—"}</strong></div></div>
       <div className="slot-control-bar"><WagerChips onChange={setWager} value={wager} /><Button className="slot-spin-button" disabled={isSubmitting} onClick={spin} size="lg" variant="primary">{isSubmitting ? <LoaderCircle className="animate-spin" size={19} /> : null} {isSubmitting ? "Spinning…" : "Spin"}</Button></div>
       <div aria-live="polite" className={`slot-result-callout ${result ? result.payout > 0 ? "slot-result-win" : "slot-result-neutral" : "slot-result-ready"}`}><div><span className="slot-result-kicker">{result ? result.payout > 0 ? "Win" : "Round complete" : "Ready"}</span><strong>{result ? result.payout > 0 ? formatCurrency(result.payout, { sign: "always" }) : "No win this round" : "Choose a wager to begin"}</strong></div>{result ? <span className="text-xs text-white/55">{result.winningLines.length ? `${result.winningLines.length} winning line${result.winningLines.length === 1 ? "" : "s"}` : "Five reels settled"}</span> : null}</div>
-      {error ? <p aria-live="assertive" className="mt-3 text-xs font-semibold text-danger">{error}</p> : null}
     </div>
     <div className="slot-support-grid">
       <section className="slot-support-panel" aria-labelledby="neon-paytable"><div className="flex items-end justify-between gap-3"><div><p className="slot-section-kicker">Five fixed paylines</p><h2 className="mt-1 text-lg font-bold text-foreground" id="neon-paytable">Paytable</h2></div><span className="text-[10px] font-semibold text-foreground-muted">Multiplier × wager</span></div><div className="mt-4 slot-paytable"><div className="slot-paytable-head"><span>Symbol</span><span>3×</span><span>4×</span><span>5×</span></div>{Object.entries(symbolArt).map(([key, art]) => { const symbol = key as SlotSymbol; const Icon = art.Icon; const values = implementedPaytable[symbol]; return <div className="slot-paytable-row" key={key}><span className={`flex items-center gap-2 font-semibold ${art.tone}`}><Icon size={18} strokeWidth={1.6} />{art.label}</span><span>{values[3]}×</span><span>{values[4]}×</span><span>{values[5]}×</span></div>; })}</div></section>

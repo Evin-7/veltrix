@@ -125,11 +125,6 @@ export function AuthForm({ mode, next = "/", googleError }: AuthFormProps) {
           <p className="eyebrow">{eyebrow}</p>
           <h1 className="display">{title}</h1>
           <p>{supportingCopy}</p>
-          {googleError ? (
-            <p className="auth-provider-error" role="alert">
-              {googleError}
-            </p>
-          ) : null}
         </div>
         <form className="auth-form" noValidate onSubmit={submit}>
           {isRegister ? (

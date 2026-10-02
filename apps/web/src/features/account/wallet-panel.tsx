@@ -59,12 +59,10 @@ export function WalletPanel({
   const [dailyStatus, setDailyStatus] = useState(initialDailyStatus);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isClaiming, setIsClaiming] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { showToast } = useToast();
 
   async function claimReward() {
     if (!dailyStatus.available || isClaiming) return;
-    setErrorMessage(null);
     setIsClaiming(true);
     try {
       const reward = await requestJson<DailyStatus & { balance: number }>("/api/v1/rewards/daily", { method: "POST" });
@@ -75,11 +73,10 @@ export function WalletPanel({
       try {
         setTransactions(await requestJson<WalletTransactionView[]>("/api/v1/wallet/transactions?page=1&pageSize=4"));
       } catch {
-        setErrorMessage("Reward claimed. Recent activity will refresh shortly.");
+        showToast("Reward claimed, but recent activity could not refresh.", "error");
       }
     } catch (error) {
       const message = safeErrorMessage(error, "NETWORK_ERROR");
-      setErrorMessage(message);
       showToast(message, "error");
     } finally {
       setIsClaiming(false);
@@ -138,14 +135,6 @@ export function WalletPanel({
               )}
             </Button>
           </div>
-          {errorMessage ? (
-            <p
-              aria-live="polite"
-              className="mt-4 text-xs font-semibold text-danger"
-            >
-              {errorMessage}
-            </p>
-          ) : null}
         </div>
       </section>
       <section className="mt-14">

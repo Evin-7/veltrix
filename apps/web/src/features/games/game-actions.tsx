@@ -23,7 +23,6 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
   const [isFavouritePopping, setIsFavouritePopping] = useState(false);
   const [isSavingFavourite, setIsSavingFavourite] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const { showToast } = useToast();
 
   function redirectToLogin() {
@@ -35,7 +34,6 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
     if (!isAuthenticated) return redirectToLogin();
     const previousValue = isFavourite;
     const nextValue = !previousValue;
-    setMessage(null);
     setIsFavourite(nextValue);
     setIsFavouritePopping(nextValue);
     setIsSavingFavourite(true);
@@ -49,7 +47,6 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
     } catch (error) {
       setIsFavourite(previousValue);
       setIsFavouritePopping(false);
-      setMessage(errorMessage(error, "CONFLICT"));
       showToast(errorMessage(error, "CONFLICT"), "error");
     } finally {
       setIsSavingFavourite(false);
@@ -58,7 +55,6 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
 
   function launchGame() {
     if (!isAuthenticated) return redirectToLogin();
-    setMessage(null);
     setIsLaunching(true);
     beginRouteTransition(`/casino/${gameSlug}/play`);
     router.push(`/casino/${gameSlug}/play`);
@@ -74,7 +70,6 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
           {isSavingFavourite ? <LoaderCircle className="animate-spin" size={17} /> : <Heart className={cn(isFavourite ? "text-favorite" : "text-foreground-muted", isFavouritePopping && "favorite-heart-pop")} fill={isFavourite ? "currentColor" : "none"} size={17} />} {isSavingFavourite ? "Saving…" : isFavourite ? "Saved" : "Favourite"}
         </Button>
       </div>
-      {message ? <p className="mt-3 min-h-5 text-xs font-semibold text-mint" aria-live="polite">{message}</p> : null}
     </div>
   );
 }

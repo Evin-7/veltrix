@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { useEffect, useRef } from "react";
+import { useToast } from "@/components/ui/toast";
 import { VeltrixSelect } from "@/components/ui/veltrix-select";
 import { requestJsonEnvelope, isAbortError } from "@/lib/api-client";
 import { errorMessage as safeErrorMessage } from "@/lib/app-error";
@@ -60,8 +61,9 @@ export function TransactionsTable({
   const [meta, setMeta] = useState(initialMeta);
   const [type, setType] = useState<"" | WalletTransactionTypeValue>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
   const requestRef = useRef<AbortController | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => () => requestRef.current?.abort(), []);
 
@@ -70,7 +72,7 @@ export function TransactionsTable({
     const controller = new AbortController();
     requestRef.current = controller;
     setIsLoading(true);
-    setErrorMessage(null);
+    setHasError(false);
     try {
       const params = new URLSearchParams({
         page: String(nextPage),
@@ -81,8 +83,12 @@ export function TransactionsTable({
       if (!result.meta) throw new Error("Missing transaction metadata");
       setTransactions(result.data);
       setMeta(result.meta);
+      setHasError(false);
     } catch (error) {
-      if (!isAbortError(error)) setErrorMessage(safeErrorMessage(error, "NETWORK_ERROR"));
+      if (!isAbortError(error)) {
+        setHasError(true);
+        showToast(safeErrorMessage(error, "NETWORK_ERROR"), "error");
+      }
     } finally {
       if (!controller.signal.aborted) setIsLoading(false);
     }
@@ -107,9 +113,8 @@ export function TransactionsTable({
           {meta.total.toLocaleString("en-US")} entries
         </p>
       </div>
-      {errorMessage ? (
-        <div className="mt-5 flex flex-wrap items-center gap-3" role="alert">
-          <p aria-live="polite" className="text-xs font-semibold text-danger">{errorMessage}</p>
+      {hasError ? (
+        <div className="mt-5 flex justify-end">
           <button className="focus-ring rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink" onClick={() => void load(meta.page)} type="button">Try again</button>
         </div>
       ) : null}

@@ -3,7 +3,9 @@
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRealtime } from "@/components/realtime/realtime-provider";
+import { useToast } from "@/components/ui/toast";
 import type { Game } from "@/features/games/types";
+import { errorMessage } from "@/lib/app-error";
 import { formatCurrency } from "@/lib/currency";
 import { useState } from "react";
 import { GameSoundToggle } from "./game-audio";
@@ -13,12 +15,15 @@ export function GameplayRouteHeader({ game, initialBalance }: { game: Pick<Game,
   const realtime = useRealtime();
   const balance = realtime.walletBalance ?? initialBalance;
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { showToast } = useToast();
 
   async function refreshWallet() {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
       await realtime.refreshWallet();
+    } catch (error) {
+      showToast(errorMessage(error, "NETWORK_ERROR"), "error");
     } finally {
       setIsRefreshing(false);
     }

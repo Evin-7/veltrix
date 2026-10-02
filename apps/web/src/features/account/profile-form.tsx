@@ -20,14 +20,12 @@ export function ProfileForm({
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { showToast } = useToast();
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSaving(true);
     setMessage(null);
-    setErrorMessage(null);
     try {
       await requestJson("/api/v1/users/me", {
         method: "PATCH",
@@ -40,7 +38,6 @@ export function ProfileForm({
       showToast("Profile saved", "success");
     } catch (error) {
       const message = safeErrorMessage(error, "NETWORK_ERROR");
-      setErrorMessage(message);
       showToast(message, "error");
     } finally {
       setIsSaving(false);
@@ -73,11 +70,6 @@ export function ProfileForm({
           value={avatarUrl}
         />
       </label>
-      {errorMessage ? (
-        <p aria-live="polite" className="text-xs font-semibold text-danger">
-          {errorMessage}
-        </p>
-      ) : null}
       {message ? (
         <p aria-live="polite" className="text-xs font-semibold text-success">
           {message}

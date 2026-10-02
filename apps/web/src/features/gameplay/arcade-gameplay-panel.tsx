@@ -3,6 +3,7 @@
 import { Car, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import type { Game } from "@/features/games/types";
 import { requestJson } from "@/lib/api-client";
 import { errorMessage } from "@/lib/app-error";
@@ -58,12 +59,12 @@ export function ArcadeGameplayPanel({
   const [gameOver, setGameOver] = useState(false);
   const [result, setResult] = useState<ArcadeResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const laneRef = useRef(lane);
   const tickRef = useRef(0);
   const settlingRef = useRef(false);
   const bestScore = useRef(0);
   const { play, startAmbient, stopAmbient } = useGameAudio();
+  const { showToast } = useToast();
 
   useEffect(() => {
     laneRef.current = lane;
@@ -111,12 +112,12 @@ export function ArcadeGameplayPanel({
       if (wasHighScore) play("arcade-high-score", { delayMs: 390 });
       else if (next.tokens >= 3) play("arcade-milestone", { delayMs: 390 });
     } catch (caught) {
-      setError(errorMessage(caught, "INVALID_WAGER"));
+      showToast(errorMessage(caught, "INVALID_WAGER"), "error");
     } finally {
       setBusy(false);
       settlingRef.current = false;
     }
-  }, [game.slug, play, wager]);
+  }, [game.slug, play, showToast, wager]);
 
   useEffect(() => {
     if (!running) return;
@@ -157,7 +158,6 @@ export function ArcadeGameplayPanel({
     setRunTick(0);
     setRunTokens(0);
     setGameOver(false);
-    setError(null);
     setResult(null);
     setRunning(true);
     play("arcade-start");
@@ -296,11 +296,8 @@ export function ArcadeGameplayPanel({
                   ? "Restart night run"
                   : "Start night run"}
           </Button>
-          <p
-            aria-live="polite"
-            className={`min-h-6 text-xs font-semibold ${error ? "text-rose-300" : "text-mint"}`}
-          >
-            {error ?? message}
+          <p aria-live="polite" className="min-h-6 text-xs font-semibold text-mint">
+            {message}
           </p>
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-5 text-muted">
             <div className="font-semibold text-ink">Fair run</div>

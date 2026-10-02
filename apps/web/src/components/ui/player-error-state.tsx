@@ -4,12 +4,16 @@ import { ArrowLeft, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { ROUTE_TRANSITION_ERROR } from "@/lib/route-transition";
 
 export function PlayerErrorState({ reset }: { reset: () => void }) {
+  const { showToast } = useToast();
+
   useEffect(() => {
     window.dispatchEvent(new Event(ROUTE_TRANSITION_ERROR));
-  }, []);
+    showToast("We could not load this page. Please try again.", "error");
+  }, [showToast]);
 
   return (
     <main className="page-shell flex min-h-[60vh] items-center justify-center py-20">

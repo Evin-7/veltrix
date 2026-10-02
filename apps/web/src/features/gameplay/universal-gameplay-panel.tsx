@@ -4,6 +4,7 @@ import { Car, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Game } from "@/features/games/types";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { requestJson } from "@/lib/api-client";
 import { errorMessage } from "@/lib/app-error";
 import { formatCurrency } from "@/lib/currency";
@@ -63,12 +64,11 @@ function BaccaratPanel({
   const [result, setResult] = useState<BaccaratResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const { play } = useGameAudio();
   async function deal() {
     if (busy) return;
     setBusy(true);
-    setError(null);
     play("chip-place");
     try {
       const next = await requestJson<BaccaratResult>(
@@ -105,7 +105,7 @@ function BaccaratPanel({
         { delayMs: cardCount * 105 + 120 },
       );
     } catch (caught) {
-      setError(errorMessage(caught, "INVALID_WAGER"));
+      showToast(errorMessage(caught, "INVALID_WAGER"), "error");
     } finally {
       setBusy(false);
     }
@@ -182,14 +182,10 @@ function BaccaratPanel({
             {busy ? <LoaderCircle className="animate-spin" size={17} /> : null}{" "}
             {busy ? "Dealing…" : "Deal baccarat"}
           </Button>
-          <p
-            aria-live="polite"
-            className={`min-h-6 text-xs font-semibold ${error ? "text-rose-300" : "text-mint"}`}
-          >
-            {error ??
-              (result
-                ? `Bet ${result.bet} settled server-side.`
-                : "Player and banker draw by standard baccarat rules.")}
+          <p aria-live="polite" className="min-h-6 text-xs font-semibold text-mint">
+            {result
+              ? `Bet ${result.bet} settled server-side.`
+              : "Player and banker draw by standard baccarat rules."}
           </p>
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-5 text-muted">
             <div className="font-semibold text-ink">Table rules</div>
@@ -223,12 +219,11 @@ function DicePanel({
   const [result, setResult] = useState<DiceResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const { play } = useGameAudio();
   async function roll() {
     if (busy) return;
     setBusy(true);
-    setError(null);
     play("dice-shake");
     play("dice-roll", { delayMs: 170 });
     try {
@@ -257,7 +252,7 @@ function DicePanel({
       play("dice-land", { delayMs: 350 });
       play(next.payout > 0 ? "win" : "loss", { delayMs: 480 });
     } catch (caught) {
-      setError(errorMessage(caught, "INVALID_WAGER"));
+      showToast(errorMessage(caught, "INVALID_WAGER"), "error");
     } finally {
       setBusy(false);
     }
@@ -299,14 +294,10 @@ function DicePanel({
             {busy ? <LoaderCircle className="animate-spin" size={17} /> : null}{" "}
             {busy ? "Rolling…" : "Roll dice"}
           </Button>
-          <p
-            aria-live="polite"
-            className={`min-h-6 text-xs font-semibold ${error ? "text-rose-300" : "text-mint"}`}
-          >
-            {error ??
-              (result
-                ? `${result.bet} settled · ${result.payout ? `returned ${formatCurrency(result.payout)}` : "no payout"}.`
-                : "Choose a side and roll.")}
+          <p aria-live="polite" className="min-h-6 text-xs font-semibold text-mint">
+            {result
+              ? `${result.bet} settled · ${result.payout ? `returned ${formatCurrency(result.payout)}` : "no payout"}.`
+              : "Choose a side and roll."}
           </p>
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-5 text-muted">
             <div className="font-semibold text-ink">House rules</div>
@@ -341,7 +332,7 @@ export function ArcadePanel({
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ArcadeResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const { play, startAmbient, stopAmbient } = useGameAudio();
   const bestScore = useRef(0);
   const previousLane = useRef(lane);
@@ -408,14 +399,13 @@ export function ArcadePanel({
       if (wasHighScore) play("arcade-high-score", { delayMs: 390 });
       else if (next.tokens >= 3) play("arcade-milestone", { delayMs: 390 });
     } catch (caught) {
-      setError(errorMessage(caught, "INVALID_WAGER"));
+      showToast(errorMessage(caught, "INVALID_WAGER"), "error");
     } finally {
       setBusy(false);
     }
   }
   function run() {
     if (running || busy) return;
-    setError(null);
     setResult(null);
     setRunning(true);
     play("arcade-start");
@@ -499,14 +489,10 @@ export function ArcadePanel({
             ) : null}{" "}
             {running ? "Driving…" : busy ? "Settling…" : "Start night run"}
           </Button>
-          <p
-            aria-live="polite"
-            className={`min-h-6 text-xs font-semibold ${error ? "text-rose-300" : "text-mint"}`}
-          >
-            {error ??
-              (result
-                ? `${result.payout ? `Returned ${formatCurrency(result.payout)}` : "Run complete · no payout"}.`
-                : "Steer through three lanes, collect tokens and chase a higher score.")}
+          <p aria-live="polite" className="min-h-6 text-xs font-semibold text-mint">
+            {result
+              ? `${result.payout ? `Returned ${formatCurrency(result.payout)}` : "Run complete · no payout"}.`
+              : "Steer through three lanes, collect tokens and chase a higher score."}
           </p>
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-5 text-muted">
             <div className="font-semibold text-ink">Fair run</div>

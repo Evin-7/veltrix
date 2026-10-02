@@ -78,12 +78,10 @@ export function PromotionsPanel({
 }) {
   const [promotions, setPromotions] = useState(initialPromotions);
   const [busy, setBusy] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const { showToast } = useToast();
 
   async function claim(promotionId: string) {
     setBusy(promotionId);
-    setMessage(null);
     try {
       const payload = await requestJson<{ newBalance?: number }>(`/api/v1/promotions/${promotionId}/claim`, {
         method: "POST",
@@ -96,12 +94,10 @@ export function PromotionsPanel({
           item.id === promotionId ? { ...item, claimed: true } : item,
         ),
       );
-      setMessage("Reward added to your wallet.");
       if (typeof payload.newBalance === "number") emitWalletUpdate(payload.newBalance);
       showToast("Promotion reward claimed", "success");
     } catch (error) {
       const message = safeErrorMessage(error, "CONFLICT");
-      setMessage(message);
       showToast(message, "error");
     } finally {
       setBusy(null);
@@ -165,14 +161,6 @@ export function PromotionsPanel({
             Check back as the Veltrix calendar changes.
           </p>
         </div>
-      ) : null}
-      {message ? (
-        <p
-          aria-live="polite"
-          className="text-xs font-semibold text-mint md:col-span-2"
-        >
-          {message}
-        </p>
       ) : null}
     </div>
   );
@@ -292,7 +280,6 @@ export function ResponsibleGamingPanel({
   const [settings, setSettings] = useState(initialSettings);
   const [status, setStatus] = useState(initialStatus);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [daily, setDaily] = useState(
     settings.dailyWagerLimit?.toString() ?? "",
@@ -309,7 +296,6 @@ export function ResponsibleGamingPanel({
 
   async function save() {
     setBusy(true);
-    setMessage(null);
     try {
       const payload = await request("/api/v1/responsible-gaming/settings", {
         method: "PATCH",
@@ -321,9 +307,8 @@ export function ResponsibleGamingPanel({
       });
       setSettings(payload);
       setStatus((current) => ({ ...current, settings: payload }));
-      setMessage("Your settings are active.");
+      showToast("Your settings are active.", "success");
     } catch (error) {
-      setMessage(safeErrorMessage(error, "BAD_REQUEST"));
       showToast(safeErrorMessage(error, "BAD_REQUEST"), "error");
     } finally {
       setBusy(false);
@@ -334,7 +319,6 @@ export function ResponsibleGamingPanel({
     if (!pendingAction) return;
     const isCoolOff = pendingAction === "coolOff";
     setBusy(true);
-    setMessage(null);
     try {
       const payload = await request(
         isCoolOff
@@ -347,14 +331,14 @@ export function ResponsibleGamingPanel({
       );
       setSettings(payload);
       setStatus((current) => ({ ...current, settings: payload }));
-      setMessage(
+      showToast(
         isCoolOff
           ? "A 24-hour cool-off is active."
           : "Self-exclusion is active for 7 days.",
+        "success",
       );
       setPendingAction(null);
     } catch (error) {
-      setMessage(safeErrorMessage(error, "BAD_REQUEST"));
       showToast(safeErrorMessage(error, "BAD_REQUEST"), "error");
     } finally {
       setBusy(false);
@@ -439,11 +423,6 @@ export function ResponsibleGamingPanel({
             {busy ? <LoaderCircle className="animate-spin" size={14} /> : null}{" "}
             Save settings
           </button>
-          {message ? (
-            <p aria-live="polite" className="text-xs font-semibold text-mint">
-              {message}
-            </p>
-          ) : null}
         </div>
       </section>
       <section className="mt-14">

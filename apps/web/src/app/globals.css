@@ -308,7 +308,6 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .gameplay-layout .game-audio-control:hover, .gameplay-layout .game-icon-control:hover, .gameplay-game-header .game-audio-control:hover, .gameplay-game-header .game-icon-control:hover { background: color-mix(in srgb, var(--control-bg) 86%, var(--primary) 14%); color: var(--game-fg); }
 .gameplay-layout .game-value-badge { border-color: var(--game-border); background: var(--value-badge-bg); color: var(--value-badge-fg); }
 .gameplay-layout .game-status-message { min-height: 1.5rem; color: var(--game-status-success); }
-.gameplay-layout .game-status-message.is-error { color: var(--game-status-danger); }
 .gameplay-layout .game-surface-panel { border-color: var(--game-border); background: var(--game-surface); }
 .gameplay-layout [class~="border-white/10"], .gameplay-layout [class~="border-white/15"] { border-color: var(--game-border); }
 .gameplay-layout [class~="bg-white/[0.03]"], .gameplay-layout [class~="bg-white/[0.04]"], .gameplay-layout [class~="bg-white/[0.05]"] { background: color-mix(in srgb, var(--game-surface) 92%, transparent); }
@@ -589,7 +588,6 @@ body:has(.auth-page) > footer { display: none; }
 .auth-form-heading { min-width: 0; }
 .auth-form-heading h1 { max-width: 100%; min-width: 0; margin-top: 0.7rem; color: var(--foreground); font-size: clamp(2.35rem, 4.3vw, 3.75rem); line-height: 0.94; letter-spacing: -0.055em; overflow-wrap: anywhere; text-wrap: balance; }
 .auth-form-heading > p:last-child { margin-top: 1rem; color: var(--foreground-muted); font-size: 0.86rem; line-height: 1.55; }
-.auth-provider-error { margin-top: 0.75rem; color: var(--danger); font-size: 0.75rem; font-weight: 700; line-height: 1.45; }
 .auth-form { display: grid; gap: 0.85rem; margin-top: 2rem; }
 .auth-field-group { display: grid; gap: 0.35rem; }
 .auth-field { position: relative; display: block; min-height: 3.7rem; border: 1px solid var(--border); border-radius: 0.9rem; background: color-mix(in srgb, var(--surface-hover) 42%, transparent); transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease; }

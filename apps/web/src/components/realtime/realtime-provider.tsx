@@ -66,8 +66,9 @@ export function RealtimeProvider({
         walletBalance: payload.balance ?? current.walletBalance,
       }));
       setWalletAvailable(true);
-    } catch {
+    } catch (error) {
       // Keep the last known balance. A failed refresh must never turn it into zero.
+      throw error;
     }
   }, [enabled]);
 
