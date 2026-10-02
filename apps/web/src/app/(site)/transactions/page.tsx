@@ -20,7 +20,7 @@ export default async function TransactionsPage() {
   return (
     <main className="page-shell player-page">
       <PageHeader
-        description="Every VC change is recorded in your transaction history."
+        description="Every balance change is recorded in your transaction history."
         eyebrow="A transparent trail"
         title="Transactions"
       />

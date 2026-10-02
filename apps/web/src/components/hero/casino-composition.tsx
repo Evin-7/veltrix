@@ -69,7 +69,7 @@ export function CasinoComposition() {
 
         <div className="hero-chip hero-chip--main">
           <div className="hero-chip-inner">
-            <span>VC</span>
+            <span>€</span>
             <small>VELTRIX</small>
           </div>
         </div>

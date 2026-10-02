@@ -12,9 +12,22 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile", use: { ...devices["Pixel 5"] } },
+  ],
   webServer: [
-    { command: "npm run dev:web", url: "http://localhost:3000", reuseExistingServer: true, timeout: 120_000 },
-    { command: "npm run dev:admin", url: "http://localhost:3001/login", reuseExistingServer: true, timeout: 120_000 },
+    {
+      command: "npm run dev:web",
+      url: "http://localhost:3000",
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
+    {
+      command: "npm run dev:admin",
+      url: "http://localhost:3001/admin/login",
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
   ],
 });

@@ -25,7 +25,7 @@ export default async function WalletPage() {
   return (
     <main className="page-shell player-page">
       <PageHeader
-        description="A clear view of your Veltrix Credits, daily rhythm and transaction history."
+        description="A clear view of your virtual balance, daily rhythm and transaction history."
         eyebrow="Your Veltrix wallet"
         title="Wallet"
       />

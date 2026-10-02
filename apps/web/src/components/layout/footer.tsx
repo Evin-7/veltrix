@@ -21,7 +21,7 @@ export function Footer() {
           <Link className="focus-ring rounded-sm hover:text-ink" href="/responsible-gaming">Responsible gaming</Link>
         </div>
       </div>
-      <div className="border-t border-border px-6 py-4 text-center text-xs leading-5 text-muted">Veltrix Credits are virtual credits used within Veltrix and have no cash value. They cannot be purchased, withdrawn, or exchanged for money.</div>
+      <div className="border-t border-border px-6 py-4 text-center text-xs leading-5 text-muted">Displayed balances are virtual play currency used within Veltrix. They have no cash value and cannot be purchased, withdrawn, redeemed, or exchanged for money.</div>
     </footer>
   );
 }

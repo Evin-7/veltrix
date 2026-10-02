@@ -10,6 +10,7 @@ import { SectionHeader, Stat } from "@/components/ui/layout-primitives";
 import { useToast } from "@/components/ui/toast";
 import { requestJson } from "@/lib/api-client";
 import { errorMessage as safeErrorMessage } from "@/lib/app-error";
+import { formatCurrency } from "@/lib/currency";
 import { emitWalletUpdate } from "@/lib/wallet-sync";
 import type {
   WalletSummary,
@@ -27,10 +28,6 @@ type WalletPanelProps = {
   initialDailyStatus: DailyStatus;
   initialTransactions: WalletTransactionView[];
 };
-
-function formatAmount(amount: number) {
-  return `${amount > 0 ? "+" : ""}${amount.toLocaleString("en-US")} VC`;
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -97,10 +94,10 @@ export function WalletPanel({
             <div>
               <p className="eyebrow">Available balance</p>
               <p className="mt-5 text-5xl font-semibold tracking-[-0.06em] text-ink sm:text-6xl">
-                {wallet.balance.toLocaleString("en-US")}
+                {formatCurrency(wallet.balance)}
               </p>
               <p className="mt-2 text-sm font-semibold text-amber-bright">
-                Veltrix Credits
+                Virtual play balance
               </p>
             </div>
           </div>
@@ -114,7 +111,7 @@ export function WalletPanel({
         <SectionHeader
           eyebrow="Daily reward"
           title="A little extra rhythm"
-          description={`Claim ${dailyStatus.amount.toLocaleString("en-US")} VC once per UTC calendar day. There are no wagers attached.`}
+          description={`Claim ${formatCurrency(dailyStatus.amount)} once per UTC calendar day. There are no wagers attached.`}
         />
         <div className="border-y border-border py-6">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -137,7 +134,7 @@ export function WalletPanel({
               ) : dailyStatus.claimed ? (
                 <>Claimed today</>
               ) : (
-                <>Claim {dailyStatus.amount.toLocaleString("en-US")} VC</>
+                <>Claim {formatCurrency(dailyStatus.amount)}</>
               )}
             </Button>
           </div>
@@ -171,7 +168,7 @@ export function WalletPanel({
                   </p>
                   <p className="mt-1 text-xs text-muted">
                     {formatDate(transaction.createdAt)} · Balance{" "}
-                    {transaction.balanceAfter.toLocaleString("en-US")} VC
+                    {formatCurrency(transaction.balanceAfter)}
                   </p>
                 </div>
                 <span
@@ -181,7 +178,7 @@ export function WalletPanel({
                       : "shrink-0 text-sm font-semibold text-danger"
                   }
                 >
-                  {formatAmount(transaction.amount)}
+                  {formatCurrency(transaction.amount, { sign: "always" })}
                 </span>
               </div>
             ))
@@ -195,8 +192,8 @@ export function WalletPanel({
       <div className="mt-8 grid gap-6 border-t border-border pt-6 sm:grid-cols-2">
         <Stat
           label="Currency"
-          value="VC"
-          detail="Virtual credits for Veltrix play."
+          value="€"
+          detail="Virtual play balance for Veltrix."
         />
         <Stat
           label="Ledger"

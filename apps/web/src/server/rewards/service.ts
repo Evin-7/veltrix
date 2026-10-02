@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma, type PrismaClient, type VipLevel } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
+import { formatCurrency } from "@/lib/currency";
 import { applyWalletMutationToLockedWallet, type LockedWallet } from "@/server/wallet/ledger";
 import { createNotification } from "@/server/notifications/service";
 import { vipLevelIndex } from "./constants";
@@ -51,7 +52,7 @@ export async function awardGameplayXp(tx: Prisma.TransactionClient, userId: stri
       walletTransactionId = result.transaction.id;
     }
     await recordRewardHistory(tx, { userId, type: "VIP_MILESTONE", amountVC: config.rewardVC, level: config.level, walletTransactionId, sourceKey, metadata: { xp: nextXp } });
-    await createNotification(tx, { userId, type: "REWARD", title: `${config.level} level reached`, message: config.rewardVC > 0 ? `You reached ${config.level} and received ${config.rewardVC.toLocaleString("en-US")} VC.` : `You reached ${config.level}. Keep exploring the Veltrix world.` });
+    await createNotification(tx, { userId, type: "REWARD", title: `${config.level} level reached`, message: config.rewardVC > 0 ? `You reached ${config.level} and received ${formatCurrency(config.rewardVC)}.` : `You reached ${config.level}. Keep exploring the Veltrix world.` });
     milestones.push(config.level);
   }
   return { progression: { userId, level: nextLevel, xp: nextXp }, wallet, milestones };

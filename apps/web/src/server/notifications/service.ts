@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma, type PrismaClient } from "@prisma/client";
+import { replaceLegacyCurrencyText } from "@/lib/currency";
 import { getPrisma } from "@/server/db/prisma";
 import { notFound } from "@/server/http/errors";
 
@@ -18,7 +19,7 @@ export async function listNotifications(userId: string, input: { page: number; p
     prisma.notification.count({ where: { userId, readAt: null } }),
   ]);
   return {
-    notifications: records.map((record) => ({ id: record.id, type: record.type, title: record.title, message: record.message, readAt: record.readAt?.toISOString() ?? null, createdAt: record.createdAt.toISOString() })),
+    notifications: records.map((record) => ({ id: record.id, type: record.type, title: record.title, message: replaceLegacyCurrencyText(record.message), readAt: record.readAt?.toISOString() ?? null, createdAt: record.createdAt.toISOString() })),
     unread,
     meta: { page: input.page, pageSize: input.pageSize, total, totalPages: Math.ceil(total / input.pageSize) },
   };

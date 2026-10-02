@@ -36,6 +36,23 @@ describe.skipIf(!runIntegration)("Phase 4 PostgreSQL gameplay integration", () =
     await expect(prisma.walletTransaction.count({ where: { referenceId: { startsWith: `game-round:${first.roundId}:` } } })).resolves.toBeGreaterThanOrEqual(1);
   });
 
+  it("persists the exact authoritative reel matrix and winning lines returned to the client", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: `gameplay-slot-persistence-${randomUUID()}@veltrix.local`,
+        passwordHash: "integration-only",
+        profile: { create: { username: `slot_persist_${randomUUID().replaceAll("-", "").slice(0, 16)}` } },
+        wallet: { create: { balance: 1_000 } },
+      },
+      select: { id: true },
+    });
+    const response = await spinSlotsRound(user.id, 100, `integration-slot-persistence:${randomUUID()}`, "ember-room") as { roundId: string; reels: string[][]; winningLines: unknown[] };
+    const round = await prisma.gameRound.findUniqueOrThrow({ where: { id: response.roundId }, select: { result: true } });
+    const stored = round.result as { reels: string[][]; winningLines: unknown[] };
+    expect(stored.reels).toEqual(response.reels);
+    expect(stored.winningLines).toEqual(response.winningLines);
+  });
+
   it("serializes concurrent wagers without allowing a negative wallet", async () => {
     const user = await prisma.user.create({
       data: {
@@ -50,8 +67,14 @@ describe.skipIf(!runIntegration)("Phase 4 PostgreSQL gameplay integration", () =
       spinSlotsRound(user.id, 100, `parallel-a:${randomUUID()}`),
       spinSlotsRound(user.id, 100, `parallel-b:${randomUUID()}`),
     ]);
-    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-    await expect(prisma.wallet.findUniqueOrThrow({ where: { userId: user.id } })).resolves.toMatchObject({ balance: 0 });
+    const fulfilled = results.filter((result) => result.status === "fulfilled");
+    const wallet = await prisma.wallet.findUniqueOrThrow({ where: { userId: user.id } });
+    const transactions = await prisma.walletTransaction.findMany({ where: { userId: user.id }, orderBy: { createdAt: "asc" }, select: { amount: true, balanceBefore: true, balanceAfter: true, type: true } });
+    expect(fulfilled.length).toBeGreaterThanOrEqual(1);
+    expect(wallet.balance).toBeGreaterThanOrEqual(0);
+    expect(transactions.filter((transaction) => transaction.type === "GAME_WAGER")).toHaveLength(fulfilled.length);
+    for (const transaction of transactions) expect(transaction.balanceAfter).toBe(transaction.balanceBefore + transaction.amount);
+    expect(wallet.balance).toBe(100 + transactions.reduce((total, transaction) => total + transaction.amount, 0));
   });
 
   it("returns the stored response for a repeated blackjack action", async () => {

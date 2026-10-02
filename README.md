@@ -151,7 +151,7 @@ Phase 4 adds three server-authoritative fictional-credit games:
 
 - **Neon Relics**: five-reel, three-row slots with five fixed paylines.
 - **Veltrix Blackjack**: dealer stands on soft 17, blackjack pays 3:2, double is allowed on the initial two-card hand, and split/insurance/surrender are excluded.
-- **European Roulette**: single-zero roulette with red, black, odd, even, and single-number bets.
+- **European Roulette**: single-zero roulette with straight, outside, dozen, column, color, parity, and range bets.
 
 All wagers are restricted server-side to `10`, `25`, `50`, `100`, `250`, or `500` VC. Wagers are debited as `GAME_WAGER` and only positive total returns are appended as `GAME_WIN`; `payout` consistently means the total amount returned after the wager was already debited. Phase 6 responsible-gaming controls can further lower the effective maximum.
 

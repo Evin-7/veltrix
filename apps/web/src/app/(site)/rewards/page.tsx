@@ -15,7 +15,7 @@ export default async function RewardsPage() {
   return (
     <main className="page-shell player-page">
       <PageHeader
-        description="Earn XP from completed rounds and unlock a transparent VIP ladder. XP and VC are separate systems."
+        description="Earn XP from completed rounds and unlock a transparent VIP ladder. XP and your balance are separate systems."
         eyebrow="Progression, made clear"
         title="Rewards"
       />

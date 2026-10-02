@@ -8,12 +8,12 @@ describe("wallet ledger arithmetic", () => {
   });
 
   it("rejects a debit that would make the balance negative", () => {
-    expect(() => calculateWalletBalance(100, -101)).toThrow("enough VC");
+    expect(() => calculateWalletBalance(100, -101)).toThrow("enough virtual balance");
   });
 
   it("rejects non-integer, zero, and overflowing operations", () => {
     expect(() => calculateWalletBalance(100, 0)).toThrow("non-zero integer");
     expect(() => calculateWalletBalance(100, 1.5)).toThrow("non-zero integer");
-    expect(() => calculateWalletBalance(MAX_VC_BALANCE, 1)).toThrow("allowed VC limit");
+    expect(() => calculateWalletBalance(MAX_VC_BALANCE, 1)).toThrow("allowed virtual balance limit");
   });
 });

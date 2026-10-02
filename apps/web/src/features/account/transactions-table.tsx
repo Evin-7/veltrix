@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { VeltrixSelect } from "@/components/ui/veltrix-select";
 import { requestJsonEnvelope, isAbortError } from "@/lib/api-client";
 import { errorMessage as safeErrorMessage } from "@/lib/app-error";
+import { formatCurrency } from "@/lib/currency";
 import type {
   WalletTransactionTypeValue,
   WalletTransactionView,
@@ -135,7 +136,7 @@ export function TransactionsTable({
                 </p>
                 <p className="mt-1 text-xs text-muted">
                   Balance after{" "}
-                  {transaction.balanceAfter.toLocaleString("en-US")} VC
+                  {formatCurrency(transaction.balanceAfter)}
                 </p>
               </div>
               <p className="text-xs text-muted">
@@ -148,8 +149,7 @@ export function TransactionsTable({
                     : "text-sm font-semibold text-danger sm:text-right"
                 }
               >
-                {transaction.amount > 0 ? "+" : ""}
-                {transaction.amount.toLocaleString("en-US")} VC
+                {formatCurrency(transaction.amount, { sign: "always" })}
               </p>
             </div>
           ))

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     default: "Veltrix — Play the atmosphere",
     template: "%s — Veltrix",
   },
-  description: "A premium gaming collection built around Veltrix Credits.",
+    description: "A premium gaming collection built around virtual play currency.",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { requestJson } from "@/lib/api-client";
 import { errorMessage as safeErrorMessage } from "@/lib/app-error";
+import { formatCurrency } from "@/lib/currency";
 import { emitWalletUpdate } from "@/lib/wallet-sync";
 
 type Promotion = {
@@ -136,7 +137,7 @@ export function PromotionsPanel({
                   Reward
                 </p>
                 <p className="mt-1 text-lg font-semibold text-mint">
-                  {promotion.rewardVC.toLocaleString("en-US")} VC
+                  {formatCurrency(promotion.rewardVC)}
                 </p>
               </div>
               <button
@@ -234,7 +235,7 @@ export function RewardsPanel({ initial }: { initial: RewardOverview }) {
                 </p>
               </div>
               <span className="text-xs font-semibold text-mint">
-                +{config.rewardVC.toLocaleString("en-US")} VC
+                {formatCurrency(config.rewardVC, { sign: "always" })}
               </span>
             </div>
           ))}
@@ -264,7 +265,7 @@ export function RewardsPanel({ initial }: { initial: RewardOverview }) {
                 </p>
               </div>
               <span className="text-sm font-semibold text-mint">
-                +{item.amountVC.toLocaleString("en-US")} VC
+                {formatCurrency(item.amountVC, { sign: "always" })}
               </span>
             </div>
           ))}
@@ -451,19 +452,19 @@ export function ResponsibleGamingPanel({
           <Stat
             detail="Total wagered in the UTC day."
             label="Wagered today"
-            value={`${status.dailyWagered.toLocaleString("en-US")} VC`}
+            value={formatCurrency(status.dailyWagered)}
           />
           <Stat
             detail={
               status.dailyRemaining === null
                 ? "No daily limit configured."
-                : `${status.dailyRemaining.toLocaleString("en-US")} VC remaining.`
+                : `${formatCurrency(status.dailyRemaining)} remaining.`
             }
             label="Daily limit"
             value={
               status.dailyRemaining === null
                 ? "No limit"
-                : `${status.dailyRemaining.toLocaleString("en-US")} VC left`
+                : `${formatCurrency(status.dailyRemaining)} left`
             }
           />
           <Stat

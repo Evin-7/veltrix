@@ -1,23 +1,66 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("player journey", () => {
-  test.skip(process.env.E2E_RUN !== "1", "Set E2E_RUN=1 to run against the configured disposable Neon branch.");
+  test.skip(
+    process.env.E2E_RUN !== "1",
+    "Set E2E_RUN=1 to run against the configured disposable Neon branch.",
+  );
 
-  test("registers, plays, uses the wallet, and signs in again", async ({ page }) => {
+  test("registers, plays, uses the wallet, and signs in again", async ({
+    page,
+  }) => {
+    test.setTimeout(420_000);
+    const browserErrors: string[] = [];
+    const apiFailures: string[] = [];
+    page.on("pageerror", (error) => browserErrors.push(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error") {
+        const location = message.location().url;
+        browserErrors.push(
+          `${message.text()}${location ? ` @ ${location}` : ""}`,
+        );
+      }
+    });
+    page.on("response", (response) => {
+      if (response.status() >= 400) {
+        const failure = `${response.status()} ${response.request().method()} ${response.url()}`;
+        if (response.url().includes("/api/v1/")) apiFailures.push(failure);
+        else browserErrors.push(failure);
+      }
+    });
+    page.on("requestfailed", (request) => {
+      const failure = request.failure()?.errorText;
+      if (
+        request.url().includes("/api/v1/") &&
+        !request.url().endsWith("/realtime") &&
+        failure !== "net::ERR_ABORTED"
+      ) {
+        apiFailures.push(`failed ${request.method()} ${request.url()}`);
+      }
+    });
     const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     const email = `e2e-player-${suffix}@veltrix.local`;
     const username = `e2e_${suffix.slice(-16)}`;
-    const password = process.env.E2E_PLAYER_PASSWORD ?? "E2E-only-password-2026!";
+    const password =
+      process.env.E2E_PLAYER_PASSWORD ?? "E2E-only-password-2026!";
 
     await page.goto("/register");
     await page.getByLabel("Username").fill(username);
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill(password);
-    await page.getByRole("button", { name: "Create demo account" }).click();
-    await expect(page).toHaveURL(/localhost:3000\/$/);
+    await page.locator("#password").fill(password);
+    await page.locator("#confirm-password").fill(password);
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expect(page).toHaveURL(/localhost:3000\/$/, { timeout: 30_000 });
 
     await page.goto("/casino");
-    await expect(page.getByRole("heading", { name: "Find your next ritual." })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Find your next ritual." }),
+    ).toBeVisible();
+
+    const themeButton = page.getByRole("button", { name: /^Theme:/ });
+    await themeButton.click();
+    await page.getByRole("menuitemradio", { name: "Dark" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
     const games = [
       { slug: "neon-relics", action: "Spin" },
@@ -37,33 +80,111 @@ test.describe("player journey", () => {
       { slug: "moonlit-mint", action: "Spin reels" },
     ];
 
+    const gameplayResponse = (slug: string, endpoint: string) =>
+      page
+        .waitForResponse(
+          (response) =>
+            response.request().method() === "POST" &&
+            response.url().includes(`/api/v1/games/${slug}/`) &&
+            response.url().endsWith(endpoint),
+          { timeout: 30_000 },
+        )
+        .then(async (response) => {
+          expect(response.ok(), `${response.status()} ${response.url()}`).toBe(
+            true,
+          );
+          const payload = (await response.json()) as { data?: unknown };
+          expect(payload.data).toBeDefined();
+          return payload.data as Record<string, unknown>;
+        });
+
     for (const game of games) {
       await page.goto(`/casino/${game.slug}`);
-      await page.getByRole("button", { name: "Play Demo" }).click();
+      await page.getByRole("button", { name: "Play" }).click();
       await expect(page).toHaveURL(new RegExp(`/casino/${game.slug}/play$`));
-      await page.getByRole("button", { name: game.action }).click();
       if (game.action === "Deal hand") {
-        const stand = page.getByRole("button", { name: "Stand" });
-        if (await stand.isVisible()) await stand.click();
+        const dealResponse = gameplayResponse(game.slug, "/deal");
+        await page.getByRole("button", { name: game.action }).click();
+        const dealData = await dealResponse;
+        expect(["ACTIVE", "SETTLED"]).toContain(dealData.status);
+        const handInPlay = page.getByRole("button", { name: "Hand in play" });
+        if (dealData.status === "ACTIVE") {
+          const followUpName =
+            game.slug === "veltrix-blackjack" ? "Double" : "Hit";
+          const followUp = page.getByRole("button", { name: followUpName });
+          await expect(followUp).toBeVisible({ timeout: 30_000 });
+          await expect(followUp).toBeEnabled({ timeout: 30_000 });
+          const followUpResponse = gameplayResponse(
+            game.slug,
+            `/${followUpName.toLowerCase()}`,
+          );
+          await followUp.click();
+          const followUpData = await followUpResponse;
+          expect(["ACTIVE", "SETTLED"]).toContain(followUpData.status);
+          if (followUpData.status === "ACTIVE") {
+            const standResponse = gameplayResponse(game.slug, "/stand");
+            const stand = page.getByRole("button", { name: "Stand" });
+            await expect(stand).toBeVisible({ timeout: 30_000 });
+            await expect(stand).toBeEnabled({ timeout: 30_000 });
+            await stand.click();
+            const standData = await standResponse;
+            expect(standData.status).toBe("SETTLED");
+          }
+        }
+        await expect(handInPlay).toBeHidden({ timeout: 30_000 });
+      } else {
+        const endpoint = game.action === "Deal baccarat" ? "/deal" : "/spin";
+        const response = gameplayResponse(game.slug, endpoint);
+        await page.getByRole("button", { name: game.action }).click();
+        const data = await response;
+        expect(data.roundId).toBeTruthy();
+        expect(data.newBalance).toEqual(expect.any(Number));
       }
-      if (game.action === "Deal hand") await expect(page.getByText(/PLAYER|DEALER|PUSH|BUST|BLACKJACK/).first()).toBeVisible();
-      else if (game.action === "Start night run") await expect(page.getByText(/score|Returned|Run complete/).first()).toBeVisible({ timeout: 10_000 });
-      else await expect(page.getByText(/Round complete|Round settled|Bet .* settled|No line win|No win/).first()).toBeVisible();
-      await page.goto("/casino");
     }
 
     await page.goto("/wallet");
+    const lightThemeButton = page.getByRole("button", { name: /^Theme:/ });
+    await lightThemeButton.click();
+    await page.getByRole("menuitemradio", { name: "Light" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
     await expect(page.getByRole("heading", { name: /wallet/i })).toBeVisible();
     await page.goto("/promotions");
-    await expect(page.getByRole("heading", { name: "Promotions" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Promotions" }),
+    ).toBeVisible();
     await page.goto("/responsible-gaming");
-    await expect(page.getByRole("heading", { name: "Responsible gaming" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Responsible gaming" }),
+    ).toBeVisible();
 
-    await page.getByRole("button", { name: "Log out" }).first().click();
+    const accountMenu = page.getByRole("button", { name: "Open account menu" });
+    if (await accountMenu.isVisible()) {
+      await accountMenu.click();
+    } else {
+      await page.getByRole("button", { name: "Open navigation menu" }).click();
+    }
+    await page.getByRole("button", { name: "Log out" }).click();
     await page.goto("/login");
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill(password);
+    await page.locator("#password").fill(password);
+    const loginResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().endsWith("/api/v1/auth/login"),
+      { timeout: 30_000 },
+    );
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page).toHaveURL(/localhost:3000\/$/);
+    const loginResult = await loginResponse;
+    expect(
+      loginResult.ok(),
+      `${loginResult.status()} ${loginResult.url()}`,
+    ).toBe(true);
+    await expect(page).toHaveURL(/localhost:3000\/$/, { timeout: 30_000 });
+    expect(
+      browserErrors,
+      `browser errors: ${browserErrors.join(" | ")}`,
+    ).toEqual([]);
+    expect(apiFailures, `API failures: ${apiFailures.join(" | ")}`).toEqual([]);
   });
 });

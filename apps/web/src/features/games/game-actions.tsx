@@ -74,7 +74,7 @@ export function GameActions({ gameName, gameSlug, initialIsFavourite, isAuthenti
           {isSavingFavourite ? <LoaderCircle className="animate-spin" size={17} /> : <Heart className={cn(isFavourite ? "text-favorite" : "text-foreground-muted", isFavouritePopping && "favorite-heart-pop")} fill={isFavourite ? "currentColor" : "none"} size={17} />} {isSavingFavourite ? "Saving…" : isFavourite ? "Saved" : "Favourite"}
         </Button>
       </div>
-      <p className="mt-3 min-h-5 text-xs font-semibold text-mint" aria-live="polite">{message}</p>
+      {message ? <p className="mt-3 min-h-5 text-xs font-semibold text-mint" aria-live="polite">{message}</p> : null}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { ThemeMenu } from "@/components/theme/theme-menu";
 import { VeltrixLogo } from "@/components/ui/veltrix-logo";
 import { requestJson } from "@/lib/api-client";
 import { errorMessage } from "@/lib/app-error";
+import { formatCurrency } from "@/lib/currency";
 import { useToast } from "@/components/ui/toast";
 
 const navItems = [
@@ -115,7 +116,7 @@ export function Header({ initialUser, initialWallet, initialWalletError = false 
   }
 
   function walletLabel() {
-    if (typeof liveBalance === "number") return `${liveBalance.toLocaleString("en-US")} VC`;
+    if (typeof liveBalance === "number") return formatCurrency(liveBalance);
     return isRefreshingWallet ? "Checking…" : "Balance unavailable";
   }
 

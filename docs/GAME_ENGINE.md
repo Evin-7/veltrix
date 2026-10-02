@@ -13,7 +13,7 @@ HTTP route → auth/origin/Zod/idempotency → gameplay service
 The pure engines do not know about Prisma or wallets:
 
 - `slots.ts` generates a 5×3 Neon Relics grid and evaluates five fixed left-to-right paylines.
-- `roulette.ts` evaluates a single-zero 0–36 wheel with red, black, odd, even, and single-number bets.
+- `roulette.ts` evaluates a single-zero 0–36 wheel with straight, outside, dozen, column, color, parity, and range bets.
 - `blackjack.ts` creates/shuffles a 52-card deck, handles ace values, dealer soft-17 behavior, blackjack, hit, stand, double, bust, push, and settlement states.
 
 Each engine accepts a `RandomSource`. Production uses `crypto.randomInt`, which rejects out-of-range samples instead of applying biased modulo arithmetic. Cards use Fisher–Yates with that source. Tests inject deterministic values or decks, so rule behavior is repeatable. This RNG is suitable for the demo’s server-authoritative behavior, not a certified real-money gambling system.

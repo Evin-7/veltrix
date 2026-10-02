@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { FullBleed } from "@/components/ui/layout-primitives";
 import { VeltrixLogo } from "@/components/ui/veltrix-logo";
+import { formatCurrency } from "@/lib/currency";
 
 const wheelNumbers = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 const redNumbers = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
@@ -50,7 +51,7 @@ export function EuropeanRouletteShowcase() {
                 <div className="roulette-even-money"><span>1–18</span><span>Even</span><span className="roulette-bet-red">Red</span><span className="roulette-bet-black">Black</span><span>Odd</span><span>19–36</span></div>
               </div>
             </div>
-            <div className="roulette-chips"><span className="roulette-chip roulette-chip-gold">VC <b>100</b></span><span className="roulette-chip roulette-chip-ivory">VC <b>250</b></span><span className="roulette-chip roulette-chip-red">VC <b>50</b></span></div>
+            <div className="roulette-chips"><span className="roulette-chip roulette-chip-gold">{formatCurrency(100)}</span><span className="roulette-chip roulette-chip-ivory">{formatCurrency(250)}</span><span className="roulette-chip roulette-chip-red">{formatCurrency(50)}</span></div>
           </div>
         </div>
       </FullBleed>

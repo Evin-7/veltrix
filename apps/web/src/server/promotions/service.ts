@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma, type PrismaClient, type VipLevel } from "@prisma/client";
+import { formatCurrency, replaceLegacyCurrencyText } from "@/lib/currency";
 import { getPrisma } from "@/server/db/prisma";
 import { applyWalletMutationToLockedWallet, lockWallet } from "@/server/wallet/ledger";
 import { createNotification } from "@/server/notifications/service";
@@ -43,7 +44,7 @@ async function isEligible(tx: Prisma.TransactionClient | PrismaClient, userId: s
 }
 
 function serializePromotion(promotion: { id: string; title: string; slug: string; description: string; banner: Prisma.JsonValue | null; startAt: Date; endAt: Date; status: string; rewardVC: number; eligibility: Prisma.JsonValue | null; createdAt: Date; updatedAt: Date }, claimed = false) {
-  return { id: promotion.id, title: promotion.title, slug: promotion.slug, description: promotion.description, banner: promotion.banner, startAt: promotion.startAt.toISOString(), endAt: promotion.endAt.toISOString(), status: promotion.status, rewardVC: promotion.rewardVC, eligibility: promotion.eligibility, claimed, createdAt: promotion.createdAt.toISOString(), updatedAt: promotion.updatedAt.toISOString() };
+  return { id: promotion.id, title: promotion.title, slug: promotion.slug, description: replaceLegacyCurrencyText(promotion.description), banner: promotion.banner, startAt: promotion.startAt.toISOString(), endAt: promotion.endAt.toISOString(), status: promotion.status, rewardVC: promotion.rewardVC, eligibility: promotion.eligibility, claimed, createdAt: promotion.createdAt.toISOString(), updatedAt: promotion.updatedAt.toISOString() };
 }
 
 export async function listEligiblePromotions(userId: string) {
@@ -86,7 +87,7 @@ export async function claimPromotion(userId: string, promotionId: string, idempo
     const walletResult = await applyWalletMutationToLockedWallet(tx, wallet, { userId, type: "PROMOTION_REWARD", amount: promotion.rewardVC, idempotencyKey: `promotion:${promotion.id}:${userId}`, referenceId: `promotion:${promotion.id}`, metadata: { promotionId: promotion.id, promotionSlug: promotion.slug } });
     const claim = await tx.promotionClaim.create({ data: { promotionId, userId, rewardVC: promotion.rewardVC, walletTransactionId: walletResult.transaction.id, idempotencyKey, claimedAt: now } });
     await recordRewardHistory(tx, { userId, type: "PROMOTION_REWARD", amountVC: promotion.rewardVC, promotionId, walletTransactionId: walletResult.transaction.id, sourceKey: `promotion-claim:${claim.id}`, metadata: { promotionId, promotionSlug: promotion.slug } });
-    await createNotification(tx, { userId, type: "PROMOTION", title: `${promotion.title} claimed`, message: `${promotion.rewardVC.toLocaleString("en-US")} VC was added to your wallet.` });
+    await createNotification(tx, { userId, type: "PROMOTION", title: `${promotion.title} claimed`, message: `${formatCurrency(promotion.rewardVC)} was added to your wallet.` });
     return { claimId: claim.id, rewardVC: claim.rewardVC, transactionId: claim.walletTransactionId, newBalance: walletResult.balance, idempotent: false };
   }, { maxWait: 15_000, timeout: 30_000 });
 }

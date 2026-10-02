@@ -24,7 +24,7 @@ export const forbidden = (message = "You do not have permission to perform this 
 export const badRequest = (message = "The request is invalid.") => new AppError(400, "BAD_REQUEST", message);
 export const notFound = (message = "The requested resource was not found.") => new AppError(404, "NOT_FOUND", message);
 export const conflict = (message = "The request conflicts with existing data.") => new AppError(409, "CONFLICT", message);
-export const insufficientBalance = (message = "The wallet does not have enough VC for this operation.") => new AppError(409, "INSUFFICIENT_BALANCE", message);
+export const insufficientBalance = (message = "The wallet does not have enough virtual balance for this operation.") => new AppError(409, "INSUFFICIENT_BALANCE", message);
 export const invalidWager = (message = "Choose a valid wager and try again.") => new AppError(400, "INVALID_WAGER", message);
 export const roundAlreadySettled = (message = "This round is already settled.") => new AppError(409, "ROUND_ALREADY_SETTLED", message);
 export const selfExcluded = (message = "Gameplay is unavailable while self-exclusion is active.") => new AppError(403, "SELF_EXCLUDED", message);

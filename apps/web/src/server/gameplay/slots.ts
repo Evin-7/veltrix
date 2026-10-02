@@ -1,6 +1,7 @@
 import { secureRandom, type RandomSource } from "./random";
+import { slotGameCatalog, type SlotPayouts } from "@/shared/slot-catalog";
 
-export const slotSymbols = ["crystal", "crown", "orb", "star", "lightning", "diamond"] as const;
+export const slotSymbols = slotGameCatalog["neon-relics"].symbols;
 export type SlotSymbol = (typeof slotSymbols)[number];
 
 export const slotPaylines = [
@@ -11,14 +12,7 @@ export const slotPaylines = [
   [2, 1, 0, 1, 2],
 ] as const;
 
-export const slotMultipliers: Record<SlotSymbol, Record<3 | 4 | 5, number>> = {
-  crystal: { 3: 8, 4: 30, 5: 150 },
-  crown: { 3: 6, 4: 20, 5: 100 },
-  orb: { 3: 5, 4: 15, 5: 75 },
-  star: { 3: 4, 4: 12, 5: 60 },
-  lightning: { 3: 3, 4: 10, 5: 40 },
-  diamond: { 3: 2, 4: 8, 5: 25 },
-};
+export const slotMultipliers = slotGameCatalog["neon-relics"].paytable;
 
 export type SlotWinLine = {
   line: number;
@@ -40,31 +34,39 @@ export type ConfiguredSlotSpinResult = {
   payout: number;
 };
 
-export function evaluateSlotReels(reels: SlotSymbol[][], wager: number): SlotSpinResult {
-  const winningLines: SlotWinLine[] = [];
-  for (const [lineIndex, line] of slotPaylines.entries()) {
-    const first = reels[0]?.[line[0]];
-    if (!first) continue;
-    let count = 1;
-    for (let reel = 1; reel < line.length; reel += 1) {
-      if (reels[reel]?.[line[reel]] !== first) break;
-      count += 1;
-    }
-    if (count < 3) continue;
-    const multiplier = slotMultipliers[first][count as 3 | 4 | 5];
-    winningLines.push({ line: lineIndex + 1, symbol: first, count, multiplier, payout: wager * multiplier });
+function assertSlotConfiguration(symbols: readonly string[], paytable: Readonly<Record<string, SlotPayouts>>) {
+  if (symbols.length === 0 || new Set(symbols).size !== symbols.length) {
+    throw new Error("Slot configuration must contain unique symbols.");
   }
-  return { reels, winningLines, payout: winningLines.reduce((total, win) => total + win.payout, 0) };
+  for (const symbol of symbols) {
+    const payouts = paytable[symbol];
+    if (!payouts || [3, 4, 5].some((count) => !Number.isSafeInteger(payouts[count as 3 | 4 | 5]) || payouts[count as 3 | 4 | 5] < 0)) {
+      throw new Error(`Slot configuration is missing a valid paytable for ${symbol}.`);
+    }
+  }
 }
 
-export function spinSlots(wager: number, rng: RandomSource = secureRandom): SlotSpinResult {
-  const reels = Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => slotSymbols[rng.nextInt(slotSymbols.length)]));
-  return evaluateSlotReels(reels, wager);
+function assertSlotMatrix(reels: readonly (readonly string[])[], symbols: readonly string[]) {
+  if (reels.length !== 5 || reels.some((reel) => reel.length !== 3)) {
+    throw new Error("Slot outcome must be a 5x3 reel matrix.");
+  }
+  const allowedSymbols = new Set(symbols);
+  for (const reel of reels) {
+    for (const symbol of reel) {
+      if (!allowedSymbols.has(symbol)) throw new Error(`Slot outcome contains unknown symbol: ${symbol}.`);
+    }
+  }
 }
 
-export function spinConfiguredSlots(symbols: readonly string[], paytable: Record<string, Record<3 | 4 | 5, number>>, wager: number, rng: RandomSource = secureRandom): ConfiguredSlotSpinResult {
-  const reels = Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => symbols[rng.nextInt(symbols.length)]));
-  const winningLines: { line: number; symbol: string; count: number; multiplier: number; payout: number }[] = [];
+export function evaluateConfiguredSlotReels(
+  reels: readonly (readonly string[])[],
+  symbols: readonly string[],
+  paytable: Readonly<Record<string, SlotPayouts>>,
+  wager: number,
+): ConfiguredSlotSpinResult {
+  assertSlotConfiguration(symbols, paytable);
+  assertSlotMatrix(reels, symbols);
+  const winningLines: ConfiguredSlotSpinResult["winningLines"] = [];
   for (const [lineIndex, line] of slotPaylines.entries()) {
     const first = reels[0]?.[line[0]];
     if (!first) continue;
@@ -75,8 +77,27 @@ export function spinConfiguredSlots(symbols: readonly string[], paytable: Record
     }
     if (count < 3) continue;
     const multiplier = paytable[first]?.[count as 3 | 4 | 5];
-    if (!multiplier) continue;
+    if (multiplier === undefined) throw new Error(`Slot paytable has no ${count}-symbol payout for ${first}.`);
     winningLines.push({ line: lineIndex + 1, symbol: first, count, multiplier, payout: wager * multiplier });
   }
-  return { reels, winningLines, payout: winningLines.reduce((total, win) => total + win.payout, 0) };
+  return { reels: reels.map((reel) => [...reel]), winningLines, payout: winningLines.reduce((total, win) => total + win.payout, 0) };
+}
+
+export function evaluateSlotReels(reels: SlotSymbol[][], wager: number): SlotSpinResult {
+  return evaluateConfiguredSlotReels(reels, slotSymbols, slotMultipliers, wager) as SlotSpinResult;
+}
+
+export function spinSlots(wager: number, rng: RandomSource = secureRandom): SlotSpinResult {
+  const reels = Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => slotSymbols[rng.nextInt(slotSymbols.length)]));
+  return evaluateSlotReels(reels, wager);
+}
+
+export function spinConfiguredSlots(
+  symbols: readonly string[],
+  paytable: Readonly<Record<string, SlotPayouts>>,
+  wager: number,
+  rng: RandomSource = secureRandom,
+): ConfiguredSlotSpinResult {
+  const reels = Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => symbols[rng.nextInt(symbols.length)]));
+  return evaluateConfiguredSlotReels(reels, symbols, paytable, wager);
 }

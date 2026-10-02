@@ -19,12 +19,12 @@ export type LockedWallet = { id: string; userId: string; balance: number };
 
 export function calculateWalletBalance(balanceBefore: number, amount: number) {
   if (!Number.isSafeInteger(balanceBefore) || !Number.isSafeInteger(amount) || amount === 0) {
-    throw conflict("Wallet amounts must be non-zero integer VC units.");
+    throw conflict("Wallet amounts must be non-zero integer virtual balance units.");
   }
 
   const balanceAfter = balanceBefore + amount;
   if (balanceAfter < 0) throw insufficientBalance();
-  if (balanceAfter > MAX_VC_BALANCE) throw conflict("The wallet balance exceeds the allowed VC limit.");
+  if (balanceAfter > MAX_VC_BALANCE) throw conflict("The wallet balance exceeds the allowed virtual balance limit.");
   return balanceAfter;
 }
 

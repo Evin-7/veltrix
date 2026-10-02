@@ -41,7 +41,7 @@ describe.skipIf(!runIntegration)("wallet PostgreSQL integration", () => {
 
   it("rejects negative balances and leaves the wallet unchanged", async () => {
     const userId = await createWallet(100);
-    await expect(prisma.$transaction((tx) => applyWalletMutation(tx, { userId, type: "GAME_WAGER", amount: -101, idempotencyKey: `debit:test:${userId}` }))).rejects.toThrow("enough VC");
+    await expect(prisma.$transaction((tx) => applyWalletMutation(tx, { userId, type: "GAME_WAGER", amount: -101, idempotencyKey: `debit:test:${userId}` }))).rejects.toThrow("enough virtual balance");
     await expect(prisma.wallet.findUniqueOrThrow({ where: { userId } })).resolves.toMatchObject({ balance: 100 });
     await expect(prisma.walletTransaction.count({ where: { userId } })).resolves.toBe(0);
   });

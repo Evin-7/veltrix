@@ -27,7 +27,6 @@ export async function requestJsonEnvelope<T, M = Record<string, unknown>>(
   input: RequestInfo | URL,
   options: RequestInit = {},
 ): Promise<{ data: T; meta?: M }> {
-  let response: Response;
   const controller = new AbortController();
   let timedOut = false;
   const timeoutId = globalThis.setTimeout(() => {
@@ -37,7 +36,7 @@ export async function requestJsonEnvelope<T, M = Record<string, unknown>>(
   const forwardAbort = () => controller.abort();
   options.signal?.addEventListener("abort", forwardAbort, { once: true });
   try {
-    response = await fetch(input, {
+    const response = await fetch(input, {
       ...options,
       signal: controller.signal,
       headers: {
@@ -45,39 +44,44 @@ export async function requestJsonEnvelope<T, M = Record<string, unknown>>(
         ...(options.headers ?? {}),
       },
     });
-  } catch (error) {
-    if (timedOut) {
-      throw new AppRequestError({ code: "NETWORK_ERROR", message: "Connection problem. Check your connection and try again.", retryable: true });
+    const payload = await parseBody(response);
+    if (!response.ok) {
+      if (response.status === 401) notifySessionExpired();
+      throw new AppRequestError(normalizeApiError(payload, response.status));
     }
-    if (error instanceof DOMException && error.name === "AbortError") throw error;
+
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      !("data" in payload) ||
+      (payload as { data?: unknown }).data === undefined
+    ) {
+      throw new AppRequestError({
+        code: "INTERNAL_ERROR",
+        message: "Something went wrong on our side. Please try again.",
+        retryable: true,
+        status: response.status,
+      });
+    }
+
+    const envelope = payload as ApiEnvelope<T, M>;
+    return { data: envelope.data as T, meta: envelope.meta };
+  } catch (error) {
+    if (error instanceof AppRequestError) throw error;
+    if (timedOut) {
+      throw new AppRequestError({
+        code: "NETWORK_ERROR",
+        message: "Connection problem. Check your connection and try again.",
+        retryable: true,
+      });
+    }
+    if (error instanceof DOMException && error.name === "AbortError")
+      throw error;
     throw new AppRequestError(normalizeApiError(error));
   } finally {
     globalThis.clearTimeout(timeoutId);
     options.signal?.removeEventListener("abort", forwardAbort);
   }
-
-  const payload = await parseBody(response);
-  if (!response.ok) {
-    if (response.status === 401) notifySessionExpired();
-    throw new AppRequestError(normalizeApiError(payload, response.status));
-  }
-
-  if (
-    !payload ||
-    typeof payload !== "object" ||
-    !("data" in payload) ||
-    (payload as { data?: unknown }).data === undefined
-  ) {
-    throw new AppRequestError({
-      code: "INTERNAL_ERROR",
-      message: "Something went wrong on our side. Please try again.",
-      retryable: true,
-      status: response.status,
-    });
-  }
-
-  const envelope = payload as ApiEnvelope<T, M>;
-  return { data: envelope.data as T, meta: envelope.meta };
 }
 
 export async function requestJson<T>(

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { AccountNav } from "@/features/account/account-nav";
 import { ProfileForm } from "@/features/account/profile-form";
 import { PageHeader, Stat } from "@/components/ui/layout-primitives";
+import { formatCurrency } from "@/lib/currency";
 import { getCurrentUser } from "@/server/auth/session";
 import { listFavouriteGameIds, listRecentGames } from "@/server/users/service";
 import {
@@ -146,8 +147,7 @@ export default async function ProfilePage() {
               label="Balance"
               value={
                 <>
-                  {playerData[2].balance.toLocaleString("en-US")}{" "}
-                  <span className="text-sm text-amber-bright">VC</span>
+                  {formatCurrency(playerData[2].balance)}
                 </>
               }
               detail={
