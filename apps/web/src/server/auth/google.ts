@@ -68,13 +68,15 @@ export function safeCompare(left: string, right: string) {
 
 export function createGoogleAuthorizationUrl(config: NonNullable<ReturnType<typeof getGoogleOAuthConfig>>, state: GoogleOAuthState) {
   const codeChallenge = createHash("sha256").update(state.codeVerifier).digest("base64url");
-  return config.client.generateAuthUrl({
+  const authorizationUrl = new URL(config.client.generateAuthUrl({
     prompt: "select_account",
     scope: ["openid", "email", "profile"],
     state: state.state,
     code_challenge: codeChallenge,
     code_challenge_method: CodeChallengeMethod.S256,
-  });
+  }));
+  authorizationUrl.searchParams.set("nonce", state.nonce);
+  return authorizationUrl.toString();
 }
 
 export function googleOAuthCookieOptions() {

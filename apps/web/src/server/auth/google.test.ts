@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { createGoogleOAuthState, readGoogleOAuthState, safeCompare } from "./google";
+import { OAuth2Client } from "google-auth-library";
+import { createGoogleAuthorizationUrl, createGoogleOAuthState, readGoogleOAuthState, safeCompare } from "./google";
 
 beforeAll(() => {
   process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/veltrix";
@@ -22,5 +23,18 @@ describe("Google OAuth state", () => {
     expect(readGoogleOAuthState(`${encoded}x.${signature}`)).toBeNull();
     expect(safeCompare(created.state.state, `${created.state.state}x`)).toBe(false);
     expect(safeCompare(created.state.state, created.state.state)).toBe(true);
+  });
+
+  it("sends the OIDC nonce with the authorization request", () => {
+    const created = createGoogleOAuthState("/");
+    const client = new OAuth2Client("client-id", "client-secret", "http://localhost:3000/api/v1/auth/google/callback");
+    const authorizationUrl = createGoogleAuthorizationUrl({
+      clientId: "client-id",
+      clientSecret: "client-secret",
+      redirectUri: "http://localhost:3000/api/v1/auth/google/callback",
+      client,
+    }, created.state);
+
+    expect(new URL(authorizationUrl).searchParams.get("nonce")).toBe(created.state.nonce);
   });
 });
