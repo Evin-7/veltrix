@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   basePath: "/admin",
+  images: { unoptimized: true },
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
