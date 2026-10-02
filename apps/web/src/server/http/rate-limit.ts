@@ -40,8 +40,8 @@ function enforceLocalRateLimit(key: string, maxRequests: number, message: string
 async function enforceRateLimit(request: Request, action: string, maxRequests: number, message: string) {
   const env = getEnv();
   const key = requestKey(request, action);
-  const redisUrl = env.UPSTASH_REDIS_REST_URL;
-  const redisToken = env.UPSTASH_REDIS_REST_TOKEN;
+  const redisUrl = env.UPSTASH_REDIS_REST_URL ?? env.KV_REST_API_URL;
+  const redisToken = env.UPSTASH_REDIS_REST_TOKEN ?? env.KV_REST_API_TOKEN;
   if (!redisUrl && !redisToken) {
     if (env.NODE_ENV === "production") {
       throw new AppError(503, "RATE_LIMIT_UNAVAILABLE", "Rate limiting is not configured. Please try again shortly.", undefined, 5);

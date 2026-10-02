@@ -14,6 +14,8 @@ const environmentSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   UPSTASH_REDIS_REST_URL: httpsUrl.optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+  KV_REST_API_URL: httpsUrl.optional(),
+  KV_REST_API_TOKEN: z.string().min(1).optional(),
 }).superRefine((environment, context) => {
   if (environment.NODE_ENV === "production") {
     if (new URL(environment.APP_URL).protocol !== "https:") {
@@ -24,8 +26,8 @@ const environmentSchema = z.object({
     }
   }
 
-  const hasUrl = Boolean(environment.UPSTASH_REDIS_REST_URL);
-  const hasToken = Boolean(environment.UPSTASH_REDIS_REST_TOKEN);
+  const hasUrl = Boolean(environment.UPSTASH_REDIS_REST_URL ?? environment.KV_REST_API_URL);
+  const hasToken = Boolean(environment.UPSTASH_REDIS_REST_TOKEN ?? environment.KV_REST_API_TOKEN);
   if (hasUrl !== hasToken) {
     context.addIssue({ code: "custom", path: ["UPSTASH_REDIS_REST_URL"], message: "Both Upstash REST variables must be configured together." });
   }
@@ -53,6 +55,8 @@ export function getEnv(): Environment {
     NODE_ENV: process.env.NODE_ENV,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    KV_REST_API_URL: process.env.KV_REST_API_URL,
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
   });
 
   if (!result.success) {

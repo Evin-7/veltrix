@@ -12,6 +12,7 @@ const googleErrorMessages: Record<string, string> = {
   google_identity: "Google could not verify this account.",
   google_disabled: "This Veltrix account is currently disabled.",
   google_link: "This Google account cannot be linked on the player sign-in page.",
+  google_unavailable: "Google sign-in is temporarily unavailable. Please try again shortly.",
   google_error: "Google sign-in could not be completed. Please try again.",
 };
 
