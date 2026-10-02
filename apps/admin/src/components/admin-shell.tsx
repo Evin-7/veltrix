@@ -43,7 +43,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     router.replace("/login");
   }
 
-  if (loading) return <div aria-label="Loading" className="admin-loading-screen" role="status"><span aria-hidden="true" className="admin-loading-spinner" /> <span>Loading…</span></div>;
+  if (loading) return <div aria-label="Loading" className="admin-loading-screen" role="status"><span aria-hidden="true" className="admin-loading-spinner" /></div>;
   if (!user) return null;
 
   return <AdminContext.Provider value={user}>
