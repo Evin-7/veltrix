@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  images: { unoptimized: true },
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
@@ -18,6 +17,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/(.*)", headers: securityHeaders },
       { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }] },
+      // Only anonymous, read-only catalog data may be cached at the edge.
+      { source: "/api/v1/games", headers: [{ key: "Cache-Control", value: "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }] },
+      { source: "/api/v1/games/:slug", headers: [{ key: "Cache-Control", value: "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }] },
+      { source: "/api/v1/providers", headers: [{ key: "Cache-Control", value: "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }] },
     ];
   },
 };

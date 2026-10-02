@@ -52,7 +52,7 @@ export async function listEligiblePromotions(userId: string) {
   const prisma = getPrisma();
   const [context, records] = await Promise.all([
     getEligibilityContext(prisma, userId),
-    prisma.promotion.findMany({ where: { status: "ACTIVE", startAt: { lte: now }, endAt: { gt: now } }, orderBy: [{ endAt: "asc" }, { createdAt: "desc" }], include: { claims: { where: { userId }, select: { id: true } } } }),
+    prisma.promotion.findMany({ where: { status: "ACTIVE", startAt: { lte: now }, endAt: { gt: now } }, orderBy: [{ endAt: "asc" }, { createdAt: "desc" }], select: { id: true, title: true, slug: true, description: true, banner: true, startAt: true, endAt: true, status: true, rewardVC: true, eligibility: true, createdAt: true, updatedAt: true, claims: { where: { userId }, select: { id: true } } } }),
   ]);
   if (!context) return [];
   const results = [];

@@ -1,9 +1,30 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { Game } from "@/features/games/types";
 import { BlackjackPanel, RoulettePanel, SlotsPanel } from "./gameplay-panels";
-import { NeonRelicsPanel } from "./neon-relics-panel";
-import { UniversalGameplayPanel } from "./universal-gameplay-panel";
+
+function GameplayPanelLoading() {
+  return (
+    <section className="gameplay-layout grid min-h-96 place-items-center p-5 sm:p-8">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+        Loading game…
+      </p>
+    </section>
+  );
+}
+
+const NeonRelicsPanel = dynamic(
+  () => import("./neon-relics-panel").then((module) => module.NeonRelicsPanel),
+  { ssr: false, loading: GameplayPanelLoading },
+);
+const UniversalGameplayPanel = dynamic(
+  () =>
+    import("./universal-gameplay-panel").then(
+      (module) => module.UniversalGameplayPanel,
+    ),
+  { ssr: false, loading: GameplayPanelLoading },
+);
 
 type Props = { game: Game; initialBalance: number };
 const slots = new Set(["lunar-circuit", "orbit-reels", "ember-room", "moonlit-mint"]);

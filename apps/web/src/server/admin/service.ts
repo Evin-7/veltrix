@@ -1,6 +1,8 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { revalidateTag } from "next/cache";
 import { getPrisma } from "@/server/db/prisma";
+import { PUBLIC_GAMES_CACHE_TAG, PUBLIC_PROVIDERS_CACHE_TAG } from "@/server/games/service";
 import { badRequest, forbidden, notFound } from "@/server/http/errors";
 import { applyWalletMutationToLockedWallet, lockWallet } from "@/server/wallet/ledger";
 import { writeAuditLog } from "./audit";
@@ -18,6 +20,11 @@ function dateFilter(from?: Date, to?: Date): Prisma.DateTimeFilter | undefined {
 
 function ensureDateRange(from?: Date, to?: Date) {
   if (from && to && from > to) throw badRequest("The start date must be before the end date.");
+}
+
+function invalidatePublicCatalog() {
+  revalidateTag(PUBLIC_GAMES_CACHE_TAG, "max");
+  revalidateTag(PUBLIC_PROVIDERS_CACHE_TAG, "max");
 }
 
 export async function getDashboard(range: "24h" | "7d" | "30d") {
@@ -170,6 +177,7 @@ export async function createAdminGame(actor: SafeUser, input: Prisma.GameCreateI
     await writeAuditLog(tx, { actorUserId: actor.id, action: "GAME_CREATED", targetType: "GAME", targetId: created.id, metadata: { slug: created.slug } });
     return created;
   });
+  invalidatePublicCatalog();
   return { ...game, demoRtp: Number(game.demoRtp), createdAt: game.createdAt.toISOString(), updatedAt: game.updatedAt.toISOString() };
 }
 
@@ -181,6 +189,7 @@ export async function updateAdminGame(actor: SafeUser, id: string, input: Prisma
     await writeAuditLog(tx, { actorUserId: actor.id, action: "GAME_UPDATED", targetType: "GAME", targetId: updated.id, metadata: { fields: Object.keys(input) } });
     return updated;
   });
+  invalidatePublicCatalog();
   return { ...game, demoRtp: Number(game.demoRtp), createdAt: game.createdAt.toISOString(), updatedAt: game.updatedAt.toISOString() };
 }
 
@@ -190,6 +199,7 @@ export async function createProvider(actor: SafeUser, input: Prisma.GameProvider
     await writeAuditLog(tx, { actorUserId: actor.id, action: "PROVIDER_CREATED", targetType: "PROVIDER", targetId: created.id, metadata: { slug: created.slug } });
     return created;
   });
+  invalidatePublicCatalog();
   return provider;
 }
 
@@ -201,5 +211,6 @@ export async function updateProvider(actor: SafeUser, id: string, input: Prisma.
     await writeAuditLog(tx, { actorUserId: actor.id, action: "PROVIDER_UPDATED", targetType: "PROVIDER", targetId: updated.id, metadata: { fields: Object.keys(input) } });
     return updated;
   });
+  invalidatePublicCatalog();
   return provider;
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Header } from "@/components/layout/header";
 import { RealtimeProvider } from "@/components/realtime/realtime-provider";
+import { GameAudioProvider } from "@/features/gameplay/game-audio";
 import { getCurrentUser } from "@/server/auth/session";
 import { getWalletSummary, type WalletSummary } from "@/server/wallet/service";
 
@@ -21,9 +22,11 @@ export default async function PlayLayout({ children }: Readonly<{ children: Reac
 
   return (
     <RealtimeProvider enabled={currentUser?.role === "PLAYER"} initialBalance={wallet?.balance}>
-      <a className="button-primary sr-only focus:not-sr-only focus-ring fixed left-4 top-4 z-[100] rounded-lg px-4 py-3 text-xs" href="#main-content">Skip to content</a>
-      <Header initialUser={currentUser} initialWallet={wallet} initialWalletError={walletLoadFailed} />
-      <div id="main-content">{children}</div>
+      <GameAudioProvider>
+        <a className="button-primary sr-only focus:not-sr-only focus-ring fixed left-4 top-4 z-[100] rounded-lg px-4 py-3 text-xs" href="#main-content">Skip to content</a>
+        <Header initialUser={currentUser} initialWallet={wallet} initialWalletError={walletLoadFailed} />
+        <div id="main-content">{children}</div>
+      </GameAudioProvider>
     </RealtimeProvider>
   );
 }

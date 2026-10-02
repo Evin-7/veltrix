@@ -60,8 +60,8 @@ export async function awardGameplayXp(tx: Prisma.TransactionClient, userId: stri
 
 export async function getRewardOverview(userId: string) {
   const prisma = getPrisma();
-  const progression = await prisma.playerProgression.upsert({ where: { userId }, update: {}, create: { userId, level: "BRONZE", xp: 0 } });
-  const configs = await prisma.vipLevelConfig.findMany({ orderBy: { xpThreshold: "asc" } });
+  const progression = await prisma.playerProgression.upsert({ where: { userId }, update: {}, create: { userId, level: "BRONZE", xp: 0 }, select: { level: true, xp: true } });
+  const configs = await prisma.vipLevelConfig.findMany({ orderBy: { xpThreshold: "asc" }, select: { level: true, xpThreshold: true, rewardVC: true } });
   const currentIndex = vipLevelIndex(progression.level);
   const next = configs.find((config) => vipLevelIndex(config.level) > currentIndex) ?? null;
   const current = configs.find((config) => config.level === progression.level) ?? configs[0];
@@ -71,9 +71,10 @@ export async function getRewardOverview(userId: string) {
 
 export async function listRewardHistory(userId: string, input: { page: number; pageSize: number }) {
   const where = { userId };
-  const [records, total] = await getPrisma().$transaction([
-    getPrisma().rewardHistory.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (input.page - 1) * input.pageSize, take: input.pageSize }),
-    getPrisma().rewardHistory.count({ where }),
+  const prisma = getPrisma();
+  const [records, total] = await prisma.$transaction([
+    prisma.rewardHistory.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (input.page - 1) * input.pageSize, take: input.pageSize, select: { id: true, type: true, amountVC: true, level: true, promotionId: true, walletTransactionId: true, sourceKey: true, metadata: true, createdAt: true } }),
+    prisma.rewardHistory.count({ where }),
   ]);
   return { history: records.map((record) => ({ ...record, createdAt: record.createdAt.toISOString() })), meta: { page: input.page, pageSize: input.pageSize, total, totalPages: Math.ceil(total / input.pageSize) } };
 }

@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { getGamePresentation } from "@/features/games/presentation";
 import type { Game, GameCategory } from "@/features/games/types";
 import { getPrisma } from "@/server/db/prisma";
@@ -25,6 +26,7 @@ const categoryToPublic = {
 type ListGamesInput = {
   search?: string;
   category?: keyof typeof categoryToDatabase;
+  categories?: Array<keyof typeof categoryToDatabase>;
   provider?: string;
   sort: "popular" | "newest" | "name";
   featured?: boolean;
@@ -32,9 +34,13 @@ type ListGamesInput = {
   new?: boolean;
   page: number;
   pageSize: number;
+  includeTotal?: boolean;
 };
 
 const publicWhere = { status: "ACTIVE" as const, provider: { status: "ACTIVE" as const } };
+export const PUBLIC_GAMES_CACHE_TAG = "public-games";
+export const PUBLIC_PROVIDERS_CACHE_TAG = "public-providers";
+const PUBLIC_DATA_REVALIDATE_SECONDS = 300;
 
 export function mapGame(game: {
   id: string;
@@ -84,7 +90,7 @@ export const gameSelect = {
   provider: { select: { name: true, slug: true } },
 } satisfies Prisma.GameSelect;
 
-export async function listPublicGames(input: ListGamesInput) {
+async function queryPublicGames(input: ListGamesInput) {
   const prisma = getPrisma();
   const where: Prisma.GameWhereInput = { ...publicWhere };
 
@@ -96,6 +102,9 @@ export async function listPublicGames(input: ListGamesInput) {
     ];
   }
   if (input.category) where.category = categoryToDatabase[input.category];
+  if (input.categories?.length) {
+    where.category = { in: input.categories.map((category) => categoryToDatabase[category]) };
+  }
   if (input.provider) where.provider = { ...publicWhere.provider, slug: input.provider };
   if (input.featured !== undefined) where.featured = input.featured;
   if (input.popular !== undefined) where.popular = input.popular;
@@ -108,10 +117,17 @@ export async function listPublicGames(input: ListGamesInput) {
       : [{ popular: "desc" }, { featured: "desc" }, { name: "asc" }];
   const skip = (input.page - 1) * input.pageSize;
 
-  const [records, total] = await prisma.$transaction([
-    prisma.game.findMany({ where, select: gameSelect, orderBy, skip, take: input.pageSize }),
-    prisma.game.count({ where }),
-  ]);
+  let records;
+  let total: number;
+  if (input.includeTotal === false) {
+    records = await prisma.game.findMany({ where, select: gameSelect, orderBy, skip, take: input.pageSize });
+    total = records.length;
+  } else {
+    [records, total] = await prisma.$transaction([
+      prisma.game.findMany({ where, select: gameSelect, orderBy, skip, take: input.pageSize }),
+      prisma.game.count({ where }),
+    ]);
+  }
 
   return {
     games: records.map(mapGame),
@@ -119,18 +135,58 @@ export async function listPublicGames(input: ListGamesInput) {
   };
 }
 
-export async function getPublicGameBySlug(slug: string) {
+const cachedListPublicGames = unstable_cache(
+  queryPublicGames,
+  ["public-games-list"],
+  { revalidate: PUBLIC_DATA_REVALIDATE_SECONDS, tags: [PUBLIC_GAMES_CACHE_TAG] },
+);
+
+export function listPublicGames(input: ListGamesInput) {
+  return cachedListPublicGames(input);
+}
+
+async function queryPublicGameBySlug(slug: string) {
   const prisma = getPrisma();
   const game = await prisma.game.findFirst({ where: { ...publicWhere, slug }, select: gameSelect });
   return game ? mapGame(game) : null;
 }
 
-export async function getPublicGameById(id: string) {
+const cachedPublicGameBySlug = unstable_cache(
+  queryPublicGameBySlug,
+  ["public-game-by-slug"],
+  { revalidate: PUBLIC_DATA_REVALIDATE_SECONDS, tags: [PUBLIC_GAMES_CACHE_TAG] },
+);
+
+export function getPublicGameBySlug(slug: string) {
+  return cachedPublicGameBySlug(slug);
+}
+
+async function queryPublicGameById(id: string) {
   const game = await getPrisma().game.findFirst({ where: { ...publicWhere, id }, select: gameSelect });
   return game ? mapGame(game) : null;
 }
 
-export async function listPublicProviders() {
+const cachedPublicGameById = unstable_cache(
+  queryPublicGameById,
+  ["public-game-by-id"],
+  { revalidate: PUBLIC_DATA_REVALIDATE_SECONDS, tags: [PUBLIC_GAMES_CACHE_TAG] },
+);
+
+export function getPublicGameById(id: string) {
+  return cachedPublicGameById(id);
+}
+
+async function queryPublicProviders() {
   const prisma = getPrisma();
   return prisma.gameProvider.findMany({ where: { status: "ACTIVE" }, select: { id: true, name: true, slug: true }, orderBy: { name: "asc" } });
+}
+
+const cachedPublicProviders = unstable_cache(
+  queryPublicProviders,
+  ["public-providers"],
+  { revalidate: PUBLIC_DATA_REVALIDATE_SECONDS, tags: [PUBLIC_PROVIDERS_CACHE_TAG, PUBLIC_GAMES_CACHE_TAG] },
+);
+
+export function listPublicProviders() {
+  return cachedPublicProviders();
 }

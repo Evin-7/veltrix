@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { RouteTransitionOverlay } from "@/components/navigation/route-transition-overlay";
 import { SessionExpiryHandler } from "@/components/navigation/session-expiry-handler";
 import { ToastProvider } from "@/components/ui/toast";
-import { GameAudioProvider } from "@/features/gameplay/game-audio";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 
 const montserrat = Montserrat({ display: "swap", subsets: ["latin"], variable: "--font-montserrat", weight: ["400", "500", "600", "700", "800"] });
@@ -52,14 +51,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <head><Script id="veltrix-theme" nonce={nonce} strategy="beforeInteractive">{themeScript}</Script></head>
       <body className={`${montserrat.variable} ${oswald.variable}`}>
         <ThemeProvider>
-          <GameAudioProvider>
-            <ToastProvider>
-              <SessionExpiryHandler />
-              <RouteTransitionOverlay />
-              <ServiceWorkerRegister />
-              {children}
-            </ToastProvider>
-          </GameAudioProvider>
+          <ToastProvider>
+            <SessionExpiryHandler />
+            <RouteTransitionOverlay />
+            <ServiceWorkerRegister />
+            {children}
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

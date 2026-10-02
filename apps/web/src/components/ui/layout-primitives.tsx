@@ -115,6 +115,7 @@ export function SectionHeader({
           <Link
             className="focus-ring hidden items-center rounded-full px-2 py-2 text-xs font-semibold text-muted-strong hover:text-amber-bright sm:inline-flex"
             href={href}
+            prefetch={false}
           >
             {actionLabel}
           </Link>

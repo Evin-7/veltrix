@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { cache } from "react";
 import { getPrisma } from "@/server/db/prisma";
 import { formatCurrency } from "@/lib/currency";
 import { notFound } from "@/server/http/errors";
@@ -47,11 +48,15 @@ export async function createPlayerWalletWithWelcome(tx: Prisma.TransactionClient
   });
 }
 
-export async function getWalletSummary(userId: string): Promise<WalletSummary> {
+async function getWalletSummaryUncached(userId: string): Promise<WalletSummary> {
   const wallet = await getPrisma().wallet.findUnique({ where: { userId }, select: { balance: true } });
   if (!wallet) throw notFound("Wallet not found.");
   return { balance: wallet.balance, currency: "VC" };
 }
+
+// This memoization is private and request-scoped; it never shares a balance
+// between users or requests.
+export const getWalletSummary = cache(getWalletSummaryUncached);
 
 export async function listWalletTransactions(userId: string, input: { page: number; pageSize: number; type?: WalletTransactionTypeValue }) {
   const prisma = getPrisma();

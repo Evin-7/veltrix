@@ -33,31 +33,22 @@ function GameRail({
 }
 
 export default async function Home() {
-  const [{ games }, currentUser] = await Promise.all([
-    listPublicGames({ page: 1, pageSize: 100, sort: "popular" }),
+  const [{ games: popularGames }, { games: newGames }, { games: tableGames }, { games: slotGames }, currentUser] = await Promise.all([
+    listPublicGames({ includeTotal: false, page: 1, pageSize: 8, popular: true, sort: "popular" }),
+    listPublicGames({ includeTotal: false, page: 1, pageSize: 8, new: true, sort: "newest" }),
+    listPublicGames({ categories: ["Table Games", "Blackjack", "Roulette", "Live-style"], includeTotal: false, page: 1, pageSize: 8, sort: "popular" }),
+    listPublicGames({ category: "Slots", includeTotal: false, page: 1, pageSize: 8, sort: "popular" }),
     getCurrentUser(),
   ]);
-  const favouriteGameIds =
+  const [favouriteGameIds, recentlyPlayed] =
     currentUser?.role === "PLAYER"
-      ? await listFavouriteGameIds(currentUser.id)
-      : [];
-  const recentlyPlayed =
-    currentUser?.role === "PLAYER"
-      ? (await listRecentGames(currentUser.id, 6)).map((item) => item.game)
-      : [];
-  const popularGames = games.filter((game) => game.popular).slice(0, 8);
-  const newGames = games.filter((game) => game.isNew).slice(0, 8);
-  const tableGames = games
-    .filter((game) =>
-      ["Table Games", "Blackjack", "Roulette", "Live-style"].includes(
-        game.category,
-      ),
-    )
-    .slice(0, 8);
-  const slotGames = games
-    .filter((game) => game.category === "Slots")
-    .slice(0, 8);
-
+      ? await Promise.all([
+          listFavouriteGameIds(currentUser.id),
+          listRecentGames(currentUser.id, 6).then((items) =>
+            items.map((item) => item.game),
+          ),
+        ])
+      : [[], []];
   return (
     <main>
       <section className="home-hero">
@@ -82,12 +73,14 @@ export default async function Home() {
               <Link
                 className="button-primary focus-ring inline-flex min-h-12 items-center justify-center rounded-full px-5 text-sm"
                 href="/casino"
+                prefetch={false}
               >
                 Explore the lobby
               </Link>
               <Link
                 className="button-secondary focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-sm"
                 href="/rewards"
+                prefetch={false}
               >
                 View rewards
               </Link>
@@ -165,12 +158,14 @@ export default async function Home() {
               <Link
                 className="button-primary focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] px-4 text-xs"
                 href="/promotions"
+                prefetch={false}
               >
                 See promotions
               </Link>
               <Link
                 className="button-secondary focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] px-4 text-xs"
                 href="/responsible-gaming"
+                prefetch={false}
               >
                 Play responsibly
               </Link>

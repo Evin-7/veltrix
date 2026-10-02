@@ -14,7 +14,7 @@ export async function listNotifications(userId: string, input: { page: number; p
   const prisma = getPrisma();
   const where = { userId };
   const [records, total, unread] = await prisma.$transaction([
-    prisma.notification.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (input.page - 1) * input.pageSize, take: input.pageSize }),
+    prisma.notification.findMany({ where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (input.page - 1) * input.pageSize, take: input.pageSize, select: { id: true, type: true, title: true, message: true, readAt: true, createdAt: true } }),
     prisma.notification.count({ where }),
     prisma.notification.count({ where: { userId, readAt: null } }),
   ]);

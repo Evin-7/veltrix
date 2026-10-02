@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { Prisma } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
 import { getEnv } from "@/server/env";
@@ -60,7 +61,7 @@ export async function clearSessionCookie() {
   store.set(SESSION_COOKIE_NAME, "", { httpOnly: true, secure: getEnv().NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 0 });
 }
 
-export async function getCurrentUser(): Promise<SafeUser | null> {
+async function getCurrentUserUncached(): Promise<SafeUser | null> {
   const token = await getRequestToken();
   if (!token || token.length < 30) return null;
   const prisma = getPrisma();
@@ -74,6 +75,11 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
 
   return toSafeUser(session.user);
 }
+
+// React's cache is request-scoped in Server Components. It prevents the site
+// layout, page, and metadata from repeating the same private session query
+// without creating a shared/public cache entry.
+export const getCurrentUser = cache(getCurrentUserUncached);
 
 export async function requireAuth() {
   const user = await getCurrentUser();
