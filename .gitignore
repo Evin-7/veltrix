@@ -16,3 +16,4 @@ apps/web/.env.local
 apps/admin/.env.local
 apps/**/.env.*
 !apps/**/.env.example
+.vercel

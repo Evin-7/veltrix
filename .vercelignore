@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+apps/**/.env
+apps/**/.env.*
+!.env.example
+.next
+apps/**/.next
+node_modules
+apps/**/node_modules
+*.tsbuildinfo
+test-results
+playwright-report
+.vercel
