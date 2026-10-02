@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
-import { Activity, CircleDollarSign, FileClock, Gamepad2, LayoutDashboard, LogOut, Menu, Search, Settings, Shield, Sparkles, Trophy, Users, X } from "lucide-react";
+import { Activity, CircleDollarSign, FileClock, Gamepad2, LayoutDashboard, LogOut, Menu, Settings, Shield, Sparkles, Trophy, Users, X } from "lucide-react";
 import { apiFetch, type ApiError } from "@/lib/api";
 import { AdminThemeMenu } from "@/components/theme-menu";
 import { AdminVeltrixLogo } from "@/components/veltrix-logo";
@@ -31,7 +31,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -42,11 +41,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   async function logout() {
     await apiFetch("/api/v1/admin/auth/logout", { method: "POST" }).catch(() => undefined);
     router.replace("/login");
-  }
-
-  function submitSearch(event: React.FormEvent) {
-    event.preventDefault();
-    if (search.trim()) router.push(`/players?search=${encodeURIComponent(search.trim())}`);
   }
 
   if (loading) return <div aria-label="Loading" className="admin-loading-screen" role="status"><span aria-hidden="true" className="admin-loading-spinner" /> <span>Loading…</span></div>;
@@ -71,7 +65,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <main className="min-w-0 flex-1 pt-20 lg:pl-72">
         <header className="fixed left-0 right-0 top-0 z-30 flex h-20 items-center justify-between border-b border-[#252d3d]/80 bg-[#090b11]/90 px-5 backdrop-blur-xl sm:px-8 lg:left-72 lg:px-10">
           <div className="flex items-center gap-3"><button aria-label="Open navigation" onClick={() => setMobileOpen(true)} className="text-[#aab4c8] lg:hidden"><Menu size={22} /></button><span className="hidden text-xs font-medium text-[#59657b] sm:inline">VELTRIX /</span><span className="text-sm font-semibold text-[#e9eef8]">{pathname === "/" ? "Overview" : nav.find((item) => pathname.startsWith(item.href))?.label ?? "Control room"}</span></div>
-          <div className="flex items-center gap-3 sm:gap-6"><form aria-label="Search players" onSubmit={submitSearch} className="hidden items-center gap-2 rounded-xl border border-[#252d3d] bg-[#11151f] px-3 py-2 md:flex"><Search aria-hidden="true" size={15} className="text-[#637089]" /><input aria-label="Search players" value={search} onChange={(event) => setSearch(event.target.value)} className="w-44 bg-transparent text-xs text-white outline-none" /></form><div className="hidden h-8 w-px bg-[#252d3d] sm:block" /><div className="flex items-center gap-3"><AdminThemeMenu /><div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#83f5c5] to-[#3b8c78] text-sm font-bold text-[#09120f]">{(user.profile?.displayName ?? user.email).slice(0, 1).toUpperCase()}</div><div className="hidden leading-tight sm:block"><div className="text-xs font-semibold text-[#edf3fd]">{user.profile?.displayName ?? user.email.split("@")[0]}</div><div className="mt-1 text-[10px] uppercase tracking-wider text-[#83f5c5]">{user.role.replace("_", " ")}</div></div></div></div>
+          <div className="flex items-center gap-3 sm:gap-6"><div className="flex items-center gap-3"><AdminThemeMenu /><div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#83f5c5] to-[#3b8c78] text-sm font-bold text-[#09120f]">{(user.profile?.displayName ?? user.email).slice(0, 1).toUpperCase()}</div><div className="hidden leading-tight sm:block"><div className="text-xs font-semibold text-[#edf3fd]">{user.profile?.displayName ?? user.email.split("@")[0]}</div><div className="mt-1 text-[10px] uppercase tracking-wider text-[#83f5c5]">{user.role.replace("_", " ")}</div></div></div></div>
         </header>
         <div className="mx-auto max-w-[1600px] p-5 sm:p-8 lg:p-10">{children}</div>
       </main>
