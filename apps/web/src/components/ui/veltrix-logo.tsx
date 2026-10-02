@@ -34,7 +34,7 @@ export function VeltrixLogo({
         fill
         priority={priority}
         sizes="(min-width: 640px) 164px, 145px"
-        src="/veltrix-wordmark-on-dark.png"
+        src="/veltrix-wordmark-on-dark.webp"
         unoptimized
       />
       <Image
@@ -44,7 +44,7 @@ export function VeltrixLogo({
         fill
         priority={priority}
         sizes="(min-width: 640px) 164px, 145px"
-        src="/veltrix-wordmark-on-light.png"
+        src="/veltrix-wordmark-on-light.webp"
         unoptimized
       />
     </span>
