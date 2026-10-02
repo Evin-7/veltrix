@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { Prisma, type GameActionType, type GameRound } from "@prisma/client";
+import { Prisma, type GameActionType, type GameRound, type GameType } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
 import { badRequest, conflict, notFound } from "@/server/http/errors";
 import { assertGameplayAllowed } from "@/server/responsible-gaming/service";
@@ -9,10 +9,15 @@ import { awardGameplayXp } from "@/server/rewards/service";
 import { calculateGameplayXp } from "@/server/rewards/constants";
 import { applyWalletMutationToLockedWallet, lockWallet, MAX_VC_BALANCE, type LockedWallet } from "@/server/wallet/ledger";
 import { GAME_SLUGS, MAX_DEMO_WAGER, type DemoWager } from "./constants";
+import { slotDefinitionForSlug } from "./catalog";
+import { resolveArcadeRun } from "./arcade";
+import { dealBaccarat, type BaccaratBet } from "./baccarat";
+import { rollDice, type DiceBet } from "./dice";
 import { blackjackEngine, payoutForBlackjack, publicBlackjackState, type BlackjackState } from "./engine";
 import { rouletteEngine } from "./engine";
 import type { RouletteBet } from "./roulette";
 import { slotsEngine } from "./engine";
+import { spinConfiguredSlots } from "./slots";
 
 type Tx = Prisma.TransactionClient;
 type JsonRecord = Record<string, unknown>;
@@ -90,10 +95,10 @@ async function recordRecentGame(tx: Tx, userId: string, gameId: string) {
   await tx.recentGame.upsert({ where: { userId_gameId: { userId, gameId } }, update: { lastPlayedAt: new Date() }, create: { userId, gameId, lastPlayedAt: new Date() } });
 }
 
-export async function spinSlotsRound(userId: string, wager: DemoWager, idempotencyKey: string) {
-  const hash = requestHash({ wager });
+export async function spinSlotsRound(userId: string, wager: DemoWager, idempotencyKey: string, gameSlug: string = GAME_SLUGS.slots) {
+  const hash = requestHash({ wager, gameSlug });
   const response = await getPrisma().$transaction(async (tx) => {
-    const game = await getActiveGame(tx, GAME_SLUGS.slots);
+    const game = await getActiveGame(tx, gameSlug);
     const wallet = await lockWallet(tx, userId);
     const duplicate = await existingAction(tx, { idempotencyKey, userId, type: "SLOT_SPIN", hash });
     if (duplicate) return duplicate;
@@ -101,25 +106,27 @@ export async function spinSlotsRound(userId: string, wager: DemoWager, idempoten
     const session = await getOrCreateSession(tx, userId, game.id);
     const round = await tx.gameRound.create({ data: { sessionId: session.id, gameId: game.id, userId, roundNumber: session.roundCount + 1, status: "PENDING", wager, netResult: -wager, gameType: "SLOTS" } });
     const wagerResult = await applyWalletMutationToLockedWallet(tx, wallet, { userId, type: "GAME_WAGER", amount: -wager, idempotencyKey: walletIdempotency(round.id, "wager"), referenceId: walletReference(round.id, "wager"), metadata: asInputJson({ roundId: round.id, game: GAME_SLUGS.slots }) });
-    const result = slotsEngine.resolve(wager);
+    const slotDefinition = slotDefinitionForSlug(gameSlug);
+    if (!slotDefinition) throw notFound("This slot game is not configured.");
+    const result = gameSlug === GAME_SLUGS.slots ? slotsEngine.resolve(wager) : spinConfiguredSlots(slotDefinition.symbols, slotDefinition.paytable, wager);
     const payoutResult = await settlePayout(tx, { ...wallet, balance: wagerResult.balance }, userId, round.id, result.payout);
     const rewardResult = await awardGameplayXp(tx, userId, round.id, calculateGameplayXp(wager), payoutResult.wallet);
     assertSessionTotals(session, wager, result.payout);
     const settled = await tx.gameRound.update({ where: { id: round.id }, data: { status: "SETTLED", payout: result.payout, netResult: result.payout - wager, result: asInputJson(result), settledAt: new Date() } });
     await tx.gameSession.update({ where: { id: session.id }, data: { status: "COMPLETED", endedAt: new Date(), totalWagered: { increment: wager }, totalWon: { increment: result.payout }, roundCount: { increment: 1 } } });
     await recordRecentGame(tx, userId, game.id);
-    const responseBody: JsonRecord = { roundId: settled.id, wager, reels: result.reels, winningLines: result.winningLines, payout: result.payout, netResult: result.payout - wager, newBalance: rewardResult.wallet.balance, idempotent: false };
+    const responseBody: JsonRecord = { roundId: settled.id, gameSlug, wager, reels: result.reels, winningLines: result.winningLines, payout: result.payout, netResult: result.payout - wager, newBalance: rewardResult.wallet.balance, idempotent: false };
     await saveAction(tx, { sessionId: session.id, roundId: round.id, userId, type: "SLOT_SPIN", idempotencyKey, hash, response: responseBody });
     return responseBody;
   }, { maxWait: 15_000, timeout: 30_000 });
   return response;
 }
 
-export async function spinRouletteRound(userId: string, wager: DemoWager, bet: RouletteBet, idempotencyKey: string) {
+export async function spinRouletteRound(userId: string, wager: DemoWager, bet: RouletteBet, idempotencyKey: string, gameSlug: string = GAME_SLUGS.roulette) {
   const normalizedBet = bet.type === "SINGLE_NUMBER" ? { type: bet.type, number: bet.number } : { type: bet.type };
-  const hash = requestHash({ wager, bet: normalizedBet });
+  const hash = requestHash({ wager, bet: normalizedBet, gameSlug });
   return getPrisma().$transaction(async (tx) => {
-    const game = await getActiveGame(tx, GAME_SLUGS.roulette);
+    const game = await getActiveGame(tx, gameSlug);
     const wallet = await lockWallet(tx, userId);
     const duplicate = await existingAction(tx, { idempotencyKey, userId, type: "ROULETTE_SPIN", hash });
     if (duplicate) return duplicate;
@@ -134,7 +141,7 @@ export async function spinRouletteRound(userId: string, wager: DemoWager, bet: R
     const settled = await tx.gameRound.update({ where: { id: round.id }, data: { status: "SETTLED", payout: result.payout, netResult: result.payout - wager, result: asInputJson(result), settledAt: new Date() } });
     await tx.gameSession.update({ where: { id: session.id }, data: { status: "COMPLETED", endedAt: new Date(), totalWagered: { increment: wager }, totalWon: { increment: result.payout }, roundCount: { increment: 1 } } });
     await recordRecentGame(tx, userId, game.id);
-    const responseBody: JsonRecord = { roundId: settled.id, winningNumber: result.winningNumber, winningColor: result.winningColor, bet: normalizedBet, wager, payout: result.payout, netResult: result.payout - wager, newBalance: rewardResult.wallet.balance, idempotent: false };
+    const responseBody: JsonRecord = { roundId: settled.id, gameSlug, winningNumber: result.winningNumber, winningColor: result.winningColor, bet: normalizedBet, wager, payout: result.payout, netResult: result.payout - wager, newBalance: rewardResult.wallet.balance, idempotent: false };
     await saveAction(tx, { sessionId: session.id, roundId: round.id, userId, type: "ROULETTE_SPIN", idempotencyKey, hash, response: responseBody });
     return responseBody;
   }, { maxWait: 15_000, timeout: 30_000 });
@@ -154,10 +161,10 @@ function blackjackResponse(round: Pick<GameRound, "id" | "wager" | "payout" | "n
   return { roundId: round.id, status: round.status, ...result, wager: round.wager, payout: round.payout, netResult: round.netResult, newBalance: balance, idempotent };
 }
 
-export async function dealBlackjackRound(userId: string, wager: DemoWager, idempotencyKey: string) {
-  const hash = requestHash({ wager });
+export async function dealBlackjackRound(userId: string, wager: DemoWager, idempotencyKey: string, gameSlug: string = GAME_SLUGS.blackjack) {
+  const hash = requestHash({ wager, gameSlug });
   return getPrisma().$transaction(async (tx) => {
-    const game = await getActiveGame(tx, GAME_SLUGS.blackjack);
+    const game = await getActiveGame(tx, gameSlug);
     const wallet = await lockWallet(tx, userId);
     const duplicate = await existingAction(tx, { idempotencyKey, userId, type: "BLACKJACK_DEAL", hash });
     if (duplicate) return duplicate;
@@ -182,17 +189,22 @@ export async function dealBlackjackRound(userId: string, wager: DemoWager, idemp
   }, { maxWait: 15_000, timeout: 30_000 });
 }
 
-async function lockRound(tx: Tx, userId: string, roundId: string) {
+async function lockRound(tx: Tx, userId: string, roundId: string, gameSlug?: string) {
   const rows = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "GameRound" WHERE "id" = ${roundId}::uuid AND "userId" = ${userId}::uuid FOR UPDATE`);
   if (!rows[0]) throw notFound("Blackjack hand not found.");
-  return tx.gameRound.findUniqueOrThrow({ where: { id: roundId } });
+  const round = await tx.gameRound.findUniqueOrThrow({ where: { id: roundId } });
+  if (gameSlug) {
+    const game = await tx.game.findUnique({ where: { id: round.gameId }, select: { slug: true } });
+    if (game?.slug !== gameSlug) throw conflict("This blackjack hand belongs to another game.");
+  }
+  return round;
 }
 
-export async function blackjackAction(userId: string, roundId: string, action: "hit" | "stand" | "double", idempotencyKey: string) {
+export async function blackjackAction(userId: string, roundId: string, action: "hit" | "stand" | "double", idempotencyKey: string, gameSlug?: string) {
   const actionType = action === "hit" ? "BLACKJACK_HIT" : action === "stand" ? "BLACKJACK_STAND" : "BLACKJACK_DOUBLE";
   const hash = requestHash({ roundId, action });
   return getPrisma().$transaction(async (tx) => {
-    const round = await lockRound(tx, userId, roundId);
+    const round = await lockRound(tx, userId, roundId, gameSlug);
     if (round.gameType !== "BLACKJACK") throw conflict("This round is not a blackjack hand.");
     const duplicate = await existingAction(tx, { idempotencyKey, userId, type: actionType, hash });
     if (duplicate) return duplicate;
@@ -233,12 +245,59 @@ export async function blackjackAction(userId: string, roundId: string, action: "
   }, { maxWait: 15_000, timeout: 30_000 });
 }
 
-export async function recoverBlackjack(userId: string) {
-  const round = await getPrisma().gameRound.findFirst({ where: { userId, gameType: "BLACKJACK", status: "ACTIVE" }, orderBy: { createdAt: "desc" } });
+export async function recoverBlackjack(userId: string, gameSlug: string = GAME_SLUGS.blackjack) {
+  const round = await getPrisma().gameRound.findFirst({ where: { userId, gameType: "BLACKJACK", status: "ACTIVE", game: { slug: gameSlug } }, orderBy: { createdAt: "desc" } });
   if (!round) return null;
   const wallet = await getPrisma().wallet.findUnique({ where: { userId }, select: { balance: true } });
   if (!wallet) throw notFound("Wallet not found.");
   return blackjackResponse(round, wallet.balance);
+}
+
+type InstantRoundInput = {
+  userId: string;
+  gameSlug: string;
+  wager: DemoWager;
+  idempotencyKey: string;
+  gameType: GameType;
+  actionType: GameActionType;
+  request: JsonRecord;
+  resolve: () => JsonRecord & { payout: number };
+};
+
+async function settleInstantRound(input: InstantRoundInput) {
+  const hash = requestHash(input.request);
+  return getPrisma().$transaction(async (tx) => {
+    const game = await getActiveGame(tx, input.gameSlug);
+    const wallet = await lockWallet(tx, input.userId);
+    const duplicate = await existingAction(tx, { idempotencyKey: input.idempotencyKey, userId: input.userId, type: input.actionType, hash });
+    if (duplicate) return duplicate;
+    await assertGameplayAllowed(tx, input.userId, input.wager, MAX_DEMO_WAGER);
+    const session = await getOrCreateSession(tx, input.userId, game.id);
+    const round = await tx.gameRound.create({ data: { sessionId: session.id, gameId: game.id, userId: input.userId, roundNumber: session.roundCount + 1, status: "PENDING", wager: input.wager, netResult: -input.wager, gameType: input.gameType } });
+    const wagerResult = await applyWalletMutationToLockedWallet(tx, wallet, { userId: input.userId, type: "GAME_WAGER", amount: -input.wager, idempotencyKey: walletIdempotency(round.id, "wager"), referenceId: walletReference(round.id, "wager"), metadata: asInputJson({ roundId: round.id, game: input.gameSlug }) });
+    const result = input.resolve();
+    const payoutResult = await settlePayout(tx, { ...wallet, balance: wagerResult.balance }, input.userId, round.id, result.payout);
+    const rewardResult = await awardGameplayXp(tx, input.userId, round.id, calculateGameplayXp(input.wager), payoutResult.wallet);
+    assertSessionTotals(session, input.wager, result.payout);
+    const settled = await tx.gameRound.update({ where: { id: round.id }, data: { status: "SETTLED", payout: result.payout, netResult: result.payout - input.wager, result: asInputJson(result), settledAt: new Date() } });
+    await tx.gameSession.update({ where: { id: session.id }, data: { status: "COMPLETED", endedAt: new Date(), totalWagered: { increment: input.wager }, totalWon: { increment: result.payout }, roundCount: { increment: 1 } } });
+    await recordRecentGame(tx, input.userId, game.id);
+    const responseBody: JsonRecord = { roundId: settled.id, gameSlug: input.gameSlug, wager: input.wager, ...result, netResult: result.payout - input.wager, newBalance: rewardResult.wallet.balance, idempotent: false };
+    await saveAction(tx, { sessionId: session.id, roundId: round.id, userId: input.userId, type: input.actionType, idempotencyKey: input.idempotencyKey, hash, response: responseBody });
+    return responseBody;
+  }, { maxWait: 15_000, timeout: 30_000 });
+}
+
+export async function dealBaccaratRound(userId: string, wager: DemoWager, bet: BaccaratBet, idempotencyKey: string, gameSlug: string) {
+  return settleInstantRound({ userId, gameSlug, wager, idempotencyKey, gameType: "BACCARAT", actionType: "BACCARAT_DEAL", request: { wager, bet, gameSlug }, resolve: () => dealBaccarat(wager, bet) as unknown as JsonRecord & { payout: number } });
+}
+
+export async function rollDiceRound(userId: string, wager: DemoWager, bet: DiceBet, idempotencyKey: string, gameSlug: string) {
+  return settleInstantRound({ userId, gameSlug, wager, idempotencyKey, gameType: "DICE", actionType: "DICE_ROLL", request: { wager, bet, gameSlug }, resolve: () => rollDice(wager, bet) });
+}
+
+export async function settleArcadeRound(userId: string, wager: DemoWager, idempotencyKey: string, gameSlug: string) {
+  return settleInstantRound({ userId, gameSlug, wager, idempotencyKey, gameType: "ARCADE", actionType: "ARCADE_RUN", request: { wager, gameSlug }, resolve: () => resolveArcadeRun(gameSlug, wager) });
 }
 
 export async function listGameSessions(userId: string, page: number, pageSize: number) {

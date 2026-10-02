@@ -34,6 +34,12 @@ export type SlotSpinResult = {
   payout: number;
 };
 
+export type ConfiguredSlotSpinResult = {
+  reels: string[][];
+  winningLines: { line: number; symbol: string; count: number; multiplier: number; payout: number }[];
+  payout: number;
+};
+
 export function evaluateSlotReels(reels: SlotSymbol[][], wager: number): SlotSpinResult {
   const winningLines: SlotWinLine[] = [];
   for (const [lineIndex, line] of slotPaylines.entries()) {
@@ -54,4 +60,23 @@ export function evaluateSlotReels(reels: SlotSymbol[][], wager: number): SlotSpi
 export function spinSlots(wager: number, rng: RandomSource = secureRandom): SlotSpinResult {
   const reels = Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => slotSymbols[rng.nextInt(slotSymbols.length)]));
   return evaluateSlotReels(reels, wager);
+}
+
+export function spinConfiguredSlots(symbols: readonly string[], paytable: Record<string, Record<3 | 4 | 5, number>>, wager: number, rng: RandomSource = secureRandom): ConfiguredSlotSpinResult {
+  const reels = Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => symbols[rng.nextInt(symbols.length)]));
+  const winningLines: { line: number; symbol: string; count: number; multiplier: number; payout: number }[] = [];
+  for (const [lineIndex, line] of slotPaylines.entries()) {
+    const first = reels[0]?.[line[0]];
+    if (!first) continue;
+    let count = 1;
+    for (let reel = 1; reel < line.length; reel += 1) {
+      if (reels[reel]?.[line[reel]] !== first) break;
+      count += 1;
+    }
+    if (count < 3) continue;
+    const multiplier = paytable[first]?.[count as 3 | 4 | 5];
+    if (!multiplier) continue;
+    winningLines.push({ line: lineIndex + 1, symbol: first, count, multiplier, payout: wager * multiplier });
+  }
+  return { reels, winningLines, payout: winningLines.reduce((total, win) => total + win.payout, 0) };
 }

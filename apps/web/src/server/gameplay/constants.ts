@@ -10,6 +10,34 @@ export const GAME_SLUGS = {
   roulette: "european-roulette",
 } as const;
 
+export type GameplayMode = "SLOTS" | "BLACKJACK" | "ROULETTE" | "BACCARAT" | "DICE" | "ARCADE";
+
+const gameplayModes: Record<string, GameplayMode> = {
+  "neon-relics": "SLOTS",
+  "lunar-circuit": "SLOTS",
+  "orbit-reels": "SLOTS",
+  "ember-room": "SLOTS",
+  "moonlit-mint": "SLOTS",
+  "veltrix-blackjack": "BLACKJACK",
+  "signal-blackjack": "BLACKJACK",
+  "european-roulette": "ROULETTE",
+  "velvet-roulette": "ROULETTE",
+  "afterglow-baccarat": "BACCARAT",
+  "gilded-dice": "DICE",
+  "cinder-club": "DICE",
+  "neon-paddock": "ARCADE",
+  "tide-chase": "ARCADE",
+  "prism-pulse": "ARCADE",
+};
+
+export function gameplayModeForSlug(slug: string) {
+  return gameplayModes[slug] ?? null;
+}
+
+export function isPlayableGameSlug(slug: string): slug is keyof typeof gameplayModes {
+  return Boolean(gameplayModes[slug]);
+}
+
 export function isSupportedWager(value: unknown): value is DemoWager {
   return typeof value === "number" && Number.isSafeInteger(value) && (DEMO_WAGERS as readonly number[]).includes(value);
 }
