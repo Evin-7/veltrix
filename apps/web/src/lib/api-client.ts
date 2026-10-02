@@ -40,7 +40,9 @@ export async function requestJsonEnvelope<T, M = Record<string, unknown>>(
       ...options,
       signal: controller.signal,
       headers: {
-        ...(options.body ? { "content-type": "application/json" } : {}),
+        ...(typeof options.body === "string"
+          ? { "content-type": "application/json" }
+          : {}),
         ...(options.headers ?? {}),
       },
     });

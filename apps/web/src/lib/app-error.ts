@@ -15,6 +15,10 @@ export type AppErrorCode =
   | "NETWORK_ERROR"
   | "BAD_REQUEST"
   | "CONFLICT"
+  | "FILE_TOO_LARGE"
+  | "INVALID_IMAGE"
+  | "IMAGE_UPLOAD_NOT_CONFIGURED"
+  | "IMAGE_UPLOAD_FAILED"
   | "INTERNAL_ERROR"
   | "UNKNOWN";
 
@@ -45,6 +49,10 @@ const safeMessages: Record<AppErrorCode, string> = {
   NETWORK_ERROR: "Connection problem. Check your connection and try again.",
   BAD_REQUEST: "We could not complete that request. Please check your details and try again.",
   CONFLICT: "We could not complete that request right now. Please try again.",
+  FILE_TOO_LARGE: "That image is too large. Choose an image under 8 MB.",
+  INVALID_IMAGE: "Choose a JPG, PNG, or WebP image and try again.",
+  IMAGE_UPLOAD_NOT_CONFIGURED: "Profile image uploads are not configured yet.",
+  IMAGE_UPLOAD_FAILED: "We could not upload that image. Please try again.",
   INTERNAL_ERROR: "Something went wrong on our side. Please try again.",
   UNKNOWN: "Something went wrong. Please try again.",
 };
@@ -52,6 +60,7 @@ const safeMessages: Record<AppErrorCode, string> = {
 const retryableCodes = new Set<AppErrorCode>([
   "NETWORK_ERROR",
   "RATE_LIMITED",
+  "IMAGE_UPLOAD_FAILED",
   "INTERNAL_ERROR",
   "CONFLICT",
   "UNKNOWN",

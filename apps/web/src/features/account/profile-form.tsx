@@ -1,7 +1,10 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useEffect } from "react";
+import { AvatarCropper } from "@/features/account/avatar-cropper";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { requestJson } from "@/lib/api-client";
@@ -18,24 +21,59 @@ export function ProfileForm({
 }: ProfileFormProps) {
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
+  const [pendingAvatar, setPendingAvatar] = useState<File | null>(null);
+  const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    return () => {
+      if (previewAvatarUrl) URL.revokeObjectURL(previewAvatarUrl);
+    };
+  }, [previewAvatarUrl]);
+
+  const visibleAvatarUrl = previewAvatarUrl ?? avatarUrl;
+
+  function handleCroppedAvatar(file: File) {
+    setPendingAvatar(file);
+    setPreviewAvatarUrl(URL.createObjectURL(file));
+    setMessage(null);
+  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSaving(true);
     setMessage(null);
     try {
+      let nextAvatarUrl = avatarUrl.trim() || null;
+      if (pendingAvatar) {
+        const formData = new FormData();
+        formData.append("file", pendingAvatar);
+        const upload = await requestJson<{ avatarUrl: string }>(
+          "/api/v1/users/me/avatar",
+          {
+            body: formData,
+            method: "POST",
+          },
+        );
+        nextAvatarUrl = upload.avatarUrl;
+      }
+
       await requestJson("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify({
           displayName: displayName.trim() || null,
-          avatarUrl: avatarUrl.trim() || null,
+          avatarUrl: nextAvatarUrl,
         }),
       });
+      setAvatarUrl(nextAvatarUrl ?? "");
+      setPendingAvatar(null);
+      setPreviewAvatarUrl(null);
       setMessage("Profile saved.");
       showToast("Profile saved", "success");
+      router.refresh();
     } catch (error) {
       const message = safeErrorMessage(error, "NETWORK_ERROR");
       showToast(message, "error");
@@ -57,19 +95,43 @@ export function ProfileForm({
           value={displayName}
         />
       </label>
-      <label className="block">
+      <div className="block">
         <span className="mb-2 block text-xs font-semibold text-foreground-subtle">
-          Avatar URL{" "}
+          Profile image{" "}
           <span className="font-normal text-foreground-muted">(optional)</span>
         </span>
-        <input
-          className="field focus-ring"
-          maxLength={500}
-          onChange={(event) => setAvatarUrl(event.target.value)}
-          type="url"
-          value={avatarUrl}
-        />
-      </label>
+        <div className="flex flex-col gap-3 rounded-[var(--radius-control)] border border-border bg-surface-hover/30 p-3 sm:flex-row sm:items-center">
+          <span
+            className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-[#e8b86a] to-[#a86246] text-sm font-bold text-[#17110a]"
+            style={visibleAvatarUrl ? { backgroundImage: `url(\"${visibleAvatarUrl}\")`, backgroundPosition: "center", backgroundSize: "cover" } : undefined}
+          >
+            {visibleAvatarUrl ? <span className="sr-only">Current profile image</span> : "V"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <AvatarCropper disabled={isSaving} onCropped={handleCroppedAvatar} />
+            <p className="mt-2 text-[11px] leading-4 text-muted">
+              JPG, PNG, or WebP · up to 8 MB · you can crop before saving
+            </p>
+          </div>
+        </div>
+        <div className="mt-3">
+          <span className="mb-2 block text-[11px] font-semibold text-muted">
+            Or paste an HTTPS image URL
+          </span>
+          <input
+            className="field focus-ring"
+            maxLength={500}
+            onChange={(event) => {
+              setAvatarUrl(event.target.value);
+              setPendingAvatar(null);
+              setPreviewAvatarUrl(null);
+            }}
+            placeholder="https://…"
+            type="url"
+            value={avatarUrl}
+          />
+        </div>
+      </div>
       {message ? (
         <p aria-live="polite" className="text-xs font-semibold text-success">
           {message}
