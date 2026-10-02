@@ -7,7 +7,7 @@ export type WalletDbClient = Prisma.TransactionClient | PrismaClient;
 
 export type WalletMutationInput = {
   userId: string;
-  type: "WELCOME_BONUS" | "DAILY_REWARD" | "GAME_WAGER" | "GAME_WIN" | "ADMIN_ADJUSTMENT";
+  type: "WELCOME_BONUS" | "DAILY_REWARD" | "GAME_WAGER" | "GAME_WIN" | "ADMIN_ADJUSTMENT" | "PROMOTION_REWARD" | "VIP_REWARD";
   amount: number;
   idempotencyKey: string;
   referenceId?: string;

@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    enforceAuthRateLimit(request, "login");
+    await enforceAuthRateLimit(request, "login");
     assertSameOrigin(request);
     const input = loginSchema.parse(await readJson(request));
     let user;

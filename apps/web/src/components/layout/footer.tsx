@@ -1,14 +1,14 @@
 import { ShieldCheck, Sparkles } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-white/[0.07] bg-[#070a10]">
+    <footer className="mt-20 border-t border-border bg-surface/70">
       <div className="page-shell grid gap-10 py-12 sm:grid-cols-[1fr_auto] sm:items-end">
         <div>
-          <Link className="focus-ring inline-flex items-center gap-2 rounded-lg text-sm font-bold tracking-[0.16em] text-ink" href="/">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-amber font-serif text-sm font-bold text-[#17110a]">V</span>
-            VELTRIX
+          <Link aria-label="Veltrix home" className="focus-ring inline-flex items-center rounded-lg" href="/">
+            <Image alt="Veltrix" className="h-auto w-[156px]" height={300} src="/veltrix-wordmark.png" width={1450} />
           </Link>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted">A considered playground for fictional credits, atmospheric games, and polished product craft.</p>
           <p className="mt-5 flex items-center gap-2 text-[11px] font-semibold text-muted"><ShieldCheck size={14} className="text-mint" /> Built as a portfolio demonstration</p>

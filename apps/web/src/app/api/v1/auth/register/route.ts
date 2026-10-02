@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    enforceAuthRateLimit(request, "register");
+    await enforceAuthRateLimit(request, "register");
     assertSameOrigin(request);
     const input = registerSchema.parse(await readJson(request));
     const user = await registerUser(input);

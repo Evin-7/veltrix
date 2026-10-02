@@ -17,7 +17,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    enforceMutationRateLimit(request, "profile");
+    await enforceMutationRateLimit(request, "profile");
     assertSameOrigin(request);
     const user = await requireAuth();
     const input = updateProfileSchema.parse(await readJson(request));

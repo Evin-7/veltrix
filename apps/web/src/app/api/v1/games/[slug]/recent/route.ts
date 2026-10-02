@@ -12,7 +12,7 @@ type RecentRouteProps = { params: Promise<{ slug: string }> };
 
 export async function POST(request: Request, { params }: RecentRouteProps) {
   try {
-    enforceMutationRateLimit(request, "recent");
+    await enforceMutationRateLimit(request, "recent");
     assertSameOrigin(request);
     const user = requireRole(await requireAuth(), ["PLAYER"]);
     const { slug } = await params;

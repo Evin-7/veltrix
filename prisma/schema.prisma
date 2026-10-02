@@ -45,6 +45,38 @@ enum WalletTransactionType {
   GAME_WAGER
   GAME_WIN
   ADMIN_ADJUSTMENT
+  PROMOTION_REWARD
+  VIP_REWARD
+}
+
+enum PromotionStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  ENDED
+  ARCHIVED
+}
+
+enum VipLevel {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+}
+
+enum RewardHistoryType {
+  DAILY_REWARD
+  PROMOTION_REWARD
+  VIP_MILESTONE
+}
+
+enum NotificationType {
+  REWARD
+  PROMOTION
+  ACCOUNT
+  RESPONSIBLE_GAMING
+  SYSTEM
 }
 
 enum GameSessionStatus {
@@ -76,13 +108,13 @@ enum GameActionType {
 }
 
 model User {
-  id                 String              @id @default(uuid()) @db.Uuid
-  email              String              @unique @db.VarChar(320)
-  passwordHash       String              @db.VarChar(255)
-  role               Role                @default(PLAYER)
-  status             UserStatus          @default(ACTIVE)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                 String                    @id @default(uuid()) @db.Uuid
+  email              String                    @unique @db.VarChar(320)
+  passwordHash       String                    @db.VarChar(255)
+  role               Role                      @default(PLAYER)
+  status             UserStatus                @default(ACTIVE)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
   lastLoginAt        DateTime?
   profile            Profile?
   sessions           AuthSession[]
@@ -93,6 +125,14 @@ model User {
   gameSessions       GameSession[]
   gameRounds         GameRound[]
   gameActions        GameAction[]
+  auditLogs          AuditLog[]
+  createdPromotions  Promotion[]               @relation("PromotionCreatedBy")
+  promotionClaims    PromotionClaim[]
+  progression        PlayerProgression?
+  xpEvents           XpEvent[]
+  rewardHistory      RewardHistory[]
+  responsibleGaming  ResponsibleGamingSetting?
+  notifications      Notification[]
 
   @@index([status])
   @@index([role])
@@ -256,6 +296,7 @@ model WalletTransaction {
   createdAt      DateTime              @default(now())
   wallet         Wallet                @relation(fields: [walletId], references: [id], onDelete: Restrict)
   user           User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  RewardHistory  RewardHistory?
 
   @@index([walletId, createdAt])
   @@index([userId, createdAt])
@@ -287,4 +328,139 @@ model RecentGame {
   @@unique([userId, gameId])
   @@index([userId, lastPlayedAt])
   @@index([gameId])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  actorUserId    String   @db.Uuid
+  action         String   @db.VarChar(80)
+  targetType     String   @db.VarChar(40)
+  targetId       String?  @db.VarChar(160)
+  idempotencyKey String?  @unique @db.VarChar(160)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  actor          User     @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId, createdAt])
+}
+
+model Promotion {
+  id          String           @id @default(uuid()) @db.Uuid
+  title       String           @db.VarChar(160)
+  slug        String           @unique @db.VarChar(160)
+  description String           @db.VarChar(1000)
+  banner      Json?
+  startAt     DateTime
+  endAt       DateTime
+  status      PromotionStatus  @default(DRAFT)
+  rewardVC    Int
+  eligibility Json?
+  createdById String           @db.Uuid
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  createdBy   User             @relation("PromotionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  claims      PromotionClaim[]
+  rewards     RewardHistory[]
+
+  @@index([status, startAt, endAt])
+  @@index([createdById, createdAt])
+}
+
+model PromotionClaim {
+  id                  String    @id @default(uuid()) @db.Uuid
+  promotionId         String    @db.Uuid
+  userId              String    @db.Uuid
+  rewardVC            Int
+  walletTransactionId String?   @unique @db.Uuid
+  idempotencyKey      String    @unique @db.VarChar(160)
+  claimedAt           DateTime  @default(now())
+  promotion           Promotion @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, userId])
+  @@index([userId, claimedAt])
+  @@index([promotionId, claimedAt])
+}
+
+model VipLevelConfig {
+  level       VipLevel @id
+  xpThreshold Int
+  rewardVC    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PlayerProgression {
+  userId    String   @id @db.Uuid
+  level     VipLevel @default(BRONZE)
+  xp        Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([level, xp])
+}
+
+model XpEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  sourceType String   @db.VarChar(40)
+  sourceId   String   @db.VarChar(160)
+  amount     Int
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceType, sourceId])
+  @@index([userId, createdAt])
+}
+
+model RewardHistory {
+  id                  String             @id @default(uuid()) @db.Uuid
+  userId              String             @db.Uuid
+  type                RewardHistoryType
+  amountVC            Int                @default(0)
+  level               VipLevel?
+  promotionId         String?            @db.Uuid
+  walletTransactionId String?            @unique @db.Uuid
+  sourceKey           String             @unique @db.VarChar(200)
+  metadata            Json?
+  createdAt           DateTime           @default(now())
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotion           Promotion?         @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  walletTransaction   WalletTransaction? @relation(fields: [walletTransactionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([userId, type, createdAt])
+  @@index([promotionId])
+}
+
+model ResponsibleGamingSetting {
+  userId                 String    @id @db.Uuid
+  sessionReminderMinutes Int       @default(30)
+  dailyWagerLimit        Int?
+  maxWager               Int?
+  coolOffUntil           DateTime?
+  selfExcludedUntil      DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([coolOffUntil])
+  @@index([selfExcludedUntil])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String           @db.VarChar(160)
+  message   String           @db.VarChar(500)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([userId, createdAt])
 }

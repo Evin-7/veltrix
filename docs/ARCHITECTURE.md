@@ -1,4 +1,4 @@
-# Veltrix Phase 3 Architecture
+# Veltrix Phase 5 Architecture
 
 ## Decision summary
 
@@ -14,7 +14,8 @@ Route handlers are responsible for HTTP concerns only. Auth, rate limiting, erro
 
 ## Runtime boundaries
 
-- `apps/web/src/app/api/v1`: REST endpoints
+- `apps/web/src/app/api/v1`: player and admin REST endpoints
+- `apps/admin`: separate browser UI for back-office operations; it does not own auth or persistence
 - `apps/web/src/server/db`: lazy Prisma client initialization
 - `apps/web/src/server/auth`: password hashing, sessions, authorization, and schemas
 - `apps/web/src/server/games`: database queries, public game mapping, and query validation
@@ -22,6 +23,13 @@ Route handlers are responsible for HTTP concerns only. Auth, rate limiting, erro
 - `apps/web/src/server/gameplay`: secure randomness, pure game rules, round orchestration, recovery, and session history
 - `apps/web/src/server/users`: profile changes, favourites, and recently played activity
 - `apps/web/src/server/http`: API envelopes, safe errors, rate limiting, and origin checks
+- `apps/web/src/server/observability`: structured JSON logs and request-correlation primitives
+- `apps/web/src/server/admin`: admin queries, permissioned mutations, and audit writes
+- `apps/web/src/server/promotions`: eligibility, idempotent claims, and reward issuance
+- `apps/web/src/server/rewards`: gameplay XP, VIP thresholds, milestone rewards, and reward history
+- `apps/web/src/server/responsible-gaming`: player limits, pause controls, UTC wager enforcement, and status
+- `apps/web/src/server/notifications`: scoped notification reads and writes
+- `apps/web/src/server/realtime`: authenticated display snapshots for SSE consumers
 - `prisma`: schema, committed migration, and development seed
 
 Prisma is initialized lazily on the first server request. `DATABASE_URL` is the pooled Neon URL used by the Node.js application, while `DIRECT_DATABASE_URL` is used by Prisma CLI commands through the schema datasource `directUrl`. This keeps application connections pool-friendly and migration operations session-safe without changing the PostgreSQL architecture.
@@ -68,6 +76,27 @@ The pure engines do not import Prisma or wallet code. They accept an injectable 
 
 The client never stores a session token in localStorage and never chooses a role.
 
+## Admin boundary
+
+The admin UI runs on `http://localhost:3001` during local development and calls the existing web/API app on `http://localhost:3000`. The web app allows only the configured `ADMIN_APP_URL` as an admin API origin, sends credentials, and uses the same `veltrix_session` cookie. Every admin route independently validates the session and role; UI hiding is not an authorization boundary.
+
+Admin writes use the following safety rules:
+
+- disabling a player revokes all active sessions in the same transaction and writes an audit event;
+- VC corrections are available only to `SUPER_ADMIN`, require a reason and idempotency key, lock the wallet, and call the existing append-only ledger primitive;
+- game/provider operations are limited to metadata and availability; rounds, outcomes, balances, and settlement history are read-only;
+- `AuditLog` has no update/delete API and is added by a new migration without changing prior migration history.
+
+## Phase 6 product systems
+
+Promotions, progression, responsible gaming, notifications, and realtime presentation are layered onto the Phase 4 gameplay transaction. A completed round first performs the existing wager/payout settlement, then records one server-derived XP event while the wallet lock is still held. Crossing a configured VIP threshold can append one `VIP_REWARD` ledger entry, one immutable `RewardHistory` row, and one notification. Promotion claims follow the same wallet ledger primitive and are protected by both a unique business claim and request idempotency.
+
+Responsible-gaming settings are user-owned rows. Before a new wager is debited, gameplay checks active self-exclusion/cool-off, applies `min(platformMaxWager, playerMaxWager)`, and aggregates the current UTC day’s `GAME_WAGER` debits while the player wallet is locked. This makes daily limits safe under concurrent requests without introducing a second balance or settlement path. Session reminders are informational; cool-off and self-exclusion are blocking controls.
+
+Realtime uses authenticated Server-Sent Events rather than Socket.IO. The current Next deployment needs one-way server-to-browser snapshots, and SSE keeps the dependency and operational surface small. The stream is scoped from the session cookie, never accepts a client user ID, and polls authoritative PostgreSQL-backed state. Disconnects, missed events, or disabled sockets do not affect REST mutations or wallet integrity.
+
+Production requests receive a request ID at the Next.js 16 `proxy.ts` boundary. API error responses repeat that ID and unexpected failures emit safe structured JSON logs. The local rate limiter is intentionally process-local for zero-dependency development; production uses Upstash REST counters so multiple serverless instances share the same policy. See [OBSERVABILITY.md](./OBSERVABILITY.md) and [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ## Phase boundaries
 
-Phase 4 contains virtual-credit gameplay only. It still intentionally does not contain real-money functionality, deposits, withdrawals, purchases, transfers, crypto, admin wallet adjustment UI, VIP rewards, promotions, or WebSockets.
+Phases 5 and 6 contain back-office observability, controlled virtual-credit administration, product rewards, responsible-gaming controls, and display-only realtime updates. The system still intentionally does not contain real-money functionality, deposits, withdrawals, purchases, transfers, crypto, payment operations, or cash-out.

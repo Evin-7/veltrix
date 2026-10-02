@@ -7,69 +7,53 @@ import { useState } from "react";
 import type { Game } from "@/features/games/types";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/toast";
 import { GameArtwork } from "./game-artwork";
 
-type GameCardProps = {
-  game: Game;
-  compact?: boolean;
-  initialIsFavourite?: boolean;
-};
+type GameCardProps = { game: Game; compact?: boolean; initialIsFavourite?: boolean };
 
 export function GameCard({ game, compact = false, initialIsFavourite = false }: GameCardProps) {
   const router = useRouter();
   const [isFavourite, setIsFavourite] = useState(initialIsFavourite);
+  const [isFavouritePopping, setIsFavouritePopping] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast();
 
   async function toggleFavourite() {
     if (isSaving) return;
+    const previousValue = isFavourite;
+    const nextValue = !previousValue;
+    setIsFavourite(nextValue);
+    setIsFavouritePopping(nextValue);
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/v1/games/${game.slug}/favourite`, { method: isFavourite ? "DELETE" : "POST" });
-      if (response.status === 401) {
-        router.push(`/login?next=${encodeURIComponent(`/casino/${game.slug}`)}`);
-        return;
-      }
-      if (!response.ok) return;
+      const response = await fetch(`/api/v1/games/${game.slug}/favourite`, { method: nextValue ? "POST" : "DELETE" });
+      if (response.status === 401) { setIsFavourite(previousValue); setIsFavouritePopping(false); router.push(`/login?next=${encodeURIComponent(`/casino/${game.slug}`)}`); return; }
+      if (!response.ok) throw new Error("Favourite update failed");
       const payload = (await response.json()) as { data?: { isFavourite?: boolean } };
-      setIsFavourite(Boolean(payload.data?.isFavourite));
-    } finally {
-      setIsSaving(false);
-    }
+      const savedValue = Boolean(payload.data?.isFavourite);
+      setIsFavourite(savedValue);
+      setIsFavouritePopping(savedValue);
+      window.dispatchEvent(new CustomEvent("veltrix:favourite-changed", { detail: { slug: game.slug, isFavourite: savedValue } }));
+      showToast(savedValue ? "Added to favourites" : "Removed from favourites", "success");
+    } catch {
+      setIsFavourite(previousValue);
+      setIsFavouritePopping(false);
+      showToast("Couldn’t update favourites", "error");
+    } finally { setIsSaving(false); }
   }
 
   return (
-    <article className={cn("group min-w-0", compact && "max-w-[228px]")}>
-      <div className="relative">
-        <Link aria-label={`Open ${game.name}`} className="focus-ring block" href={`/casino/${game.slug}`}>
+    <article className={cn("group min-w-0", compact && "max-w-[208px]")}>
+      <div className="relative overflow-hidden rounded-[18px]">
+        <Link aria-label={`Open ${game.name}`} className="focus-ring block rounded-[18px]" href={`/casino/${game.slug}`}>
           <GameArtwork game={game} compact={compact} />
+          <span className="pointer-events-none absolute inset-0 grid place-items-center bg-black/0 transition-colors duration-300 group-hover:bg-black/35 group-focus-within:bg-black/30"><span className="translate-y-2 scale-90 rounded-full border border-white/25 bg-white/95 px-3.5 py-2 text-xs font-bold text-slate-900 opacity-0 shadow-xl transition-all duration-300 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 group-focus-within:opacity-100"><Play className="mr-1 inline" fill="currentColor" size={12} /> Play demo</span></span>
         </Link>
-        <button
-            aria-label={isFavourite ? `Remove ${game.name} from favourites` : `Add ${game.name} to favourites`}
-            aria-pressed={isFavourite}
-            className={cn(
-            "focus-ring absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/25 text-white/70 backdrop-blur-md hover:border-white/30 hover:text-white",
-            isFavourite && "border-rose-300/40 bg-[#ff9bbb]/20 text-[#ffb1c9]",
-            )}
-          disabled={isSaving}
-          onClick={toggleFavourite}
-          type="button"
-        >
-          <Heart fill={isFavourite ? "currentColor" : "none"} size={15} strokeWidth={1.8} />
-        </button>
+        <button aria-label={isFavourite ? `Remove ${game.name} from favourites` : `Add ${game.name} to favourites`} aria-pressed={isFavourite} className={cn("focus-ring absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border-strong bg-surface/85 text-foreground-muted backdrop-blur-md hover:bg-surface hover:text-foreground", isFavourite && "border-favorite/65 bg-favorite/15 text-favorite hover:border-favorite/80 hover:text-favorite")} disabled={isSaving} onClick={toggleFavourite} title={isFavourite ? `Remove ${game.name} from favourites` : `Add ${game.name} to favourites`} type="button"><Heart className={cn(isFavouritePopping && "favorite-heart-pop")} fill={isFavourite ? "currentColor" : "none"} size={17} strokeWidth={1.8} /></button>
         {game.isNew ? <Badge className="absolute left-3 top-3" tone="mint">New</Badge> : null}
       </div>
-      <div className="flex items-start justify-between gap-2 px-0.5 pt-3">
-        <div className="min-w-0">
-          <Link className="focus-ring block truncate rounded-sm text-sm font-semibold text-ink hover:text-amber-bright" href={`/casino/${game.slug}`}>
-            {game.name}
-          </Link>
-          <p className="mt-1 truncate text-xs text-muted">{game.provider}</p>
-        </div>
-        <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-muted">
-          <Play fill="currentColor" size={9} />
-          {game.players}
-        </span>
-      </div>
+      <div className="flex items-start justify-between gap-2 px-0.5 pt-3"><div className="min-w-0"><Link className="display focus-ring block truncate rounded-sm text-base font-medium text-foreground hover:text-primary" href={`/casino/${game.slug}`}>{game.name}</Link><p className="mt-1 truncate text-xs text-foreground-muted">{game.provider}</p></div><span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-foreground-muted"><Play fill="currentColor" size={9} />{game.players}</span></div>
     </article>
   );
 }

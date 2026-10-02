@@ -4,6 +4,32 @@ Veltrix is a premium virtual-credit gaming demonstration platform. It is a portf
 
 > **Important:** Veltrix is a portfolio demonstration project. All currencies and wagers are fictional. The platform does not accept deposits, withdrawals, or real-money wagers.
 
+## Phase 5 scope
+
+Phase 5 adds a separate `apps/admin` control room backed by the existing web app’s versioned admin APIs:
+
+- ADMIN and SUPER_ADMIN-only dashboard, player, catalog, session, transaction, and audit views
+- server-derived dashboard KPIs and activity trends for 24-hour, 7-day, and 30-day ranges
+- player status controls that revoke active sessions immediately when disabled
+- SUPER_ADMIN-only compensating VC adjustments through the existing locked, append-only wallet ledger
+- provider and game metadata/status management without outcome or settlement editing
+- append-only `AuditLog` records for operational mutations
+
+The admin UI does not introduce a second auth or database system. `apps/admin` uses the existing Veltrix session cookie and calls protected admin route handlers hosted by `apps/web`.
+
+## Phase 6 scope
+
+Phase 6 adds product systems around the existing server-authoritative games:
+
+- one-time, idempotent promotions with eligibility checks and ledger-backed claims
+- server-derived gameplay XP, configurable Bronze/Silver/Gold/Platinum/Diamond VIP levels, milestone rewards, and immutable reward history
+- server-enforced session reminders, UTC daily wager limits, player maximum wagers, cool-off, and demo self-exclusion
+- player notifications and an authenticated Server-Sent Events snapshot stream for wallet, notification, and active-session updates
+- player pages for promotions, rewards, responsible gaming, and notifications
+- admin promotion lifecycle, VIP configuration, reward history, and read-only responsible-gaming inspection
+
+REST and PostgreSQL remain authoritative. The realtime stream is a convenience for display updates and never controls wallet integrity. Veltrix still has no real-money play, deposits, withdrawals, payment, crypto, purchasable VC, or cash-out.
+
 ## Phase 3 scope
 
 Phase 1 and Phase 2 remain intact. Phase 3 adds:
@@ -48,6 +74,7 @@ Requirements: Node.js 20+, npm 10+, and a Neon PostgreSQL project/branch. Docker
 npm ci
 cp .env.example .env
 cp .env.example apps/web/.env.local
+cp apps/admin/.env.example apps/admin/.env.local
 ```
 
 From Neon’s **Connect** dialog, copy both connection strings into both environment files:
@@ -68,9 +95,12 @@ npm run db:generate
 npm run db:migrate:deploy
 npm run db:seed
 npm run dev
+# In a second terminal:
+npm run dev:admin
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3001](http://localhost:3001) for the admin control room.
 
 Useful commands:
 
@@ -79,14 +109,19 @@ npm run typecheck
 npm run lint
 npm run test
 npm run build
+npm run typecheck:admin
+npm run lint:admin
+npm run build:admin
 npm run db:migrate          # safe alias for migrate:deploy
 npm run db:migrate:dev      # migration authoring only; not for shared data
 npm run format
 ```
 
-`DATABASE_URL`, `DIRECT_DATABASE_URL`, `AUTH_SECRET`, `APP_URL`, and `NODE_ENV` are validated when server code first initializes. The default migration command is `prisma migrate deploy`, which applies committed migrations without resetting or recreating the hosted database. There is intentionally no reset script in the Neon workflow. Never commit `.env`, `.env.local`, or production secrets.
+`DATABASE_URL`, `DIRECT_DATABASE_URL`, `AUTH_SECRET`, `APP_URL`, `ADMIN_APP_URL`, and `NODE_ENV` are validated or consumed by the local apps. `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are optional locally and required together for shared production rate limiting. The default migration command is `prisma migrate deploy`, which applies committed migrations without resetting or recreating the hosted database. There is intentionally no reset script in the Neon workflow. Never commit `.env`, `.env.local`, or production secrets.
 
 `docker-compose.yml` remains only as an optional legacy fallback for contributors who explicitly choose local PostgreSQL. It is not part of the default setup and is not needed for VELTRIX development on a storage-constrained Mac.
+
+For deployment, observability, and safe Neon release sequencing, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). System diagrams are in [docs/DIAGRAMS.md](docs/DIAGRAMS.md), and the concise portfolio summary is in [docs/PORTFOLIO.md](docs/PORTFOLIO.md).
 
 ## Phase 4 scope
 
@@ -96,21 +131,21 @@ Phase 4 adds three server-authoritative fictional-credit games:
 - **Veltrix Blackjack**: dealer stands on soft 17, blackjack pays 3:2, double is allowed on the initial two-card hand, and split/insurance/surrender are excluded.
 - **European Roulette**: single-zero roulette with red, black, odd, even, and single-number bets.
 
-All wagers are restricted server-side to `10`, `25`, `50`, `100`, `250`, or `500` VC. Wagers are debited as `GAME_WAGER` and only positive total returns are appended as `GAME_WIN`; `payout` consistently means the total amount returned after the wager was already debited.
+All wagers are restricted server-side to `10`, `25`, `50`, `100`, `250`, or `500` VC. Wagers are debited as `GAME_WAGER` and only positive total returns are appended as `GAME_WIN`; `payout` consistently means the total amount returned after the wager was already debited. Phase 6 responsible-gaming controls can further lower the effective maximum.
 
 The browser sends only a permitted wager/bet and an `Idempotency-Key`. The server generates outcomes with Node cryptographic randomness, evaluates rules, settles the round, updates the wallet, and returns the authoritative result. Blackjack’s active deck and hidden dealer card remain server-side in the database and can be recovered after refresh.
 
 ## Development demo accounts
 
-These accounts are created by the development seed only. Override the `SEED_*_PASSWORD` variables when needed; never reuse these values in production.
+These fictional accounts are created by the development seed only. The seed accepts `SEED_*_PASSWORD` variables and refuses production-mode seeding unless every password is explicitly injected. Never reuse local fallback credentials in a deployed environment; use a disposable Neon branch for demonstrations.
 
-| Role | Email | Password |
+| Role | Email |
 | --- | --- | --- |
-| SUPER_ADMIN | `superadmin@veltrix.local` | `VeltrixSuper!2026` |
-| ADMIN | `admin@veltrix.local` | `VeltrixAdmin!2026` |
-| PLAYER | `player@veltrix.local` | `VeltrixPlayer!2026` |
-| PLAYER | `player2@veltrix.local` | `VeltrixPlayer2!2026` |
-| PLAYER | `player3@veltrix.local` | `VeltrixPlayer3!2026` |
+| SUPER_ADMIN | `superadmin@veltrix.local` |
+| ADMIN | `admin@veltrix.local` |
+| PLAYER | `player@veltrix.local` |
+| PLAYER | `player2@veltrix.local` |
+| PLAYER | `player3@veltrix.local` |
 
 Seed passwords are hashed before persistence. Registration always creates a `PLAYER`; role selection is not accepted from the client.
 
@@ -118,7 +153,8 @@ Seed passwords are hashed before persistence. Registration always creates a `PLA
 
 ```text
 veltrix/
-├── apps/web/src/app/            # UI and versioned Next Route Handlers
+├── apps/web/src/app/            # Player UI and versioned Next Route Handlers
+├── apps/admin/src/app/          # Admin control-room UI
 ├── apps/web/src/server/         # Prisma, auth, validation, services, errors
 ├── apps/web/src/features/       # UI-facing feature types and presentation
 ├── apps/web/src/server/gameplay/ # pure game engines and transactional orchestration
@@ -126,7 +162,8 @@ veltrix/
 ├── prisma/migrations/           # committed migration history
 ├── prisma/seed.ts               # idempotent development seed
 ├── docker-compose.yml            # optional legacy local PostgreSQL fallback
-└── docs/                        # architecture, database, API, security
+├── e2e/                         # explicit, disposable-branch Playwright journeys
+└── docs/                        # architecture, database, API, security, deployment
 ```
 
 The API currently lives in Next Route Handlers instead of a second `services/api` process. The server modules are separated from route handlers so extraction into a standalone service remains possible when the admin/API workload warrants the extra deployment boundary.

@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { logger } from "../observability/logger";
 
 export class AppError extends Error {
   readonly status: number;
@@ -31,23 +33,28 @@ export function jsonDataWithMeta<T>(data: T, meta: Record<string, unknown>, init
   return Response.json({ data, meta }, init);
 }
 
-export function jsonError(error: unknown) {
+function withRequestId(response: Response, requestId: string) {
+  response.headers.set("X-Request-ID", requestId);
+  return response;
+}
+
+export function jsonError(error: unknown, requestId = randomUUID()) {
   if (error instanceof z.ZodError) {
-    return Response.json({ error: { code: "VALIDATION_ERROR", message: "Invalid request.", details: error.flatten().fieldErrors } }, { status: 400 });
+    return withRequestId(Response.json({ error: { code: "VALIDATION_ERROR", message: "Invalid request.", details: error.flatten().fieldErrors } }, { status: 400 }), requestId);
   }
 
   if (error instanceof AppError) {
     const response = Response.json({ error: { code: error.code, message: error.message, ...(error.details ? { details: error.details } : {}) } }, { status: error.status });
     if (error.retryAfterSeconds) response.headers.set("Retry-After", String(error.retryAfterSeconds));
-    return response;
+    return withRequestId(response, requestId);
   }
 
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-    return Response.json({ error: { code: "CONFLICT", message: "A record with those details already exists." } }, { status: 409 });
+    return withRequestId(Response.json({ error: { code: "CONFLICT", message: "A record with those details already exists." } }, { status: 409 }), requestId);
   }
 
-  console.error("[api] internal error");
-  return Response.json({ error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred." } }, { status: 500 });
+  logger.error("api.request_failed", { requestId, status: 500, code: "INTERNAL_ERROR", prismaCode: error instanceof Prisma.PrismaClientKnownRequestError ? error.code : undefined });
+  return withRequestId(Response.json({ error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred." } }, { status: 500 }), requestId);
 }
 
 export async function readJson(request: Request) {

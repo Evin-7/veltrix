@@ -11,10 +11,10 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "border-amber/60 bg-amber text-[#16120b] hover:border-amber-bright hover:bg-amber-bright",
-  secondary: "border-[var(--line-strong)] bg-white/[0.04] text-ink hover:border-white/25 hover:bg-white/[0.08]",
-  ghost: "border-transparent bg-transparent text-muted-strong hover:bg-white/[0.06] hover:text-ink",
-  quiet: "border-transparent bg-transparent px-0 text-muted hover:text-ink",
+  primary: "border-primary/60 bg-primary text-background hover:border-primary-hover hover:bg-primary-hover",
+  secondary: "border-border-strong bg-surface-hover/50 text-foreground hover:border-border-strong hover:bg-surface-hover",
+  ghost: "border-transparent bg-transparent text-foreground-subtle hover:bg-surface-hover hover:text-foreground",
+  quiet: "border-transparent bg-transparent px-0 text-foreground-muted hover:text-foreground",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -27,7 +27,7 @@ export function Button({ className, variant = "secondary", size = "md", children
   return (
     <button
       className={cn(
-        "focus-ring inline-flex items-center justify-center gap-2 rounded-full border font-semibold tracking-[-0.01em] disabled:cursor-not-allowed disabled:opacity-50",
+        "focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border font-semibold tracking-[-0.01em] disabled:cursor-not-allowed disabled:opacity-50",
         variantClasses[variant],
         sizeClasses[size],
         className,

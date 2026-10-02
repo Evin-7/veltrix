@@ -47,8 +47,8 @@ function TableNote({ error, message }: { error: string | null; message: string |
   return <p aria-live="polite" className={`min-h-6 text-xs font-semibold ${error ? "text-rose-300" : "text-mint"}`}>{error ?? message}</p>;
 }
 
-const slotSymbols = ["crystal", "crown", "orb", "star", "lightning", "diamond"] as const;
-const slotSymbolArt: Record<(typeof slotSymbols)[number], { glyph: string; label: string; tone: string }> = {
+type SlotSymbol = "crystal" | "crown" | "orb" | "star" | "lightning" | "diamond";
+const slotSymbolArt: Record<SlotSymbol, { glyph: string; label: string; tone: string }> = {
   crystal: { glyph: "✦", label: "Crystal", tone: "text-cyan-200" },
   crown: { glyph: "♛", label: "Crown", tone: "text-amber-200" },
   orb: { glyph: "◉", label: "Orb", tone: "text-fuchsia-200" },
@@ -56,12 +56,12 @@ const slotSymbolArt: Record<(typeof slotSymbols)[number], { glyph: string; label
   lightning: { glyph: "ϟ", label: "Lightning", tone: "text-lime-200" },
   diamond: { glyph: "◇", label: "Diamond", tone: "text-sky-200" },
 };
-type SlotResult = { roundId: string; reels: (typeof slotSymbols)[number][][]; winningLines: { line: number; symbol: (typeof slotSymbols)[number]; count: number; multiplier: number; payout: number }[]; wager: number; payout: number; netResult: number; newBalance: number };
+type SlotResult = { roundId: string; reels: SlotSymbol[][]; winningLines: { line: number; symbol: SlotSymbol; count: number; multiplier: number; payout: number }[]; wager: number; payout: number; netResult: number; newBalance: number };
 
 export function SlotsPanel({ initialBalance }: { initialBalance: number }) {
   const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<Wager>(100);
-  const [reels, setReels] = useState<(typeof slotSymbols)[number][][]>(Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => "diamond")));
+  const [reels, setReels] = useState<SlotSymbol[][]>(Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => "diamond" as SlotSymbol)));
   const [result, setResult] = useState<SlotResult | null>(null);
   const [history, setHistory] = useState<SlotResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);

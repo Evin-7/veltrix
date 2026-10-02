@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import { ArrowRight, CalendarDays, Heart, History, ShieldCheck, UserRound } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { AccountNav } from "@/features/account/account-nav";
+import { ProfileForm } from "@/features/account/profile-form";
+import { getCurrentUser } from "@/server/auth/session";
+import { listFavouriteGameIds, listRecentGames } from "@/server/users/service";
+import { getWalletSummary, listWalletTransactions } from "@/server/wallet/service";
+
+export const metadata: Metadata = { title: "Profile" };
+export const dynamic = "force-dynamic";
+
+function initials(label: string) {
+  return label.slice(0, 2).toUpperCase();
+}
+
+export default async function ProfilePage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?next=/profile");
+  const profile = user.profile;
+  const label = profile?.displayName || profile?.username || user.email;
+  const playerData = user.role === "PLAYER"
+    ? await Promise.all([listRecentGames(user.id, 4), listFavouriteGameIds(user.id), getWalletSummary(user.id), listWalletTransactions(user.id, { page: 1, pageSize: 1 })])
+    : null;
+
+  return <main className="page-shell pb-20 pt-10 sm:pt-16"><div className="max-w-3xl"><p className="eyebrow">Your corner of Veltrix</p><div className="mt-4 flex items-end justify-between gap-5"><div><h1 className="display text-5xl leading-none text-ink sm:text-6xl">Profile</h1><p className="mt-4 max-w-xl text-sm leading-6 text-muted">Keep your identity close, and let the lobby remember your rhythm.</p></div><Link className="focus-ring hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-xs font-semibold text-muted-strong hover:bg-white/[0.08] hover:text-ink sm:inline-flex" href="/casino">Explore lobby <ArrowRight size={14} /></Link></div></div><div className="mt-8 max-w-4xl"><AccountNav /></div><section className="mt-6 grid gap-5 lg:grid-cols-[0.75fr_1.25fr]"><div className="surface rounded-[28px] p-6 sm:p-8"><div className="flex items-center gap-4"><span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[22px] bg-gradient-to-br from-[#e8b86a] to-[#a86246] text-lg font-bold text-[#17110a]" style={profile?.avatarUrl ? { backgroundImage: `url(\"${profile.avatarUrl}\")`, backgroundPosition: "center", backgroundSize: "cover" } : undefined}>{profile?.avatarUrl ? <span className="sr-only">{initials(label)}</span> : initials(label)}</span><div className="min-w-0"><h2 className="truncate text-xl font-semibold text-ink">{label}</h2><p className="mt-1 truncate text-xs text-muted">@{profile?.username ?? "veltrix-player"}</p></div></div><div className="mt-8 grid gap-4 border-t border-white/10 pt-6"><div className="flex items-center gap-3"><CalendarDays className="text-amber" size={16} /><div><p className="text-[10px] uppercase tracking-[0.12em] text-muted">Member since</p><p className="mt-1 text-sm font-semibold text-ink">{new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(new Date(user.createdAt))}</p></div></div><div className="flex items-center gap-3"><ShieldCheck className="text-mint" size={16} /><div><p className="text-[10px] uppercase tracking-[0.12em] text-muted">Account</p><p className="mt-1 text-sm font-semibold text-ink">{user.role === "PLAYER" ? "Player · demo access" : `${user.role.replace("_", " ")} · internal access`}</p></div></div><div className="flex items-center gap-3"><UserRound className="text-muted" size={16} /><div><p className="text-[10px] uppercase tracking-[0.12em] text-muted">Email</p><p className="mt-1 truncate text-sm font-semibold text-ink">{user.email}</p></div></div></div></div><div className="surface-subtle rounded-[28px] p-6 sm:p-8"><p className="eyebrow">Identity</p><h2 className="display mt-3 text-3xl text-ink">Make it feel like yours.</h2><p className="mt-3 max-w-lg text-sm leading-6 text-muted">Your email, role, account status, and VC balance are protected account fields. Only your display name and avatar URL can be edited here.</p><div className="mt-7"><ProfileForm initialAvatarUrl={profile?.avatarUrl ?? null} initialDisplayName={profile?.displayName ?? profile?.username ?? ""} /></div></div></section>{playerData ? <section className="mt-5 grid gap-3 sm:grid-cols-3"><Link className="surface-subtle group rounded-2xl p-5" href="/wallet"><p className="text-[10px] uppercase tracking-[0.14em] text-muted">Balance</p><p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-ink">{playerData[2].balance.toLocaleString("en-US")} <span className="text-sm text-amber-bright">VC</span></p><p className="mt-2 text-xs text-muted group-hover:text-ink">Open wallet <ArrowRight className="ml-1 inline" size={12} /></p></Link><Link className="surface-subtle group rounded-2xl p-5" href="/transactions"><p className="text-[10px] uppercase tracking-[0.14em] text-muted">Ledger entries</p><p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-ink">{playerData[3].meta.total.toLocaleString("en-US")}</p><p className="mt-2 text-xs text-muted group-hover:text-ink"><History className="mr-1 inline" size={12} /> View history</p></Link><div className="surface-subtle rounded-2xl p-5"><p className="text-[10px] uppercase tracking-[0.14em] text-muted">Saved rhythm</p><p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-ink">{playerData[1].length + playerData[0].length}</p><p className="mt-2 text-xs text-muted"><Heart className="mr-1 inline text-favorite" size={12} /> Favourites + recent</p></div></section> : null}</main>;
+}

@@ -14,7 +14,7 @@ The auth API rejects mismatched browser `Origin` headers. Same-site cookies plus
 
 ## Authorization
 
-`requireAuth` validates the session and active user status on the server. `requireRole` is a reusable server-side guard for future admin endpoints. Frontend visibility is never considered authorization.
+`requireAuth` validates the session and active user status on the server. `requireRole` is applied independently by every admin route; frontend visibility is never considered authorization. A `PLAYER` cannot access admin routes.
 
 Registration always assigns `PLAYER`; role fields are not accepted from the client.
 
@@ -46,14 +46,34 @@ The game rules and RNG source are unit-testable with deterministic injected sour
 
 Zod validates request bodies and query parameters. Errors map to stable status codes and error codes; Prisma internals and stack traces are not exposed. Server logs intentionally record only a generic internal-error marker for unexpected API failures.
 
-Login, registration, profile, favourite, recent-activity, and daily-reward mutations use a small in-memory per-process rate limiter. This is appropriate for the single-process portfolio demo, but production horizontal scaling should move the limiter to a shared store or edge gateway before exposing the endpoints publicly.
+Login, registration, profile, favourite, recent-activity, gameplay-adjacent mutations, product mutations, and admin routes use bounded rate limits. Local development falls back to a small in-memory limiter; production requires the paired `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` variables and uses atomic Redis counters with a 60-second expiry. If the shared store is unavailable, production fails closed with a generic retryable error instead of silently reverting to process-local protection.
 
 ## Headers and secrets
 
-Next adds `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. `DATABASE_URL`, `AUTH_SECRET`, and seed password overrides come only from environment variables. `.env` and `.env.local` are ignored and must never be committed.
+Next adds `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-DNS-Prefetch-Control`, and `X-Permitted-Cross-Domain-Policies`. API responses carry a correlation-friendly `X-Request-ID`, and unexpected failures are emitted as structured JSON without request bodies, cookies, stack traces, or secrets. `DATABASE_URL`, `AUTH_SECRET`, seed password overrides, and production rate-limit credentials come only from environment variables. `.env` and `.env.local` are ignored and must never be committed.
 
-For Neon, `DATABASE_URL` contains the pooled application connection and `DIRECT_DATABASE_URL` contains the direct migration/seed connection. Both contain credentials and must remain local secrets. The repository includes only placeholders in `.env.example`; no real Neon URL is tracked.
+For Neon, `DATABASE_URL` contains the pooled application connection and `DIRECT_DATABASE_URL` contains the direct migration/seed connection. Both contain credentials and must remain local secrets. The repository includes only placeholders in `.env.example` and `apps/admin/.env.example`; no real Neon URL is tracked.
+
+## Admin controls
+
+The admin application uses the existing `veltrix_session` cookie and the same password/session service; it does not create a second identity system. Admin API responses include CORS credentials headers only for the configured `ADMIN_APP_URL`. Disabling a player updates status and revokes sessions atomically, so subsequent protected player requests fail immediately.
+
+Only `SUPER_ADMIN` can adjust a player balance. The adjustment endpoint requires a non-zero signed integer, a reason, and an idempotency key. It obtains the wallet row lock and calls `applyWalletMutationToLockedWallet` with `ADMIN_ADJUSTMENT`; it never sets a balance directly. The wallet transaction and audit record commit together. Game/provider screens cannot edit game outcomes, rounds, action responses, or ledger history.
+
+## Phase 6 product-system controls
+
+Promotion eligibility is evaluated from the authenticated player’s stored account creation date and server-side progression. A claim locks the promotion row, checks status/window/eligibility, locks the wallet, and commits the wallet reward, claim, reward history, and notification together. The request idempotency key and `(promotionId, userId)` uniqueness prevent retries and concurrent claims from issuing twice.
+
+XP is calculated from the settled wager in server code. The browser cannot submit XP, VIP level, milestone state, or reward amount. Progression is row-locked before the unique `XpEvent` is created; each VIP milestone has a unique source key and one ledger reward. Admin VIP threshold/reward edits are SUPER_ADMIN-only and audited.
+
+Responsible-gaming settings are scoped to the authenticated user. Gameplay checks cool-off and self-exclusion after locking the player wallet, uses the lower of platform and player wager maximums, and sums UTC-day `GAME_WAGER` debits under that lock. This prevents parallel requests from racing past a daily limit. Admin inspection is read-only and has no casual override path; sensitive player changes create audit records and notifications.
+
+The realtime endpoint uses the authenticated session cookie to scope an SSE stream. It accepts no user identifier, emits only safe display snapshots, and is not used to authorize or settle anything. REST responses and PostgreSQL transactions remain authoritative when the stream is disconnected or stale.
+
+## Demo seed safety
+
+The seed contains fictional local fallback account passwords only for development convenience. In production mode, it refuses to run unless every `SEED_*_PASSWORD` is injected explicitly. Seeded providers, games, players, promotions, transactions, and one clearly marked fictional historical roulette session are idempotent; no privileged production credential is predictable or committed as a deployment secret.
 
 ## Scope
 
-Veltrix does not process money, payments, crypto, deposits, withdrawals, purchases, transfers, redemptions, or real-money wagers. Phase 4 adds fictional-credit gameplay only; admin adjustment UI, promotions, VIP tiers, WebSockets, and production-grade distributed rate limiting remain out of scope.
+Veltrix does not process money, payments, crypto, deposits, withdrawals, purchases, transfers, redemptions, or real-money wagers. Promotions, VIP tiers, and responsible-gaming controls operate only on fictional VC. The game engines are portfolio-grade demonstrations and are not certified real-money gambling software.

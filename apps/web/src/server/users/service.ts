@@ -76,7 +76,7 @@ export async function listRecentGames(userId: string, limit = 4) {
   const recentGames = await getPrisma().recentGame.findMany({
     where: { userId, game: publicGameWhere },
     orderBy: { lastPlayedAt: "desc" },
-    take: limit,
+    take: Math.min(Math.max(Math.trunc(limit), 1), 20),
     select: { lastPlayedAt: true, game: { select: gameSelect } },
   });
   return recentGames.map((recentGame) => ({ game: mapGame(recentGame.game), lastPlayedAt: recentGame.lastPlayedAt.toISOString() }));

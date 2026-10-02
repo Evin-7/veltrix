@@ -30,8 +30,10 @@ export async function registerUser(input: RegisterInput): Promise<SafeUser> {
         include: userWithProfile,
       });
       await createPlayerWalletWithWelcome(tx, createdUser.id);
+      await tx.playerProgression.create({ data: { userId: createdUser.id, level: "BRONZE", xp: 0 } });
+      await tx.responsibleGamingSetting.create({ data: { userId: createdUser.id } });
       return createdUser;
-    });
+    }, { maxWait: 15_000, timeout: 30_000 });
 
     return toSafeUser(user);
   } catch (error) {

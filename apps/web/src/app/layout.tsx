@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { Oswald, Roboto } from "next/font/google";
+import Script from "next/script";
 import type { ReactNode } from "react";
 import "./globals.css";
-import { Footer } from "@/components/layout/footer";
-import { Header } from "@/components/layout/header";
-import { getCurrentUser } from "@/server/auth/session";
-import { getWalletSummary, type WalletSummary } from "@/server/wallet/service";
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { ToastProvider } from "@/components/ui/toast";
 
-export const dynamic = "force-dynamic";
+const roboto = Roboto({ subsets: ["latin"], display: "swap", variable: "--font-roboto", weight: ["400", "500", "600", "700"] });
+const oswald = Oswald({ subsets: ["latin"], display: "swap", variable: "--font-oswald", weight: ["400", "500", "600", "700"] });
+const themeScript = `(() => { try { const saved = localStorage.getItem('veltrix-theme'); const preference = saved === 'light' || saved === 'dark' ? saved : 'system'; const dark = preference === 'dark' || (preference === 'system' && matchMedia('(prefers-color-scheme: dark)').matches); document.documentElement.dataset.theme = dark ? 'dark' : 'light'; document.documentElement.style.colorScheme = dark ? 'dark' : 'light'; } catch (_) { document.documentElement.dataset.theme = 'dark'; } })()`;
 
 export const metadata: Metadata = {
   title: {
@@ -16,15 +18,16 @@ export const metadata: Metadata = {
   description: "A premium virtual-credit gaming demonstration platform.",
 };
 
-export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const currentUser = await getCurrentUser();
-  const wallet: WalletSummary | null = currentUser?.role === "PLAYER" ? await getWalletSummary(currentUser.id).catch(() => null) : null;
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
-      <body>
-        <Header initialUser={currentUser} initialWallet={wallet} />
-        {children}
-        <Footer />
+    <html lang="en" suppressHydrationWarning>
+      <head><Script id="veltrix-theme" strategy="beforeInteractive">{themeScript}</Script></head>
+      <body className={`${roboto.variable} ${oswald.variable}`}>
+        <ThemeProvider>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

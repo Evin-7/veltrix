@@ -4,6 +4,7 @@ import { ArrowRight, CalendarClock, Check, Gift, LoaderCircle, Sparkles } from "
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import type { WalletSummary, WalletTransactionView } from "@/server/wallet/service";
 
 type DailyStatus = { amount: number; claimed: boolean; available: boolean; nextEligibleAt: string };
@@ -23,6 +24,7 @@ export function WalletPanel({ initialWallet, initialDailyStatus, initialTransact
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isClaiming, setIsClaiming] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   async function claimReward() {
     if (!dailyStatus.available || isClaiming) return;
@@ -45,8 +47,10 @@ export function WalletPanel({ initialWallet, initialDailyStatus, initialTransact
       setWallet(walletPayload.data);
       setTransactions(transactionPayload.data);
       setDailyStatus(statusPayload.data);
+      showToast("Daily reward claimed", "success");
     } catch {
       setErrorMessage("The service is unavailable right now. Please try again.");
+      showToast("Couldn’t claim daily reward", "error");
     } finally {
       setIsClaiming(false);
     }

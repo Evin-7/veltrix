@@ -2,6 +2,8 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
 import { notFound } from "@/server/http/errors";
+import { createNotification } from "@/server/notifications/service";
+import { recordRewardHistory } from "@/server/rewards/service";
 import { applyWalletMutation, applyWalletMutationToLockedWallet, lockWallet, type WalletMutationInput } from "./ledger";
 import type { WalletTransactionTypeValue } from "./constants";
 
@@ -107,6 +109,8 @@ export async function claimDailyReward(userId: string) {
       referenceId: `daily:${userId}:${utcDayKey(now)}`,
     };
     const result = await applyWalletMutationToLockedWallet(tx, wallet, mutation);
+    await recordRewardHistory(tx, { userId, type: "DAILY_REWARD", amountVC: DAILY_REWARD_AMOUNT, walletTransactionId: result.transaction.id, sourceKey: `daily-reward:${userId}:${utcDayKey(now)}`, metadata: { date: utcDayKey(now) } });
+    await createNotification(tx, { userId, type: "REWARD", title: "Daily reward claimed", message: `${DAILY_REWARD_AMOUNT.toLocaleString("en-US")} VC was added to your fictional-credit wallet.` });
     return { amount: DAILY_REWARD_AMOUNT, balance: result.balance, claimed: true, idempotent: result.idempotent, nextEligibleAt: next.toISOString() };
   });
 }

@@ -38,7 +38,7 @@ Public game queries only return active games from active providers. Composite in
 
 - `Wallet`: one row per `PLAYER`, integer VC balance, unique `userId`, and a non-negative database check constraint.
 - `WalletTransaction`: append-only signed ledger with `amount`, `balanceBefore`, `balanceAfter`, server-owned idempotency key, and optional private metadata.
-- `WalletTransactionType`: `WELCOME_BONUS`, `DAILY_REWARD`, `GAME_WAGER`, `GAME_WIN`, and `ADMIN_ADJUSTMENT`.
+- `WalletTransactionType`: `WELCOME_BONUS`, `DAILY_REWARD`, `GAME_WAGER`, `GAME_WIN`, `ADMIN_ADJUSTMENT`, `PROMOTION_REWARD`, and `VIP_REWARD`.
 - `Favourite`: unique `(userId, gameId)` relationship between players and games.
 - `RecentGame`: unique `(userId, gameId)` upserted activity row with `lastPlayedAt`.
 
@@ -49,6 +49,16 @@ Public game queries only return active games from active providers. Composite in
 - `GameAction`: an auditable action record with user/session/round ownership, action type, request hash, unique idempotency key, and response snapshot. It protects deal, hit, stand, double, slot spin, and roulette spin retries.
 
 The Phase 4 migration also creates a partial unique index that prevents more than one pending/active round in a session and database checks for positive wagers, non-negative payouts, and `netResult = payout - wager`.
+
+### Phase 6 product systems
+
+- `Promotion` and `PromotionClaim`: scheduled fictional-credit campaigns, server-side eligibility JSON, unique slugs, one claim per player, and idempotency keys.
+- `VipLevelConfig`, `PlayerProgression`, and `XpEvent`: configurable VIP thresholds, current player XP/level, and one event per settled game round.
+- `RewardHistory`: immutable player reward audit with unique source keys and optional promotion/ledger links.
+- `ResponsibleGamingSetting`: session reminder, daily UTC wager limit, player max wager, cool-off, and demo self-exclusion.
+- `Notification`: scoped reward, promotion, account, responsible-gaming, and system messages with read state.
+
+The Phase 6 migration is additive and backfills Bronze progression, default responsible-gaming rows, and historical daily-reward history for existing users. It does not edit or reset earlier migrations or delete remote data.
 
 Veltrix Credits (VC) are fictional demonstration credits. They have no monetary value and cannot be purchased, transferred, redeemed or withdrawn.
 
@@ -64,8 +74,8 @@ The migration installs an append-only trigger that rejects `UPDATE` and `DELETE`
 
 ### Deliberate omissions
 
-There is no real-money balance, payment method, deposit, withdrawal, crypto, VIP, or admin wallet-adjustment workflow. `GAME_WAGER` and `GAME_WIN` are used only by the server-authoritative fictional-credit games; `ADMIN_ADJUSTMENT` remains reserved for a future authorized service.
+There is no real-money balance, payment method, deposit, withdrawal, crypto, or purchasable VC. `GAME_WAGER` and `GAME_WIN` are used only by the server-authoritative fictional-credit games; reward entries are issued only by server-owned promotion, daily reward, and VIP services.
 
 ## Seed
 
-`prisma/seed.ts` is idempotent. It creates five fictional providers, the 15 catalogue games including Neon Relics, Veltrix Blackjack, and European Roulette, one SUPER_ADMIN, one ADMIN, and three PLAYER accounts. Every player gets a wallet and welcome entry; the first player also gets a historical daily reward, favourites, and recent games. Seed passwords can be overridden with `SEED_SUPER_ADMIN_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_PLAYER_PASSWORD`, `SEED_PLAYER_2_PASSWORD`, and `SEED_PLAYER_3_PASSWORD`.
+`prisma/seed.ts` is idempotent. It creates five fictional providers, the 15 catalogue games including Neon Relics, Veltrix Blackjack, and European Roulette, one SUPER_ADMIN, one ADMIN, and three PLAYER accounts. Every player gets a wallet, welcome entry, Bronze progression row, and default responsible-gaming row; the seed also creates one active demo promotion. The first player additionally gets a historical daily reward, favourites, and recent games. Seed passwords can be overridden with `SEED_SUPER_ADMIN_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_PLAYER_PASSWORD`, `SEED_PLAYER_2_PASSWORD`, and `SEED_PLAYER_3_PASSWORD`.

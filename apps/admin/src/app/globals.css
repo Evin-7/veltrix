@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --admin-bg: #090b11;
+  --admin-panel: #11151f;
+  --admin-panel-soft: #171d2a;
+  --admin-border: #252d3d;
+  --admin-text: #f3f5fa;
+  --admin-muted: #8994aa;
+  --admin-accent: #83f5c5;
+  --admin-accent-strong: #27d49c;
+  --admin-danger: #f39bad;
+}
+
+:root[data-theme="light"] {
+  --admin-bg: #f3f5f7;
+  --admin-panel: #ffffff;
+  --admin-panel-soft: #eef2f5;
+  --admin-border: #d8e0e7;
+  --admin-text: #17212c;
+  --admin-muted: #657282;
+  --admin-accent: #177d67;
+  --admin-accent-strong: #0f654f;
+  --admin-danger: #b7375b;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--admin-bg); }
+body { margin: 0; background: radial-gradient(circle at 88% -12%, color-mix(in srgb, var(--admin-accent) 18%, transparent) 0, transparent 30rem), var(--admin-bg); color: var(--admin-text); font-family: var(--font-roboto), Roboto, Arial, Helvetica, sans-serif; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+
+.admin-input { width: 100%; border: 1px solid var(--admin-border); border-radius: 0.75rem; background: var(--admin-bg); padding: 0.75rem; color: var(--admin-text); outline: none; }
+.admin-input:focus { border-color: var(--admin-accent); }
+.admin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+.admin-scrollbar::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: 999px; }
+.admin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.admin-icon-button { display: inline-grid; height: 2.25rem; width: 2.25rem; place-items: center; border: 1px solid var(--admin-border); border-radius: 999px; background: color-mix(in srgb, var(--admin-panel) 80%, transparent); color: var(--admin-muted); }
+.admin-icon-button:hover { background: var(--admin-panel-soft); color: var(--admin-text); }
+.admin-theme-menu { position: absolute; right: 0; top: 2.75rem; z-index: 50; width: 10rem; border: 1px solid var(--admin-border); border-radius: 0.9rem; background: var(--admin-panel); padding: 0.35rem; box-shadow: 0 20px 45px rgb(0 0 0 / 0.2); }
+.admin-theme-option { display: flex; width: 100%; align-items: center; gap: 0.6rem; border: 0; border-radius: 0.65rem; background: transparent; padding: 0.6rem 0.7rem; color: var(--admin-muted); font-size: 0.75rem; font-weight: 600; text-align: left; }
+.admin-theme-option:hover { background: var(--admin-panel-soft); color: var(--admin-text); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

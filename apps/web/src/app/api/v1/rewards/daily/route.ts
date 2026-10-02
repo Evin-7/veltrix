@@ -18,7 +18,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    enforceMutationRateLimit(request, "daily-reward");
+    await enforceMutationRateLimit(request, "daily-reward");
     assertSameOrigin(request);
     const user = requireRole(await requireAuth(), ["PLAYER"]);
     return jsonData(await claimDailyReward(user.id));

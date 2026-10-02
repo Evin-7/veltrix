@@ -1,11 +1,14 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { Prisma, type GameActionType, type GameRound, type PrismaClient } from "@prisma/client";
+import { Prisma, type GameActionType, type GameRound } from "@prisma/client";
 import { getPrisma } from "@/server/db/prisma";
 import { badRequest, conflict, notFound } from "@/server/http/errors";
+import { assertGameplayAllowed } from "@/server/responsible-gaming/service";
+import { awardGameplayXp } from "@/server/rewards/service";
+import { calculateGameplayXp } from "@/server/rewards/constants";
 import { applyWalletMutationToLockedWallet, lockWallet, MAX_VC_BALANCE, type LockedWallet } from "@/server/wallet/ledger";
-import { GAME_SLUGS, type DemoWager } from "./constants";
+import { GAME_SLUGS, MAX_DEMO_WAGER, type DemoWager } from "./constants";
 import { blackjackEngine, payoutForBlackjack, publicBlackjackState, type BlackjackState } from "./engine";
 import { rouletteEngine } from "./engine";
 import type { RouletteBet } from "./roulette";
@@ -94,16 +97,18 @@ export async function spinSlotsRound(userId: string, wager: DemoWager, idempoten
     const wallet = await lockWallet(tx, userId);
     const duplicate = await existingAction(tx, { idempotencyKey, userId, type: "SLOT_SPIN", hash });
     if (duplicate) return duplicate;
+    await assertGameplayAllowed(tx, userId, wager, MAX_DEMO_WAGER);
     const session = await getOrCreateSession(tx, userId, game.id);
     const round = await tx.gameRound.create({ data: { sessionId: session.id, gameId: game.id, userId, roundNumber: session.roundCount + 1, status: "PENDING", wager, netResult: -wager, gameType: "SLOTS" } });
     const wagerResult = await applyWalletMutationToLockedWallet(tx, wallet, { userId, type: "GAME_WAGER", amount: -wager, idempotencyKey: walletIdempotency(round.id, "wager"), referenceId: walletReference(round.id, "wager"), metadata: asInputJson({ roundId: round.id, game: GAME_SLUGS.slots }) });
     const result = slotsEngine.resolve(wager);
     const payoutResult = await settlePayout(tx, { ...wallet, balance: wagerResult.balance }, userId, round.id, result.payout);
+    const rewardResult = await awardGameplayXp(tx, userId, round.id, calculateGameplayXp(wager), payoutResult.wallet);
     assertSessionTotals(session, wager, result.payout);
     const settled = await tx.gameRound.update({ where: { id: round.id }, data: { status: "SETTLED", payout: result.payout, netResult: result.payout - wager, result: asInputJson(result), settledAt: new Date() } });
     await tx.gameSession.update({ where: { id: session.id }, data: { status: "COMPLETED", endedAt: new Date(), totalWagered: { increment: wager }, totalWon: { increment: result.payout }, roundCount: { increment: 1 } } });
     await recordRecentGame(tx, userId, game.id);
-    const responseBody: JsonRecord = { roundId: settled.id, wager, reels: result.reels, winningLines: result.winningLines, payout: result.payout, netResult: result.payout - wager, newBalance: payoutResult.balance, idempotent: false };
+    const responseBody: JsonRecord = { roundId: settled.id, wager, reels: result.reels, winningLines: result.winningLines, payout: result.payout, netResult: result.payout - wager, newBalance: rewardResult.wallet.balance, idempotent: false };
     await saveAction(tx, { sessionId: session.id, roundId: round.id, userId, type: "SLOT_SPIN", idempotencyKey, hash, response: responseBody });
     return responseBody;
   }, { maxWait: 15_000, timeout: 30_000 });
@@ -118,16 +123,18 @@ export async function spinRouletteRound(userId: string, wager: DemoWager, bet: R
     const wallet = await lockWallet(tx, userId);
     const duplicate = await existingAction(tx, { idempotencyKey, userId, type: "ROULETTE_SPIN", hash });
     if (duplicate) return duplicate;
+    await assertGameplayAllowed(tx, userId, wager, MAX_DEMO_WAGER);
     const session = await getOrCreateSession(tx, userId, game.id);
     const round = await tx.gameRound.create({ data: { sessionId: session.id, gameId: game.id, userId, roundNumber: session.roundCount + 1, status: "PENDING", wager, netResult: -wager, gameType: "ROULETTE" } });
     const wagerResult = await applyWalletMutationToLockedWallet(tx, wallet, { userId, type: "GAME_WAGER", amount: -wager, idempotencyKey: walletIdempotency(round.id, "wager"), referenceId: walletReference(round.id, "wager"), metadata: asInputJson({ roundId: round.id, game: GAME_SLUGS.roulette }) });
     const result = rouletteEngine.resolve({ wager, bet: normalizedBet });
     const payoutResult = await settlePayout(tx, { ...wallet, balance: wagerResult.balance }, userId, round.id, result.payout);
+    const rewardResult = await awardGameplayXp(tx, userId, round.id, calculateGameplayXp(wager), payoutResult.wallet);
     assertSessionTotals(session, wager, result.payout);
     const settled = await tx.gameRound.update({ where: { id: round.id }, data: { status: "SETTLED", payout: result.payout, netResult: result.payout - wager, result: asInputJson(result), settledAt: new Date() } });
     await tx.gameSession.update({ where: { id: session.id }, data: { status: "COMPLETED", endedAt: new Date(), totalWagered: { increment: wager }, totalWon: { increment: result.payout }, roundCount: { increment: 1 } } });
     await recordRecentGame(tx, userId, game.id);
-    const responseBody: JsonRecord = { roundId: settled.id, winningNumber: result.winningNumber, winningColor: result.winningColor, bet: normalizedBet, wager, payout: result.payout, netResult: result.payout - wager, newBalance: payoutResult.balance, idempotent: false };
+    const responseBody: JsonRecord = { roundId: settled.id, winningNumber: result.winningNumber, winningColor: result.winningColor, bet: normalizedBet, wager, payout: result.payout, netResult: result.payout - wager, newBalance: rewardResult.wallet.balance, idempotent: false };
     await saveAction(tx, { sessionId: session.id, roundId: round.id, userId, type: "ROULETTE_SPIN", idempotencyKey, hash, response: responseBody });
     return responseBody;
   }, { maxWait: 15_000, timeout: 30_000 });
@@ -156,6 +163,7 @@ export async function dealBlackjackRound(userId: string, wager: DemoWager, idemp
     if (duplicate) return duplicate;
     const existingActive = await tx.gameRound.findFirst({ where: { userId, gameId: game.id, status: { in: ["PENDING", "ACTIVE"] } }, select: { id: true } });
     if (existingActive) throw conflict("Finish or recover the active blackjack hand before dealing again.");
+    await assertGameplayAllowed(tx, userId, wager, MAX_DEMO_WAGER);
     const session = await getOrCreateSession(tx, userId, game.id);
     const round = await tx.gameRound.create({ data: { sessionId: session.id, gameId: game.id, userId, roundNumber: session.roundCount + 1, status: "PENDING", wager, netResult: -wager, gameType: "BLACKJACK" } });
     const wagerResult = await applyWalletMutationToLockedWallet(tx, wallet, { userId, type: "GAME_WAGER", amount: -wager, idempotencyKey: walletIdempotency(round.id, "wager"), referenceId: walletReference(round.id, "wager"), metadata: asInputJson({ roundId: round.id, game: GAME_SLUGS.blackjack }) });
@@ -163,11 +171,12 @@ export async function dealBlackjackRound(userId: string, wager: DemoWager, idemp
     const isSettled = state.phase !== "PLAYER_TURN";
     const payout = isSettled ? payoutForBlackjack(state, wager) : 0;
     const payoutResult = await settlePayout(tx, { ...wallet, balance: wagerResult.balance }, userId, round.id, payout);
+    const rewardResult = isSettled ? await awardGameplayXp(tx, userId, round.id, calculateGameplayXp(wager), payoutResult.wallet) : { wallet: payoutResult.wallet };
     assertSessionTotals(session, wager, payout);
     const updated = await tx.gameRound.update({ where: { id: round.id }, data: { status: isSettled ? "SETTLED" : "ACTIVE", state: isSettled ? Prisma.DbNull : asInputJson(state), result: isSettled ? asInputJson(publicBlackjackState(state)) : Prisma.DbNull, payout, netResult: payout - wager, settledAt: isSettled ? new Date() : null } });
     await tx.gameSession.update({ where: { id: session.id }, data: { ...(isSettled ? { status: "COMPLETED", endedAt: new Date() } : {}), totalWagered: { increment: wager }, totalWon: { increment: payout }, roundCount: { increment: 1 } } });
     await recordRecentGame(tx, userId, game.id);
-    const responseBody = blackjackResponse(updated, payoutResult.balance);
+    const responseBody = blackjackResponse(updated, rewardResult.wallet.balance);
     await saveAction(tx, { sessionId: session.id, roundId: round.id, userId, type: "BLACKJACK_DEAL", idempotencyKey, hash, response: responseBody });
     return responseBody;
   }, { maxWait: 15_000, timeout: 30_000 });
@@ -191,6 +200,7 @@ export async function blackjackAction(userId: string, roundId: string, action: "
     const wallet = await lockWallet(tx, userId);
     const session = await tx.gameSession.findUniqueOrThrow({ where: { id: round.sessionId } });
     const state = parseBlackjackState(round);
+    await assertGameplayAllowed(tx, userId, action === "double" ? state.wager : 0, MAX_DEMO_WAGER);
     let nextState: BlackjackState;
     let walletAfterAction = wallet;
     let updatedWager = round.wager;
@@ -211,6 +221,8 @@ export async function blackjackAction(userId: string, roundId: string, action: "
     if (isSettled) {
       const payoutResult = await settlePayout(tx, walletAfterAction, userId, round.id, payout);
       walletAfterAction = payoutResult.wallet;
+      const rewardResult = await awardGameplayXp(tx, userId, round.id, calculateGameplayXp(updatedWager), walletAfterAction);
+      walletAfterAction = rewardResult.wallet;
     }
     const updated = await tx.gameRound.update({ where: { id: round.id }, data: { status: isSettled ? "SETTLED" : "ACTIVE", wager: updatedWager, state: isSettled ? Prisma.DbNull : asInputJson(nextState), result: isSettled ? asInputJson(publicBlackjackState(nextState)) : Prisma.DbNull, payout, netResult: payout - updatedWager, settledAt: isSettled ? new Date() : null } });
     if (isSettled) await tx.gameSession.update({ where: { id: round.sessionId }, data: { status: "COMPLETED", endedAt: new Date(), totalWon: { increment: payout } } });

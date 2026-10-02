@@ -1,0 +1,76 @@
+name: Veltrix CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Typecheck, lint, tests, and builds
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+      DIRECT_DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+      AUTH_SECRET: ci-only-secret-that-is-long-enough-for-tests
+      APP_URL: http://localhost:3000
+      ADMIN_APP_URL: http://localhost:3001
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma validate
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --audit-level=high
+
+  integration:
+    name: Optional Neon integration tests
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      APP_URL: http://localhost:3000
+      ADMIN_APP_URL: http://localhost:3001
+      NODE_ENV: test
+      VELTRIX_WALLET_INTEGRATION: "1"
+      VELTRIX_PHASE6_INTEGRATION: "1"
+    steps:
+      - id: gate
+        name: Check optional integration secrets
+        env:
+          HAS_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          HAS_DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+        run: |
+          if [[ -n "$HAS_DATABASE_URL" && -n "$HAS_DIRECT_DATABASE_URL" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Integration secrets are not configured; skipping Neon integration tests."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.enabled == 'true'
+      - run: npx prisma generate
+        if: steps.gate.outputs.enabled == 'true'
+      - run: npm test
+        if: steps.gate.outputs.enabled == 'true'

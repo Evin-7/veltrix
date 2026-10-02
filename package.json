@@ -7,11 +7,21 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @veltrix/web",
-    "build": "npm run build --workspace @veltrix/web",
-    "lint": "npm run lint --workspace @veltrix/web",
-    "typecheck": "npm run typecheck --workspace @veltrix/web",
+    "dev": "npm run dev:web",
+    "dev:web": "npm run dev --workspace @veltrix/web",
+    "dev:admin": "npm run dev --workspace @veltrix/admin",
+    "build": "npm run build:web && npm run build:admin",
+    "build:web": "npm run build --workspace @veltrix/web",
+    "build:admin": "npm run build --workspace @veltrix/admin",
+    "lint": "npm run lint:web && npm run lint:admin",
+    "lint:web": "npm run lint --workspace @veltrix/web",
+    "lint:admin": "npm run lint --workspace @veltrix/admin",
+    "typecheck": "npm run typecheck:web && npm run typecheck:admin",
+    "typecheck:web": "npm run typecheck --workspace @veltrix/web",
+    "typecheck:admin": "npm run typecheck --workspace @veltrix/admin",
     "test": "npm run test --workspace @veltrix/web",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
     "format": "prettier --write .",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
@@ -20,6 +30,7 @@
     "db:seed": "prisma db seed"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "prettier": "^3.6.2",
     "prisma": "6.12.0",
     "tsx": "^4.20.6"

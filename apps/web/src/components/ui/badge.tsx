@@ -8,10 +8,10 @@ type BadgeProps = {
 };
 
 const toneClasses = {
-  neutral: "border-white/10 bg-white/[0.05] text-muted-strong",
-  amber: "border-amber/25 bg-amber/10 text-amber-bright",
-  mint: "border-mint/25 bg-mint/10 text-mint",
-  rose: "border-[#ff9bbb]/25 bg-[#ff9bbb]/10 text-[#ffb1c9]",
+  neutral: "border-border bg-surface-hover text-foreground-subtle",
+  amber: "border-primary/25 bg-primary/10 text-primary",
+  mint: "border-accent/25 bg-accent/10 text-accent",
+  rose: "border-danger/25 bg-danger/10 text-danger",
 };
 
 export function Badge({ children, tone = "neutral", className }: BadgeProps) {

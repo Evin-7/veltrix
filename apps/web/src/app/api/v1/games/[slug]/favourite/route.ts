@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 type FavouriteRouteProps = { params: Promise<{ slug: string }> };
 
 async function getPlayer(request: Request) {
-  enforceMutationRateLimit(request, "favourite");
+  await enforceMutationRateLimit(request, "favourite");
   assertSameOrigin(request);
   return requireRole(await requireAuth(), ["PLAYER"]);
 }
