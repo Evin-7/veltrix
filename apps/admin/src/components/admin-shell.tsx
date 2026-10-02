@@ -64,7 +64,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#556078]">Operations</div>
           {nav.map((item) => { const Icon = item.icon; const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href); return <button key={item.href} onClick={() => { router.push(item.href); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${active ? "bg-[#15352f] font-semibold text-[#a3f8d2]" : "text-[#98a3b8] hover:bg-[#171d2a] hover:text-white"}`}><Icon size={17} className={active ? "text-[#83f5c5]" : "text-[#637089]"} /><span>{item.label}</span>{item.muted && <span className="ml-auto rounded-full border border-[#2b3547] px-2 py-0.5 text-[9px] uppercase tracking-wider text-[#637089]">Soon</span>}</button>; })}
         </nav>
-        <div className="mt-6 rounded-2xl border border-[#252d3d] bg-[#111722] p-4"><div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#dbe3f1]"><Shield size={14} className="text-[#83f5c5]" /> Protected environment</div><p className="text-[11px] leading-5 text-[#718097]">All mutations are permissioned, audited, and backed by the production ledger.</p></div>
       </aside>
       <main className="min-w-0 flex-1 pt-20 lg:pl-72">
         <header className="fixed left-0 right-0 top-0 z-30 flex h-20 items-center justify-between border-b border-[#252d3d]/80 bg-[#090b11]/90 px-5 backdrop-blur-xl sm:px-8 lg:left-72 lg:px-10">
