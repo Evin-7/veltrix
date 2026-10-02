@@ -81,7 +81,7 @@ export function PageIntro({ eyebrow, title, description, action }: { eyebrow: st
   return <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><div className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[#83f5c5]">{eyebrow}</div><h1 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{title}</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-[#8994aa]">{description}</p></div>{action}</div>;
 }
 
-export function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) { return <section className={`rounded-2xl border border-[#252d3d] bg-[#11151f] ${className}`}>{children}</section>; }
+export function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) { return <section className={`admin-panel rounded-2xl border border-[#252d3d] bg-[#11151f] ${className}`}>{children}</section>; }
 export function StatusPill({ value }: { value: string }) { const tone = value === "ACTIVE" || value === "COMPLETED" ? "border-[#245a4c] bg-[#12352e] text-[#8af0c4]" : value === "DISABLED" || value === "INACTIVE" || value === "ABANDONED" ? "border-[#5c3340] bg-[#321b26] text-[#f39bad]" : "border-[#64552b] bg-[#332c18] text-[#f4d98b]"; return <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${tone}`}>{value}</span>; }
 export function EmptyState({ children = "No records found." }: { children?: React.ReactNode }) { return <div className="px-6 py-14 text-center text-sm text-[#718097]">{children}</div>; }
 export function formatDate(value: string | null) { return value ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—"; }
