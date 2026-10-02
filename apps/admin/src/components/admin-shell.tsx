@@ -72,8 +72,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   </AdminContext.Provider>;
 }
 
-export function PageIntro({ eyebrow, title, action }: { eyebrow: string; title: string; description?: string; action?: React.ReactNode }) {
-  return <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><div className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[#83f5c5]">{eyebrow}</div><h1 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{title}</h1></div>{action}</div>;
+export function PageIntro({ eyebrow, title, action }: { eyebrow?: string; title: string; description?: string; action?: React.ReactNode }) {
+  return <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div>{eyebrow ? <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[#83f5c5]">{eyebrow}</div> : null}<h1 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{title}</h1></div>{action}</div>;
 }
 
 export function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) { return <section className={`admin-panel rounded-2xl border border-[#252d3d] bg-[#11151f] ${className}`}>{children}</section>; }
