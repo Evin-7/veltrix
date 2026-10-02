@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleDot, Crown, Diamond, Gem, LoaderCircle, RefreshCw, Star, Volume2, VolumeX, Zap, type LucideIcon } from "lucide-react";
+import { CircleDot, Crown, Diamond, Gem, LoaderCircle, Star, Zap, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { requestJson } from "@/lib/api-client";
@@ -9,7 +9,6 @@ import { formatCurrency } from "@/lib/currency";
 import { emitWalletUpdate } from "@/lib/wallet-sync";
 import { slotGameCatalog } from "@/shared/slot-catalog";
 import { useGameAudio } from "./game-audio";
-import { readAuthoritativeWalletBalance } from "./gameplay-wallet";
 import { InvalidSlotOutcomeError, validateSlotReels } from "./slot-symbols";
 
 const wagers = [10, 25, 50, 100, 250, 500] as const;
@@ -61,27 +60,6 @@ function WagerChips({ value, onChange }: { value: Wager; onChange: (value: Wager
   return <div className="slot-wager-control"><div className="mb-2 flex items-center justify-between gap-3"><span className="slot-control-label">Wager</span><span className="text-[10px] font-semibold text-foreground-muted">€</span></div><div className="slot-wager-chips">{wagers.map((item) => <button aria-pressed={value === item} className={value === item ? "slot-wager-chip slot-wager-chip-active" : "slot-wager-chip"} key={item} onClick={() => onChange(item)} type="button">{formatCurrency(item)}</button>)}</div></div>;
 }
 
-function BalancePill({ balance, onRefresh }: { balance: number; onRefresh: () => void }) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshedBalance, setRefreshedBalance] = useState<{ value: number; base: number } | null>(null);
-  const [refreshError, setRefreshError] = useState<string | null>(null);
-  async function refresh() {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    setRefreshError(null);
-    try {
-      const nextBalance = await readAuthoritativeWalletBalance();
-      setRefreshedBalance({ value: nextBalance, base: balance });
-      emitWalletUpdate(nextBalance);
-      onRefresh();
-    } catch (caught) {
-      setRefreshError(errorMessage(caught, "NETWORK_ERROR"));
-    } finally { setIsRefreshing(false); }
-  }
-  const displayedBalance = refreshedBalance?.base === balance ? refreshedBalance.value : balance;
-  return <div className="flex flex-wrap items-center justify-end gap-2"><div aria-live="polite" className="inline-flex items-center rounded-full border border-success/30 bg-success/10 px-3 py-2 text-xs font-bold text-success">{formatCurrency(displayedBalance)}</div><button aria-label="Refresh wallet balance" className="focus-ring rounded-full border border-border p-2 text-foreground-muted hover:bg-surface-hover hover:text-foreground" disabled={isRefreshing} onClick={() => void refresh()} type="button"><RefreshCw className={isRefreshing ? "animate-spin" : undefined} size={14} /></button>{refreshError ? <p aria-live="polite" className="basis-full text-right text-xs font-semibold text-danger">{refreshError}</p> : null}</div>;
-}
-
 export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) {
   const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<Wager>(100);
@@ -91,7 +69,7 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const animationTimer = useRef<number | null>(null);
-  const { enabled: sound, setEnabled, play } = useGameAudio();
+  const { play } = useGameAudio();
   const [error, setError] = useState<string | null>(null);
   useEffect(() => () => { if (animationTimer.current !== null) window.clearTimeout(animationTimer.current); }, []);
 
@@ -109,9 +87,8 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
   const activePaths = [...new Set(result?.winningLines.map((line) => paylinePaths[line.line]).filter(Boolean))];
 
   return <section className="slot-game-shell">
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5"><div><p className="eyebrow">Neon Relics</p><p className="mt-2 text-sm text-foreground-muted">Five reels · three rows</p></div><BalancePill balance={balance} onRefresh={() => setBalance(balance)} /></div>
-    <div className="slot-stage mt-5">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="slot-stage-kicker">Relic chamber</p><p className="mt-1 text-xs text-white/55">Five reels · three rows · five paylines</p></div><button aria-pressed={sound} aria-label={sound ? "Turn sound off" : "Turn sound on"} className="focus-ring slot-sound-button" onClick={() => setEnabled((value) => !value)} type="button">{sound ? <Volume2 size={15} /> : <VolumeX size={15} />}<span className="hidden sm:inline">{sound ? "Sound on" : "Sound off"}</span></button></div>
+    <div className="slot-stage mt-0">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="slot-stage-kicker">Relic chamber</p><p className="mt-1 text-xs text-white/55">Five reels · three rows · five paylines</p></div></div>
       <div aria-label="Five reel three row slot machine" className={`slot-machine mt-5 ${isAnimating ? "slot-machine-spinning" : ""}`}>
         <div className="slot-machine-mark"><span>NEON RELICS</span><span className="slot-machine-divider" /><span className="text-[9px] tracking-[0.16em] text-white/45">V · 05</span></div>
         <div className="slot-reel-grid">

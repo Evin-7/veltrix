@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { VeltrixSelect } from "@/components/ui/veltrix-select";
@@ -9,8 +9,7 @@ import { errorMessage } from "@/lib/app-error";
 import { formatCurrency } from "@/lib/currency";
 import { emitWalletUpdate } from "@/lib/wallet-sync";
 import { slotCatalogForSlug, type SlotPayouts } from "@/shared/slot-catalog";
-import { GameSoundToggle, useGameAudio, type GameSound } from "./game-audio";
-import { readAuthoritativeWalletBalance } from "./gameplay-wallet";
+import { useGameAudio, type GameSound } from "./game-audio";
 import {
   getSlotDisplaySymbol,
   getSlotDisplaySymbols,
@@ -58,79 +57,6 @@ function WagerSelector({
   );
 }
 
-function TableHeader({
-  balance,
-  label,
-  onRefresh,
-}: {
-  balance: number;
-  label: string;
-  onRefresh?: () => void | Promise<void>;
-}) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshedBalance, setRefreshedBalance] = useState<{
-    value: number;
-    base: number;
-  } | null>(null);
-  const [refreshError, setRefreshError] = useState<string | null>(null);
-  async function refresh() {
-    if (!onRefresh || isRefreshing) return;
-    setIsRefreshing(true);
-    setRefreshError(null);
-    try {
-      const nextBalance = await readAuthoritativeWalletBalance();
-      setRefreshedBalance({ value: nextBalance, base: balance });
-      emitWalletUpdate(nextBalance);
-      await onRefresh();
-    } catch (caught) {
-      setRefreshError(errorMessage(caught, "NETWORK_ERROR"));
-    } finally {
-      setIsRefreshing(false);
-    }
-  }
-  const displayedBalance =
-    refreshedBalance?.base === balance ? refreshedBalance.value : balance;
-  return (
-    <div className="gameplay-table-header flex flex-wrap items-center justify-between gap-4 border-b pb-5">
-      <div>
-        <p className="eyebrow">{label}</p>
-        <p className="mt-2 text-sm text-muted">Play with virtual balance</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <GameSoundToggle className="game-audio-control rounded-full border px-3 py-2 text-xs font-semibold hover:text-ink" />
-        <div
-          aria-live="polite"
-          className="game-balance-badge inline-flex items-center rounded-full border px-3 py-2 text-xs font-bold"
-        >
-          {formatCurrency(displayedBalance)}
-        </div>
-        {onRefresh ? (
-          <button
-            aria-label="Refresh wallet balance"
-            className="game-icon-control focus-ring rounded-full border p-2"
-            disabled={isRefreshing}
-            onClick={() => void refresh()}
-            type="button"
-          >
-            <RefreshCw
-              className={isRefreshing ? "animate-spin" : undefined}
-              size={14}
-            />
-          </button>
-        ) : null}
-      </div>
-      {refreshError ? (
-        <p
-          aria-live="polite"
-          className="basis-full text-xs font-semibold text-danger"
-        >
-          {refreshError}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 function TableNote({
   error,
   message,
@@ -172,19 +98,14 @@ function parseSlotResult(gameSlug: string, result: SlotResult): SlotResult {
 }
 
 export function SlotsPanel({
-  initialBalance,
-  gameName,
   gameSlug,
 }: {
-  initialBalance: number;
-  gameName: string;
   gameSlug: string;
 }) {
   const art = getSlotDisplaySymbols(gameSlug);
   const paytable = slotCatalogForSlug(gameSlug)?.paytable as
     Readonly<Record<string, SlotPayouts>> | undefined;
   const { play } = useGameAudio();
-  const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<Wager>(100);
   const [reels, setReels] = useState<string[][]>(
     Array.from({ length: 5 }, () =>
@@ -222,7 +143,6 @@ export function SlotsPanel({
       );
       setResult(next);
       setReels(next.reels);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       setHistory((current) => [next, ...current].slice(0, 4));
       next.reels.forEach((_, reelIndex) =>
@@ -262,12 +182,7 @@ export function SlotsPanel({
 
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <TableHeader
-        balance={balance}
-        label={`${gameName} · five reels`}
-        onRefresh={() => setBalance(balance)}
-      />
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_260px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
         <div>
           <div
             className={`grid grid-cols-5 gap-2 game-reels-stage rounded-[24px] border p-3 shadow-[inset_0_0_50px_rgba(28,168,192,0.12)] sm:gap-3 sm:p-5 ${isAnimating ? "animate-pulse" : ""}`}
@@ -422,15 +337,10 @@ const redNumbers = new Set([
 ]);
 
 export function RoulettePanel({
-  initialBalance,
-  gameName,
   gameSlug,
 }: {
-  initialBalance: number;
-  gameName: string;
   gameSlug: string;
 }) {
-  const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<Wager>(100);
   const [betType, setBetType] = useState<RouletteBetType>("RED");
   const [number, setNumber] = useState(7);
@@ -471,7 +381,6 @@ export function RoulettePanel({
         },
       );
       setResult(next);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       setHistory((current) => [next, ...current].slice(0, 5));
       play("roulette-settle", { delayMs: 420 });
@@ -506,12 +415,7 @@ export function RoulettePanel({
     ];
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <TableHeader
-        balance={balance}
-        label={`${gameName} · single zero`}
-        onRefresh={() => setBalance(balance)}
-      />
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_270px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div>
           <div
             className={`mx-auto grid h-64 w-64 place-items-center rounded-full border-[14px] border-[#bd3e55]/80 bg-[conic-gradient(#171b2e_0_12deg,#bd3e55_12deg_24deg,#171b2e_24deg_36deg,#bd3e55_36deg_48deg,#171b2e_48deg_60deg,#bd3e55_60deg_72deg,#171b2e_72deg_84deg,#bd3e55_84deg_96deg,#171b2e_96deg_108deg,#bd3e55_108deg_120deg,#171b2e_120deg_132deg,#bd3e55_132deg_144deg,#171b2e_144deg_156deg,#bd3e55_156deg_168deg,#171b2e_168deg_180deg,#bd3e55_180deg_192deg,#171b2e_192deg_204deg,#bd3e55_204deg_216deg,#171b2e_216deg_228deg,#bd3e55_228deg_240deg,#171b2e_240deg_252deg,#bd3e55_252deg_264deg,#171b2e_264deg_276deg,#bd3e55_276deg_288deg,#171b2e_288deg_300deg,#bd3e55_300deg_312deg,#171b2e_312deg_324deg,#bd3e55_324deg_336deg,#171b2e_336deg_348deg,#bd3e55_348deg_360deg)] shadow-[0_20px_60px_rgba(0,0,0,0.35)] transition-transform duration-700 ${isAnimating ? "rotate-[360deg]" : ""}`}
@@ -696,15 +600,10 @@ function PlayingCard({
 }
 
 export function BlackjackPanel({
-  initialBalance,
-  gameName,
   gameSlug,
 }: {
-  initialBalance: number;
-  gameName: string;
   gameSlug: string;
 }) {
-  const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<Wager>(100);
   const [hand, setHand] = useState<BlackjackHand | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -736,7 +635,6 @@ export function BlackjackPanel({
       .then((next) => {
         if (active && next) {
           setHand(next);
-          setBalance(next.newBalance);
           emitWalletUpdate(next.newBalance);
           setRecovered(true);
         }
@@ -768,7 +666,6 @@ export function BlackjackPanel({
         },
       );
       setHand(next);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       playCards(next.playerCards.length + next.dealerCards.length);
       playOutcome(
@@ -805,7 +702,6 @@ export function BlackjackPanel({
         },
       );
       setHand(next);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       playCards(
         Math.max(
@@ -828,12 +724,7 @@ export function BlackjackPanel({
   const phaseLabel = hand?.phase?.replaceAll("_", " ") ?? "Awaiting deal";
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <TableHeader
-        balance={balance}
-        label={`${gameName} · dealer stands on soft 17`}
-        onRefresh={() => setBalance(balance)}
-      />
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_270px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div className="game-board game-board--blackjack rounded-[24px] p-5 sm:p-8">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] game-board-label">

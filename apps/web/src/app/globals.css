@@ -294,18 +294,17 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .radius-surface { border-radius: var(--radius-surface); }
 .radius-overlay { border-radius: var(--radius-overlay); }
 .content-section { min-width: 0; }
-.gameplay-layout, .slot-game-shell { min-width: 0; color: var(--game-fg); }
+.gameplay-page, .gameplay-layout, .slot-game-shell { min-width: 0; font-family: var(--font-display); }
+.gameplay-layout, .slot-game-shell { color: var(--game-fg); }
 .gameplay-game-header { border-color: var(--game-border); }
-.gameplay-layout .gameplay-table-header { border-color: var(--game-border); }
 .gameplay-layout .text-ink, .gameplay-layout .text-foreground { color: var(--game-fg); }
 .gameplay-layout .text-muted, .gameplay-layout .text-foreground-muted { color: var(--game-muted); }
 .gameplay-layout .text-muted-strong, .gameplay-layout .text-foreground-subtle { color: var(--game-subtle); }
 .gameplay-layout .text-mint, .gameplay-layout .text-success { color: var(--game-status-success); }
 .gameplay-layout .text-amber, .gameplay-layout .text-amber-bright { color: var(--game-status-warning); }
 .gameplay-layout .text-rose-300, .gameplay-layout .text-danger { color: var(--game-status-danger); }
-.gameplay-layout .game-audio-control, .gameplay-layout .game-icon-control { border-color: var(--control-border); color: var(--game-muted); }
-.gameplay-layout .game-audio-control:hover, .gameplay-layout .game-icon-control:hover { background: color-mix(in srgb, var(--control-bg) 86%, var(--primary) 14%); color: var(--game-fg); }
-.gameplay-layout .game-balance-badge { border-color: color-mix(in srgb, var(--game-status-success) 35%, transparent); background: color-mix(in srgb, var(--game-status-success) 12%, transparent); color: var(--game-status-success); }
+.gameplay-layout .game-audio-control, .gameplay-layout .game-icon-control, .gameplay-game-header .game-audio-control, .gameplay-game-header .game-icon-control { border-color: var(--control-border); color: var(--game-muted); }
+.gameplay-layout .game-audio-control:hover, .gameplay-layout .game-icon-control:hover, .gameplay-game-header .game-audio-control:hover, .gameplay-game-header .game-icon-control:hover { background: color-mix(in srgb, var(--control-bg) 86%, var(--primary) 14%); color: var(--game-fg); }
 .gameplay-layout .game-value-badge { border-color: var(--game-border); background: var(--value-badge-bg); color: var(--value-badge-fg); }
 .gameplay-layout .game-status-message { min-height: 1.5rem; color: var(--game-status-success); }
 .gameplay-layout .game-status-message.is-error { color: var(--game-status-danger); }
@@ -408,8 +407,6 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .slot-stage::after { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 0 45%, rgb(255 255 255 / 0.035) 50%, transparent 55%); content: ""; }
 .slot-stage > * { position: relative; z-index: 1; }
 .slot-stage-kicker, .slot-section-kicker { color: var(--primary); font-size: 0.64rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
-.slot-sound-button { display: inline-flex; min-height: 2.25rem; align-items: center; gap: 0.5rem; border: 1px solid rgb(255 255 255 / 0.16); border-radius: 999px; background: rgb(255 255 255 / 0.06); padding: 0.55rem 0.75rem; color: rgb(255 255 255 / 0.7); font-size: 0.7rem; font-weight: 700; }
-.slot-sound-button:hover { background: rgb(255 255 255 / 0.1); color: white; }
 .slot-machine { border: 1px solid rgb(130 223 255 / 0.22); border-radius: 1.35rem; background: linear-gradient(150deg, rgb(20 45 70 / 0.95), rgb(5 15 29 / 0.98)); padding: clamp(0.75rem, 2vw, 1.5rem); box-shadow: inset 0 0 55px rgb(32 173 211 / 0.1), 0 20px 45px rgb(0 0 0 / 0.2); }
 .slot-machine-spinning .slot-symbol-tile { animation: relic-reel 720ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .slot-machine-mark { display: flex; align-items: center; justify-content: center; gap: 0.6rem; color: rgb(255 255 255 / 0.8); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.2em; }

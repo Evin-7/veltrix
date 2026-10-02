@@ -11,7 +11,6 @@ import { emitWalletUpdate } from "@/lib/wallet-sync";
 import { useGameAudio } from "./game-audio";
 import { ArcadeGameplayPanel } from "./arcade-gameplay-panel";
 import {
-  Header,
   History,
   Wager,
   gameplayIdempotencyKey,
@@ -55,15 +54,10 @@ function MiniCard({ card }: { card: BaccaratCard }) {
 }
 
 function BaccaratPanel({
-  initialBalance,
-  gameName,
   gameSlug,
 }: {
-  initialBalance: number;
-  gameName: string;
   gameSlug: string;
 }) {
-  const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<WagerValue>(100);
   const [bet, setBet] = useState<BaccaratResult["bet"]>("PLAYER");
   const [result, setResult] = useState<BaccaratResult | null>(null);
@@ -88,7 +82,6 @@ function BaccaratPanel({
         },
       );
       setResult(next);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       setHistory((current) =>
         [
@@ -119,8 +112,7 @@ function BaccaratPanel({
   }
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <Header balance={balance} gameName={gameName} />
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_270px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div className="game-board game-board--baccarat rounded-[24px] p-5 sm:p-8">
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
@@ -222,15 +214,10 @@ type DiceResult = {
   newBalance: number;
 };
 function DicePanel({
-  initialBalance,
-  gameName,
   gameSlug,
 }: {
-  initialBalance: number;
-  gameName: string;
   gameSlug: string;
 }) {
-  const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<WagerValue>(100);
   const [bet, setBet] = useState<DiceResult["bet"]>("HIGH");
   const [result, setResult] = useState<DiceResult | null>(null);
@@ -256,7 +243,6 @@ function DicePanel({
         },
       );
       setResult(next);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       setHistory((current) =>
         [
@@ -278,8 +264,7 @@ function DicePanel({
   }
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <Header balance={balance} gameName={gameName} />
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_270px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div className="game-board game-board--dice rounded-[24px] p-8 text-center sm:p-12">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] game-board-muted">
             Dice table
@@ -346,15 +331,10 @@ type ArcadeResult = {
 };
 
 export function ArcadePanel({
-  initialBalance,
-  gameName,
   gameSlug,
 }: {
-  initialBalance: number;
-  gameName: string;
   gameSlug: string;
 }) {
-  const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<WagerValue>(100);
   const [lane, setLane] = useState(1);
   const [running, setRunning] = useState(false);
@@ -408,7 +388,6 @@ export function ArcadePanel({
         },
       );
       setResult(next);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       setHistory((current) =>
         [
@@ -444,8 +423,7 @@ export function ArcadePanel({
   }
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <Header balance={balance} gameName={gameName} />
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_270px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div>
           <div className="relative grid min-h-[360px] grid-cols-3 gap-2 overflow-hidden game-board game-board--arcade rounded-[24px] p-4">
             <div
@@ -546,26 +524,20 @@ export function ArcadePanel({
 
 export function UniversalGameplayPanel({
   game,
-  initialBalance,
 }: {
   game: Game;
-  initialBalance: number;
 }) {
   if (game.slug === "afterglow-baccarat")
     return (
       <BaccaratPanel
-        gameName={game.name}
         gameSlug={game.slug}
-        initialBalance={initialBalance}
       />
     );
   if (game.slug === "gilded-dice" || game.slug === "cinder-club")
     return (
       <DicePanel
-        gameName={game.name}
         gameSlug={game.slug}
-        initialBalance={initialBalance}
       />
     );
-  return <ArcadeGameplayPanel game={game} initialBalance={initialBalance} />;
+  return <ArcadeGameplayPanel game={game} />;
 }

@@ -9,7 +9,6 @@ import { errorMessage } from "@/lib/app-error";
 import { formatCurrency } from "@/lib/currency";
 import { emitWalletUpdate } from "@/lib/wallet-sync";
 import {
-  Header,
   History,
   Wager,
   gameplayIdempotencyKey,
@@ -47,12 +46,9 @@ const arcadePattern: readonly ArcadeEvent[] = [
 
 export function ArcadeGameplayPanel({
   game,
-  initialBalance,
 }: {
   game: Game;
-  initialBalance: number;
 }) {
-  const [balance, setBalance] = useState(initialBalance);
   const [wager, setWager] = useState<WagerValue>(100);
   const [lane, setLane] = useState<0 | 1 | 2>(1);
   const [running, setRunning] = useState(false);
@@ -95,7 +91,6 @@ export function ArcadeGameplayPanel({
         },
       );
       setResult(next);
-      setBalance(next.newBalance);
       emitWalletUpdate(next.newBalance);
       setHistory((current) =>
         [
@@ -183,8 +178,7 @@ export function ArcadeGameplayPanel({
 
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <Header balance={balance} gameName={game.name} />
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_270px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div>
           <div
             aria-label={`${game.name} arcade board`}
