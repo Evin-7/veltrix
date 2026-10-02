@@ -619,15 +619,15 @@ export function NotificationsPanel({
       <div className="border-y border-border">
         {items.map((item) => (
           <button
-            className={`focus-ring flex w-full items-start gap-4 border-b border-border py-5 text-left transition last:border-b-0 ${item.readAt ? "" : "bg-amber/[0.05]"}`}
+            className="focus-ring flex w-full items-start gap-4 border-b border-border py-5 text-left transition last:border-b-0"
             key={item.id}
             disabled={busy !== null}
             onClick={() => !item.readAt && void mark(item.id)}
             type="button"
           >
-            <span className="min-w-0">
+            <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-ink">
+                <span className="min-w-0 break-words text-sm font-semibold text-ink">
                   {item.title}
                 </span>
                 {!item.readAt ? (
@@ -636,7 +636,7 @@ export function NotificationsPanel({
                   </span>
                 ) : null}
               </span>
-              <span className="mt-1 block text-xs leading-5 text-muted">
+              <span className="mt-1 block break-words text-xs leading-5 text-muted">
                 {item.message}
               </span>
               <span className="mt-2 block text-[10px] text-muted/70">
