@@ -53,9 +53,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return <AdminContext.Provider value={user}>
-    <div className="min-h-screen lg:flex">
+    <div className="min-h-screen">
       {mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/60 lg:hidden" />}
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-[#252d3d] bg-[#0d111a] px-5 py-6 transition-transform lg:static lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-[#252d3d] bg-[#0d111a] px-5 py-6 transition-transform lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="mb-10 flex items-center justify-between px-2">
           <div><Image alt="Veltrix" className="h-auto w-[164px]" height={300} priority src="/veltrix-wordmark.png" width={1450} /><div className="mt-2 pl-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#657188]">Control room</div></div>
           <button onClick={() => setMobileOpen(false)} className="text-[#8994aa] lg:hidden"><X size={20} /></button>
@@ -66,8 +66,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="mt-6 rounded-2xl border border-[#252d3d] bg-[#111722] p-4"><div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#dbe3f1]"><Shield size={14} className="text-[#83f5c5]" /> Protected environment</div><p className="text-[11px] leading-5 text-[#718097]">All mutations are permissioned, audited, and backed by the production ledger.</p></div>
       </aside>
-      <main className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-[#252d3d]/80 bg-[#090b11]/90 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
+      <main className="min-w-0 flex-1 pt-20 lg:pl-72">
+        <header className="fixed left-0 right-0 top-0 z-30 flex h-20 items-center justify-between border-b border-[#252d3d]/80 bg-[#090b11]/90 px-5 backdrop-blur-xl sm:px-8 lg:left-72 lg:px-10">
           <div className="flex items-center gap-3"><button aria-label="Open navigation" onClick={() => setMobileOpen(true)} className="text-[#aab4c8] lg:hidden"><Menu size={22} /></button><span className="hidden text-xs font-medium text-[#59657b] sm:inline">VELTRIX /</span><span className="text-sm font-semibold text-[#e9eef8]">{pathname === "/" ? "Overview" : nav.find((item) => pathname.startsWith(item.href))?.label ?? "Control room"}</span></div>
           <div className="flex items-center gap-3 sm:gap-6"><form aria-label="Search players" onSubmit={submitSearch} className="hidden items-center gap-2 rounded-xl border border-[#252d3d] bg-[#11151f] px-3 py-2 md:flex"><Search aria-hidden="true" size={15} className="text-[#637089]" /><input aria-label="Search players" value={search} onChange={(event) => setSearch(event.target.value)} className="w-44 bg-transparent text-xs text-white outline-none" /></form><div className="hidden h-8 w-px bg-[#252d3d] sm:block" /><div className="flex items-center gap-3"><AdminThemeMenu /><div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#83f5c5] to-[#3b8c78] text-sm font-bold text-[#09120f]">{(user.profile?.displayName ?? user.email).slice(0, 1).toUpperCase()}</div><div className="hidden leading-tight sm:block"><div className="text-xs font-semibold text-[#edf3fd]">{user.profile?.displayName ?? user.email.split("@")[0]}</div><div className="mt-1 text-[10px] uppercase tracking-wider text-[#83f5c5]">{user.role.replace("_", " ")}</div></div><button aria-label="Sign out" onClick={logout} className="ml-1 text-[#718097] transition hover:text-white"><LogOut aria-hidden="true" size={17} /></button></div></div>
         </header>
