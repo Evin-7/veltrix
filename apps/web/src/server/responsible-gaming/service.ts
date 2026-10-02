@@ -58,7 +58,7 @@ export async function activateSelfExclusion(userId: string, days: 1 | 7 | 30 | 3
     const selfExcludedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     const settings = await tx.responsibleGamingSetting.update({ where: { userId }, data: { selfExcludedUntil } });
     await writeAuditLog(tx, { actorUserId: userId, action: "RESPONSIBLE_GAMING_SELF_EXCLUSION_STARTED", targetType: "RESPONSIBLE_GAMING", targetId: userId, metadata: { days, selfExcludedUntil: selfExcludedUntil.toISOString(), demoFeature: true } });
-    await createNotification(tx, { userId, type: "RESPONSIBLE_GAMING", title: "Demo self-exclusion active", message: `Gameplay is unavailable until ${selfExcludedUntil.toISOString()}. This is a portfolio demonstration feature.` });
+    await createNotification(tx, { userId, type: "RESPONSIBLE_GAMING", title: "Self-exclusion active", message: `Gameplay is unavailable until ${selfExcludedUntil.toISOString()}.` });
     return serializeSettings(settings);
   });
 }
@@ -67,7 +67,7 @@ export async function assertGameplayAllowed(tx: Prisma.TransactionClient, userId
   const settings = await tx.responsibleGamingSetting.findUnique({ where: { userId } });
   if (!settings) return;
   const now = new Date();
-  if (settings.selfExcludedUntil && settings.selfExcludedUntil > now) throw forbidden("Gameplay is unavailable while demo self-exclusion is active.");
+  if (settings.selfExcludedUntil && settings.selfExcludedUntil > now) throw forbidden("Gameplay is unavailable while self-exclusion is active.");
   if (settings.coolOffUntil && settings.coolOffUntil > now) throw forbidden("Gameplay is unavailable during your cool-off period.");
   const effectiveMax = Math.min(platformMaxWager, settings.maxWager ?? platformMaxWager);
   if (wager > effectiveMax) throw badRequest(`This wager exceeds your configured maximum of ${effectiveMax} VC.`);

@@ -80,7 +80,7 @@ export async function claimPromotion(userId: string, promotionId: string, idempo
     const walletResult = await applyWalletMutationToLockedWallet(tx, wallet, { userId, type: "PROMOTION_REWARD", amount: promotion.rewardVC, idempotencyKey: `promotion:${promotion.id}:${userId}`, referenceId: `promotion:${promotion.id}`, metadata: { promotionId: promotion.id, promotionSlug: promotion.slug } });
     const claim = await tx.promotionClaim.create({ data: { promotionId, userId, rewardVC: promotion.rewardVC, walletTransactionId: walletResult.transaction.id, idempotencyKey, claimedAt: now } });
     await recordRewardHistory(tx, { userId, type: "PROMOTION_REWARD", amountVC: promotion.rewardVC, promotionId, walletTransactionId: walletResult.transaction.id, sourceKey: `promotion-claim:${claim.id}`, metadata: { promotionId, promotionSlug: promotion.slug } });
-    await createNotification(tx, { userId, type: "PROMOTION", title: `${promotion.title} claimed`, message: `${promotion.rewardVC.toLocaleString("en-US")} VC was added to your fictional-credit wallet.` });
+    await createNotification(tx, { userId, type: "PROMOTION", title: `${promotion.title} claimed`, message: `${promotion.rewardVC.toLocaleString("en-US")} VC was added to your wallet.` });
     return { claimId: claim.id, rewardVC: claim.rewardVC, transactionId: claim.walletTransactionId, newBalance: walletResult.balance, idempotent: false };
   }, { maxWait: 15_000, timeout: 30_000 });
 }

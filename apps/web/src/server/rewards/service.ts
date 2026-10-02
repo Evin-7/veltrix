@@ -51,7 +51,7 @@ export async function awardGameplayXp(tx: Prisma.TransactionClient, userId: stri
       walletTransactionId = result.transaction.id;
     }
     await recordRewardHistory(tx, { userId, type: "VIP_MILESTONE", amountVC: config.rewardVC, level: config.level, walletTransactionId, sourceKey, metadata: { xp: nextXp } });
-    await createNotification(tx, { userId, type: "REWARD", title: `${config.level} level reached`, message: config.rewardVC > 0 ? `You reached ${config.level} and received ${config.rewardVC.toLocaleString("en-US")} VC.` : `You reached ${config.level}. Keep exploring the Veltrix demo world.` });
+    await createNotification(tx, { userId, type: "REWARD", title: `${config.level} level reached`, message: config.rewardVC > 0 ? `You reached ${config.level} and received ${config.rewardVC.toLocaleString("en-US")} VC.` : `You reached ${config.level}. Keep exploring the Veltrix world.` });
     milestones.push(config.level);
   }
   return { progression: { userId, level: nextLevel, xp: nextXp }, wallet, milestones };

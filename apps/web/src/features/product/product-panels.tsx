@@ -1,60 +1,683 @@
 "use client";
 
-import { Bell, Check, Gift, LoaderCircle, LockKeyhole, ShieldCheck, Sparkles, Trophy } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  ActionRow,
+  Divider,
+  SectionHeader,
+  SettingsRow,
+  Stat,
+} from "@/components/ui/layout-primitives";
 import { useToast } from "@/components/ui/toast";
 
-type Promotion = { id: string; title: string; description: string; rewardVC: number; endAt: string; claimed: boolean };
-type RewardOverview = { progression: { level: string; xp: number; currentThreshold: number; nextLevel: string | null; nextThreshold: number | null; progress: number }; configs: Array<{ level: string; xpThreshold: number; rewardVC: number }>; history: Array<{ id: string; type: string; amountVC: number; level: string | null; createdAt: string }> };
-type Settings = { sessionReminderMinutes: number; dailyWagerLimit: number | null; maxWager: number | null; coolOffUntil: string | null; selfExcludedUntil: string | null };
-type Status = { settings: Settings; dailyWagered: number; dailyRemaining: number | null; activeSession: { gameName: string; elapsedSeconds: number } | null };
-type Notification = { id: string; type: string; title: string; message: string; readAt: string | null; createdAt: string };
+type Promotion = {
+  id: string;
+  title: string;
+  description: string;
+  rewardVC: number;
+  endAt: string;
+  claimed: boolean;
+};
+type RewardOverview = {
+  progression: {
+    level: string;
+    xp: number;
+    currentThreshold: number;
+    nextLevel: string | null;
+    nextThreshold: number | null;
+    progress: number;
+  };
+  configs: Array<{ level: string; xpThreshold: number; rewardVC: number }>;
+  history: Array<{
+    id: string;
+    type: string;
+    amountVC: number;
+    level: string | null;
+    createdAt: string;
+  }>;
+};
+type Settings = {
+  sessionReminderMinutes: number;
+  dailyWagerLimit: number | null;
+  maxWager: number | null;
+  coolOffUntil: string | null;
+  selfExcludedUntil: string | null;
+};
+type Status = {
+  settings: Settings;
+  dailyWagered: number;
+  dailyRemaining: number | null;
+  activeSession: { gameName: string; elapsedSeconds: number } | null;
+};
+type Notification = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  readAt: string | null;
+  createdAt: string;
+};
 
-function formatDate(value: string) { return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
-function errorText(payload: unknown, fallback: string) { return typeof payload === "object" && payload && "error" in payload && typeof payload.error === "object" && payload.error && "message" in payload.error && typeof payload.error.message === "string" ? payload.error.message : fallback; }
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
 
-export function PromotionsPanel({ initialPromotions }: { initialPromotions: Promotion[] }) {
+function errorText(payload: unknown, fallback: string) {
+  return typeof payload === "object" &&
+    payload &&
+    "error" in payload &&
+    typeof payload.error === "object" &&
+    payload.error &&
+    "message" in payload.error &&
+    typeof payload.error.message === "string"
+    ? payload.error.message
+    : fallback;
+}
+
+export function PromotionsPanel({
+  initialPromotions,
+}: {
+  initialPromotions: Promotion[];
+}) {
   const [promotions, setPromotions] = useState(initialPromotions);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const { showToast } = useToast();
+
   async function claim(promotionId: string) {
-    setBusy(promotionId); setMessage(null);
+    setBusy(promotionId);
+    setMessage(null);
     try {
-      const response = await fetch(`/api/v1/promotions/${promotionId}/claim`, { method: "POST", headers: { "Idempotency-Key": `promotion-ui-${promotionId}-${crypto.randomUUID()}` } });
-      const payload = await response.json() as unknown;
-      if (!response.ok) throw new Error(errorText(payload, "The promotion could not be claimed."));
-      setPromotions((items) => items.map((item) => item.id === promotionId ? { ...item, claimed: true } : item));
-      setMessage("Reward added to your fictional-credit wallet.");
+      const response = await fetch(`/api/v1/promotions/${promotionId}/claim`, {
+        method: "POST",
+        headers: {
+          "Idempotency-Key": `promotion-ui-${promotionId}-${crypto.randomUUID()}`,
+        },
+      });
+      const payload = (await response.json()) as unknown;
+      if (!response.ok)
+        throw new Error(
+          errorText(payload, "The promotion could not be claimed."),
+        );
+      setPromotions((items) =>
+        items.map((item) =>
+          item.id === promotionId ? { ...item, claimed: true } : item,
+        ),
+      );
+      setMessage("Reward added to your wallet.");
       showToast("Promotion reward claimed", "success");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "The promotion could not be claimed."); showToast("Couldn’t claim promotion", "error"); } finally { setBusy(null); }
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "The promotion could not be claimed.",
+      );
+      showToast("Couldn’t claim promotion", "error");
+    } finally {
+      setBusy(null);
+    }
   }
-  return <div className="grid gap-4 md:grid-cols-2">{promotions.map((promotion) => <article className="surface-subtle relative overflow-hidden rounded-[24px] p-6" key={promotion.id}><div aria-hidden="true" className="absolute -right-10 -top-16 h-40 w-40 rounded-full bg-amber/10 blur-3xl" /><div className="relative"><div className="flex items-start justify-between gap-4"><span className="grid h-10 w-10 place-items-center rounded-xl border border-amber/20 bg-amber/10 text-amber"><Gift size={18} /></span><span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted">Ends {formatDate(promotion.endAt)}</span></div><h2 className="display mt-6 text-3xl text-ink">{promotion.title}</h2><p className="mt-3 min-h-12 text-sm leading-6 text-muted">{promotion.description}</p><div className="mt-6 flex items-center justify-between gap-3 border-t border-white/10 pt-5"><div><p className="text-[10px] uppercase tracking-[0.14em] text-muted">Reward</p><p className="mt-1 text-lg font-semibold text-mint">{promotion.rewardVC.toLocaleString("en-US")} VC</p></div><button className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-full border border-amber/45 bg-amber px-4 text-xs font-bold text-[#17110a] disabled:cursor-not-allowed disabled:opacity-50" disabled={promotion.claimed || busy === promotion.id} onClick={() => claim(promotion.id)}>{busy === promotion.id ? <LoaderCircle className="animate-spin" size={14} /> : promotion.claimed ? <Check size={14} /> : null}{promotion.claimed ? "Claimed" : busy === promotion.id ? "Claiming…" : "Claim reward"}</button></div></div></article>)}{promotions.length === 0 ? <div className="surface-subtle rounded-[24px] p-10 text-center md:col-span-2"><Sparkles className="mx-auto text-amber" size={22} /><p className="mt-4 text-sm font-semibold text-ink">No promotions are available for you right now.</p><p className="mt-2 text-xs text-muted">Check back as the fictional Veltrix calendar changes.</p></div> : null}{message ? <p aria-live="polite" className="text-xs font-semibold text-mint md:col-span-2">{message}</p> : null}</div>;
+
+  return (
+    <div className="grid gap-8 md:grid-cols-2">
+      {promotions.map((promotion) => (
+        <article
+          className="relative overflow-hidden radius-surface border border-border bg-surface p-6 shadow-[0_18px_50px_rgb(0_0_0_/_0.08)]"
+          key={promotion.id}
+        >
+          <div
+            aria-hidden="true"
+            className="absolute -right-10 -top-16 h-40 w-40 rounded-full bg-amber/10 blur-3xl"
+          />
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4">
+              <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted">
+                Ends {formatDate(promotion.endAt)}
+              </span>
+            </div>
+            <h2 className="display mt-6 text-3xl text-ink">
+              {promotion.title}
+            </h2>
+            <p className="mt-3 min-h-12 text-sm leading-6 text-muted">
+              {promotion.description}
+            </p>
+            <div className="mt-6 flex items-center justify-between gap-3 border-t border-border pt-5">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted">
+                  Reward
+                </p>
+                <p className="mt-1 text-lg font-semibold text-mint">
+                  {promotion.rewardVC.toLocaleString("en-US")} VC
+                </p>
+              </div>
+              <button
+                className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-control)] border border-amber/45 bg-amber px-4 text-xs font-bold text-[#17110a] disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={promotion.claimed || busy === promotion.id}
+                onClick={() => claim(promotion.id)}
+              >
+                {busy === promotion.id ? <LoaderCircle className="animate-spin" size={14} /> : null}
+                {promotion.claimed
+                  ? "Claimed"
+                  : busy === promotion.id
+                    ? "Claiming…"
+                    : "Claim reward"}
+              </button>
+            </div>
+          </div>
+        </article>
+      ))}
+      {promotions.length === 0 ? (
+        <div className="py-16 text-center md:col-span-2">
+          <p className="text-sm font-semibold text-ink">
+            No promotions are available for you right now.
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            Check back as the Veltrix calendar changes.
+          </p>
+        </div>
+      ) : null}
+      {message ? (
+        <p
+          aria-live="polite"
+          className="text-xs font-semibold text-mint md:col-span-2"
+        >
+          {message}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export function RewardsPanel({ initial }: { initial: RewardOverview }) {
-  return <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]"><section className="surface relative overflow-hidden rounded-[28px] p-7 sm:p-9"><div aria-hidden="true" className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-amber/10 blur-3xl" /><div className="relative"><div className="flex items-start justify-between"><div><p className="eyebrow">Your progression</p><h2 className="display mt-4 text-5xl text-ink">{initial.progression.level}</h2><p className="mt-2 text-sm text-muted">{initial.progression.xp.toLocaleString("en-US")} XP earned through demo gameplay.</p></div><span className="grid h-12 w-12 place-items-center rounded-2xl border border-amber/20 bg-amber/10 text-amber"><Trophy size={20} /></span></div><div className="mt-9"><div className="mb-2 flex justify-between text-xs font-semibold text-muted"><span>Progress to {initial.progression.nextLevel ?? "complete"}</span><span>{initial.progression.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-amber to-mint transition-all" style={{ width: `${initial.progression.progress}%` }} /></div><p className="mt-3 text-xs text-muted">{initial.progression.nextThreshold === null ? "You have reached the highest configured level." : `${Math.max(0, initial.progression.nextThreshold - initial.progression.xp).toLocaleString("en-US")} XP to go`}</p></div></div></section><section className="surface-subtle rounded-[28px] p-7 sm:p-9"><p className="eyebrow">The ladder</p><div className="mt-5 grid gap-2">{initial.configs.map((config) => <div className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${config.level === initial.progression.level ? "border-amber/35 bg-amber/10" : "border-white/[0.07] bg-white/[0.02]"}`} key={config.level}><div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-xs font-bold text-amber">{config.level.slice(0, 1)}</span><div><p className="text-sm font-semibold text-ink">{config.level}</p><p className="text-[11px] text-muted">{config.xpThreshold.toLocaleString("en-US")} XP</p></div></div><span className="text-xs font-semibold text-mint">+{config.rewardVC.toLocaleString("en-US")} VC</span></div>)}</div></section><section className="surface-subtle rounded-[28px] p-7 sm:p-9 lg:col-span-2"><div className="flex items-center gap-3"><Sparkles className="text-amber" size={18} /><div><p className="eyebrow">Reward history</p><h2 className="display mt-2 text-3xl text-ink">Milestones and bonuses</h2></div></div><div className="mt-6 grid gap-2">{initial.history.map((item) => <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3" key={item.id}><div><p className="text-sm font-semibold text-ink">{item.type === "VIP_MILESTONE" ? `${item.level} milestone` : item.type === "PROMOTION_REWARD" ? "Promotion reward" : "Daily reward"}</p><p className="mt-1 text-xs text-muted">{formatDate(item.createdAt)}</p></div><span className="text-sm font-semibold text-mint">+{item.amountVC.toLocaleString("en-US")} VC</span></div>)}{initial.history.length === 0 ? <p className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-muted">Your reward history will appear here.</p> : null}</div></section></div>;
+  return (
+    <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="rewards-progress-focus">
+        <div
+          aria-hidden="true"
+          className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-amber/10 blur-3xl"
+        />
+        <div className="relative">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="eyebrow">Your progression</p>
+              <h2 className="display mt-4 text-5xl text-ink">
+                {initial.progression.level}
+              </h2>
+              <p className="mt-2 text-sm text-muted">
+                {initial.progression.xp.toLocaleString("en-US")} XP earned
+                through completed rounds.
+              </p>
+            </div>
+          </div>
+          <div className="mt-9">
+            <div className="mb-2 flex justify-between text-xs font-semibold text-muted">
+              <span>
+                Progress to {initial.progression.nextLevel ?? "complete"}
+              </span>
+              <span>{initial.progression.progress}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-foreground/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber to-mint transition-all"
+                style={{ width: `${initial.progression.progress}%` }}
+              />
+            </div>
+            <p className="mt-3 text-xs text-muted">
+              {initial.progression.nextThreshold === null
+                ? "You have reached the highest configured level."
+                : `${Math.max(0, initial.progression.nextThreshold - initial.progression.xp).toLocaleString("en-US")} XP to go`}
+            </p>
+          </div>
+        </div>
+      </section>
+      <section>
+        <SectionHeader
+          eyebrow="The ladder"
+          title="Earn as you play"
+          description="A clear view of the next level and its reward."
+        />
+        <div className="border-y border-border">
+          {initial.configs.map((config) => (
+            <div
+              className={`flex items-center justify-between gap-4 border-b border-border py-4 last:border-b-0 ${config.level === initial.progression.level ? "text-amber" : ""}`}
+              key={config.level}
+            >
+              <div>
+                <p className="text-sm font-semibold text-ink">{config.level}</p>
+                <p className="mt-1 text-[11px] text-muted">
+                  {config.xpThreshold.toLocaleString("en-US")} XP
+                </p>
+              </div>
+              <span className="text-xs font-semibold text-mint">
+                +{config.rewardVC.toLocaleString("en-US")} VC
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="lg:col-span-2">
+        <SectionHeader
+          eyebrow="Reward history"
+          title="Milestones and bonuses"
+        />
+        <div className="border-y border-border">
+          {initial.history.map((item) => (
+            <div
+              className="flex items-center justify-between gap-4 border-b border-border py-4 last:border-b-0"
+              key={item.id}
+            >
+              <div>
+                <p className="text-sm font-semibold text-ink">
+                  {item.type === "VIP_MILESTONE"
+                    ? `${item.level} milestone`
+                    : item.type === "PROMOTION_REWARD"
+                      ? "Promotion reward"
+                      : "Daily reward"}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {formatDate(item.createdAt)}
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-mint">
+                +{item.amountVC.toLocaleString("en-US")} VC
+              </span>
+            </div>
+          ))}
+          {initial.history.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted">
+              Your reward history will appear here.
+            </p>
+          ) : null}
+        </div>
+      </section>
+    </div>
+  );
 }
 
-export function ResponsibleGamingPanel({ initialSettings, initialStatus }: { initialSettings: Settings; initialStatus: Status }) {
+type PendingAction = "coolOff" | "selfExclusion" | null;
+
+export function ResponsibleGamingPanel({
+  initialSettings,
+  initialStatus,
+}: {
+  initialSettings: Settings;
+  initialStatus: Status;
+}) {
   const [settings, setSettings] = useState(initialSettings);
   const [status, setStatus] = useState(initialStatus);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [daily, setDaily] = useState(settings.dailyWagerLimit?.toString() ?? "");
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [daily, setDaily] = useState(
+    settings.dailyWagerLimit?.toString() ?? "",
+  );
   const [max, setMax] = useState(settings.maxWager?.toString() ?? "");
-  const [reminder, setReminder] = useState(String(settings.sessionReminderMinutes));
-  async function request(path: string, options: RequestInit = {}) { const response = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options.headers ?? {}) } }); const payload = await response.json() as unknown; if (!response.ok) throw new Error(errorText(payload, "The setting could not be updated.")); return payload as { data: Settings }; }
-  async function save() { setBusy(true); setMessage(null); try { const payload = await request("/api/v1/responsible-gaming/settings", { method: "PATCH", body: JSON.stringify({ sessionReminderMinutes: Number(reminder), dailyWagerLimit: daily ? Number(daily) : null, maxWager: max ? Number(max) : null }) }); setSettings(payload.data); setMessage("Your settings are active on the server."); } catch (error) { setMessage(error instanceof Error ? error.message : "The setting could not be updated."); } finally { setBusy(false); } }
-  async function activate(path: string, body: object, label: string) { setBusy(true); setMessage(null); try { const payload = await request(path, { method: "POST", body: JSON.stringify(body) }); setSettings(payload.data); setStatus((current) => ({ ...current, settings: payload.data })); setMessage(label); } catch (error) { setMessage(error instanceof Error ? error.message : "The setting could not be updated."); } finally { setBusy(false); } }
-  const blocked = settings.selfExcludedUntil && new Date(settings.selfExcludedUntil) > new Date();
-  return <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]"><section className="surface rounded-[28px] p-7 sm:p-9"><div className="flex items-start justify-between gap-4"><div><p className="eyebrow">Player controls</p><h2 className="display mt-3 text-3xl text-ink">Set your own pace.</h2><p className="mt-3 max-w-lg text-sm leading-6 text-muted">These controls are enforced by the server for every demo wager. Veltrix Credits are fictional and have no monetary value.</p></div><ShieldCheck className="text-mint" size={22} /></div><div className="mt-8 grid gap-5 sm:grid-cols-3"><label className="grid gap-2 text-xs font-semibold text-muted">Session reminder (minutes)<input className="field" min="5" max="240" step="5" type="number" value={reminder} onChange={(event) => setReminder(event.target.value)} /></label><label className="grid gap-2 text-xs font-semibold text-muted">Daily wager limit<input className="field" min="1" type="number" placeholder="No limit" value={daily} onChange={(event) => setDaily(event.target.value)} /></label><label className="grid gap-2 text-xs font-semibold text-muted">Max wager<input className="field" min="1" max="500" type="number" placeholder="Platform max" value={max} onChange={(event) => setMax(event.target.value)} /></label></div><button className="focus-ring mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-amber/45 bg-amber px-5 text-xs font-bold text-[#17110a] disabled:opacity-50" disabled={busy} onClick={save}>{busy ? <LoaderCircle className="animate-spin" size={14} /> : <Check size={14} />} Save settings</button></section><section className="surface-subtle rounded-[28px] p-7 sm:p-9"><p className="eyebrow">Live status</p><div className="mt-5 grid gap-3"><div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4"><p className="text-[10px] uppercase tracking-[0.14em] text-muted">Today’s demo wagers</p><p className="mt-2 text-2xl font-semibold text-ink">{status.dailyWagered.toLocaleString("en-US")} VC</p><p className="mt-1 text-xs text-muted">{status.dailyRemaining === null ? "No daily limit configured" : `${status.dailyRemaining.toLocaleString("en-US")} VC remaining in UTC day`}</p></div><div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4"><p className="text-[10px] uppercase tracking-[0.14em] text-muted">Session reminder</p><p className="mt-2 text-sm font-semibold text-ink">{status.activeSession ? `${status.activeSession.gameName} · ${Math.floor(status.activeSession.elapsedSeconds / 60)}m active` : "No active session"}</p><p className="mt-1 text-xs text-muted">Reminders are informational and never block wallet access.</p></div></div></section><section className="surface-subtle rounded-[28px] p-7 sm:p-9 lg:col-span-2"><div className="flex items-center gap-3"><LockKeyhole className="text-amber" size={18} /><div><p className="eyebrow">Pause controls</p><h2 className="display mt-2 text-3xl text-ink">Take a break when you want one.</h2></div></div><div className="mt-6 grid gap-3 sm:grid-cols-2"><button className="focus-ring rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left hover:border-amber/30 disabled:opacity-50" disabled={busy} onClick={() => activate("/api/v1/responsible-gaming/cool-off", { hours: 24 }, "A 24-hour cool-off is active.")}><p className="text-sm font-semibold text-ink">Start a 24-hour cool-off</p><p className="mt-1 text-xs leading-5 text-muted">Gameplay is paused server-side until the period ends.</p></button><button className="focus-ring rounded-2xl border border-[#ff9bbb]/20 bg-[#ff9bbb]/[0.05] p-4 text-left hover:border-[#ff9bbb]/40 disabled:opacity-50" disabled={Boolean(blocked) || busy} onClick={() => activate("/api/v1/responsible-gaming/self-exclusion", { days: 7 }, "Demo self-exclusion is active for 7 days.")}><p className="text-sm font-semibold text-ink">Self-exclude for 7 days</p><p className="mt-1 text-xs leading-5 text-muted">Demo-only control. It cannot be cancelled from the player interface.</p></button></div>{settings.coolOffUntil ? <p className="mt-4 text-xs text-muted">Cool-off until {formatDate(settings.coolOffUntil)}.</p> : null}{settings.selfExcludedUntil ? <p className="mt-2 text-xs text-muted">Self-exclusion until {formatDate(settings.selfExcludedUntil)}.</p> : null}{message ? <p aria-live="polite" className="mt-5 text-xs font-semibold text-mint">{message}</p> : null}</section></div>;
+  const [reminder, setReminder] = useState(
+    String(settings.sessionReminderMinutes),
+  );
+
+  async function request(path: string, options: RequestInit = {}) {
+    const response = await fetch(path, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers ?? {}),
+      },
+    });
+    const payload = (await response.json()) as unknown;
+    if (!response.ok)
+      throw new Error(errorText(payload, "The setting could not be updated."));
+    return payload as { data: Settings };
+  }
+
+  async function save() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const payload = await request("/api/v1/responsible-gaming/settings", {
+        method: "PATCH",
+        body: JSON.stringify({
+          sessionReminderMinutes: Number(reminder),
+          dailyWagerLimit: daily ? Number(daily) : null,
+          maxWager: max ? Number(max) : null,
+        }),
+      });
+      setSettings(payload.data);
+      setStatus((current) => ({ ...current, settings: payload.data }));
+      setMessage("Your settings are active.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "The setting could not be updated.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmAction() {
+    if (!pendingAction) return;
+    const isCoolOff = pendingAction === "coolOff";
+    setBusy(true);
+    setMessage(null);
+    try {
+      const payload = await request(
+        isCoolOff
+          ? "/api/v1/responsible-gaming/cool-off"
+          : "/api/v1/responsible-gaming/self-exclusion",
+        {
+          method: "POST",
+          body: JSON.stringify(isCoolOff ? { hours: 24 } : { days: 7 }),
+        },
+      );
+      setSettings(payload.data);
+      setStatus((current) => ({ ...current, settings: payload.data }));
+      setMessage(
+        isCoolOff
+          ? "A 24-hour cool-off is active."
+          : "Self-exclusion is active for 7 days.",
+      );
+      setPendingAction(null);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "The setting could not be updated.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const blocked = Boolean(
+    settings.selfExcludedUntil &&
+    new Date(settings.selfExcludedUntil) > new Date(),
+  );
+  const activeSession = status.activeSession
+    ? `${status.activeSession.gameName} · ${Math.floor(status.activeSession.elapsedSeconds / 60)}m active`
+    : "No active session";
+
+  return (
+    <div>
+      <section>
+        <SectionHeader
+          eyebrow="Limits"
+          title="Set your own pace"
+          description="Set limits, manage session reminders and take a break whenever you need."
+        />
+        <div className="border-y border-border">
+          <SettingsRow
+            description="Get a reminder while you play."
+            label="Session reminder"
+          >
+            <label className="block">
+              <span className="sr-only">Session reminder in minutes</span>
+              <input
+                className="field"
+                min="5"
+                max="240"
+                step="5"
+                type="number"
+                value={reminder}
+                onChange={(event) => setReminder(event.target.value)}
+              />
+            </label>
+          </SettingsRow>
+          <Divider />
+          <SettingsRow
+            description="Keep your total wagers within a daily amount."
+            label="Daily wager limit"
+          >
+            <label className="block">
+              <span className="sr-only">Daily wager limit</span>
+              <input
+                className="field"
+                min="1"
+                type="number"
+                placeholder="No limit"
+                value={daily}
+                onChange={(event) => setDaily(event.target.value)}
+              />
+            </label>
+          </SettingsRow>
+          <Divider />
+          <SettingsRow
+            description="Set the largest single wager you want to place."
+            label="Maximum wager"
+          >
+            <label className="block">
+              <span className="sr-only">Maximum wager</span>
+              <input
+                className="field"
+                min="1"
+                max="500"
+                type="number"
+                placeholder="Platform maximum"
+                value={max}
+                onChange={(event) => setMax(event.target.value)}
+              />
+            </label>
+          </SettingsRow>
+        </div>
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <button
+            className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] bg-primary px-5 text-xs font-bold text-background hover:bg-primary-hover disabled:opacity-50"
+            disabled={busy}
+            onClick={save}
+            type="button"
+          >
+            {busy ? <LoaderCircle className="animate-spin" size={14} /> : null}{" "}
+            Save settings
+          </button>
+          {message ? (
+            <p aria-live="polite" className="text-xs font-semibold text-mint">
+              {message}
+            </p>
+          ) : null}
+        </div>
+      </section>
+      <section className="mt-14">
+        <SectionHeader eyebrow="Today" title="A clear view of your session" />
+        <div className="grid gap-6 border-y border-border py-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat
+            detail="Total wagered in the UTC day."
+            label="Wagered today"
+            value={`${status.dailyWagered.toLocaleString("en-US")} VC`}
+          />
+          <Stat
+            detail={
+              status.dailyRemaining === null
+                ? "No daily limit configured."
+                : `${status.dailyRemaining.toLocaleString("en-US")} VC remaining.`
+            }
+            label="Daily limit"
+            value={
+              status.dailyRemaining === null
+                ? "No limit"
+                : `${status.dailyRemaining.toLocaleString("en-US")} VC left`
+            }
+          />
+          <Stat
+            detail="Your selected reminder interval."
+            label="Reminder"
+            value={`${settings.sessionReminderMinutes} min`}
+          />
+          <Stat
+            detail="Play when you are ready."
+            label="Session"
+            value={activeSession}
+          />
+        </div>
+      </section>
+      <section className="mt-14">
+        <SectionHeader
+          eyebrow="Take a break"
+          title="Pause when you need to"
+          description="These actions are enforced across gameplay and need confirmation before they begin."
+        />
+        <div className="border-y border-border">
+          <ActionRow
+            description="Pause gameplay until tomorrow. You can return when the 24-hour period ends."
+            label="24-hour cool-off"
+            action={
+              <button
+                className="focus-ring min-h-11 rounded-[var(--radius-control)] border border-amber/40 px-4 text-xs font-bold text-amber-bright hover:bg-amber/10 disabled:opacity-50"
+                disabled={busy}
+                onClick={() => setPendingAction("coolOff")}
+                type="button"
+              >
+                Start cool-off
+              </button>
+            }
+          />
+          <Divider />
+          <ActionRow
+            description="Pause gameplay for seven days. This cannot be cancelled from the player interface."
+            label="7-day self-exclusion"
+            tone="danger"
+            action={
+              <button
+                className="focus-ring min-h-11 rounded-[var(--radius-control)] border border-danger/40 px-4 text-xs font-bold text-danger hover:bg-danger/10 disabled:opacity-50"
+                disabled={blocked || busy}
+                onClick={() => setPendingAction("selfExclusion")}
+                type="button"
+              >
+                Self-exclude
+              </button>
+            }
+          />
+        </div>
+        {settings.coolOffUntil ? (
+          <p className="mt-4 text-xs text-muted">
+            Cool-off until {formatDate(settings.coolOffUntil)}.
+          </p>
+        ) : null}
+        {settings.selfExcludedUntil ? (
+          <p className="mt-2 text-xs text-muted">
+            Self-exclusion until {formatDate(settings.selfExcludedUntil)}.
+          </p>
+        ) : null}
+      </section>
+      <ConfirmationDialog
+        busy={busy}
+        confirmLabel={
+          pendingAction === "coolOff" ? "Start cool-off" : "Self-exclude"
+        }
+        danger={pendingAction === "selfExclusion"}
+        description={
+          pendingAction === "coolOff"
+            ? "You will not be able to play during the next 24 hours."
+            : "You will not be able to play during this period. This action cannot be cancelled from the player interface."
+        }
+        onCancel={() => setPendingAction(null)}
+        onConfirm={() => void confirmAction()}
+        open={pendingAction !== null}
+        title={
+          pendingAction === "coolOff"
+            ? "Start a 24-hour cool-off?"
+            : "Self-exclude for 7 days?"
+        }
+      />
+    </div>
+  );
 }
 
-export function NotificationsPanel({ initialNotifications, initialUnread }: { initialNotifications: Notification[]; initialUnread: number }) {
+export function NotificationsPanel({
+  initialNotifications,
+  initialUnread,
+}: {
+  initialNotifications: Notification[];
+  initialUnread: number;
+}) {
   const [items, setItems] = useState(initialNotifications);
   const [unread, setUnread] = useState(initialUnread);
-  async function mark(id: string) { const response = await fetch(`/api/v1/notifications/${id}/read`, { method: "PATCH" }); if (response.ok) { setItems((current) => current.map((item) => item.id === id ? { ...item, readAt: new Date().toISOString() } : item)); setUnread((current) => Math.max(0, current - 1)); } }
-  async function markAll() { const response = await fetch("/api/v1/notifications/read-all", { method: "POST" }); if (response.ok) { setItems((current) => current.map((item) => ({ ...item, readAt: item.readAt ?? new Date().toISOString() }))); setUnread(0); } }
-  return <section className="surface-subtle rounded-[28px] p-6 sm:p-9"><div className="flex items-end justify-between gap-4"><div><p className="eyebrow">Your inbox</p><h2 className="display mt-3 text-4xl text-ink">Notifications</h2><p className="mt-3 text-sm text-muted">{unread} unread update{unread === 1 ? "" : "s"}.</p></div><button className="focus-ring rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-muted-strong hover:border-white/20 hover:text-ink" onClick={markAll}>Mark all read</button></div><div className="mt-7 grid gap-2">{items.map((item) => <button className={`focus-ring flex w-full items-start gap-4 rounded-2xl border p-4 text-left transition ${item.readAt ? "border-white/[0.07] bg-white/[0.02]" : "border-amber/25 bg-amber/[0.06]"}`} key={item.id} onClick={() => !item.readAt && mark(item.id)}><span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-amber">{item.type === "REWARD" ? <Trophy size={15} /> : item.type === "RESPONSIBLE_GAMING" ? <ShieldCheck size={15} /> : <Bell size={15} />}</span><span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold text-ink">{item.title}</span>{!item.readAt ? <span className="rounded-full bg-amber px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#17110a]">New</span> : null}</span><span className="mt-1 block text-xs leading-5 text-muted">{item.message}</span><span className="mt-2 block text-[10px] text-muted/70">{formatDate(item.createdAt)}</span></span></button>)}{items.length === 0 ? <div className="py-14 text-center"><Bell className="mx-auto text-muted" size={20} /><p className="mt-4 text-sm font-semibold text-ink">You’re all caught up.</p></div> : null}</div></section>;
+
+  async function mark(id: string) {
+    const response = await fetch(`/api/v1/notifications/${id}/read`, {
+      method: "PATCH",
+    });
+    if (response.ok) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === id ? { ...item, readAt: new Date().toISOString() } : item,
+        ),
+      );
+      setUnread((current) => Math.max(0, current - 1));
+    }
+  }
+
+  async function markAll() {
+    const response = await fetch("/api/v1/notifications/read-all", {
+      method: "POST",
+    });
+    if (response.ok) {
+      setItems((current) =>
+        current.map((item) => ({
+          ...item,
+          readAt: item.readAt ?? new Date().toISOString(),
+        })),
+      );
+      setUnread(0);
+    }
+  }
+
+  return (
+    <section>
+      <SectionHeader
+        eyebrow="Inbox"
+        title="Latest updates"
+        description={`${unread} unread update${unread === 1 ? "" : "s"}.`}
+      >
+        <button
+          className="focus-ring rounded-[var(--radius-control)] border border-border px-4 py-2 text-xs font-semibold text-muted-strong hover:bg-surface-hover hover:text-ink"
+          onClick={markAll}
+          type="button"
+        >
+          Mark all read
+        </button>
+      </SectionHeader>
+      <div className="border-y border-border">
+        {items.map((item) => (
+          <button
+            className={`focus-ring flex w-full items-start gap-4 border-b border-border py-5 text-left transition last:border-b-0 ${item.readAt ? "" : "bg-amber/[0.05]"}`}
+            key={item.id}
+            onClick={() => !item.readAt && void mark(item.id)}
+            type="button"
+          >
+            <span className="min-w-0">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold text-ink">
+                  {item.title}
+                </span>
+                {!item.readAt ? (
+                  <span className="rounded-full bg-amber px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#17110a]">
+                    New
+                  </span>
+                ) : null}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted">
+                {item.message}
+              </span>
+              <span className="mt-2 block text-[10px] text-muted/70">
+                {formatDate(item.createdAt)}
+              </span>
+            </span>
+          </button>
+        ))}
+        {items.length === 0 ? (
+          <div className="py-14 text-center">
+            <p className="text-sm font-semibold text-ink">
+              You’re all caught up.
+            </p>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
 }

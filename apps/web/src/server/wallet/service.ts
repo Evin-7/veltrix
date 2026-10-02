@@ -110,7 +110,7 @@ export async function claimDailyReward(userId: string) {
     };
     const result = await applyWalletMutationToLockedWallet(tx, wallet, mutation);
     await recordRewardHistory(tx, { userId, type: "DAILY_REWARD", amountVC: DAILY_REWARD_AMOUNT, walletTransactionId: result.transaction.id, sourceKey: `daily-reward:${userId}:${utcDayKey(now)}`, metadata: { date: utcDayKey(now) } });
-    await createNotification(tx, { userId, type: "REWARD", title: "Daily reward claimed", message: `${DAILY_REWARD_AMOUNT.toLocaleString("en-US")} VC was added to your fictional-credit wallet.` });
+    await createNotification(tx, { userId, type: "REWARD", title: "Daily reward claimed", message: `${DAILY_REWARD_AMOUNT.toLocaleString("en-US")} VC was added to your wallet.` });
     return { amount: DAILY_REWARD_AMOUNT, balance: result.balance, claimed: true, idempotent: result.idempotent, nextEligibleAt: next.toISOString() };
   });
 }

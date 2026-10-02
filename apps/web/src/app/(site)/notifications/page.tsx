@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/layout-primitives";
 import { NotificationsPanel } from "@/features/product/product-panels";
 import { getCurrentUser } from "@/server/auth/session";
 import { listNotifications } from "@/server/notifications/service";
@@ -12,5 +13,19 @@ export default async function NotificationsPage() {
   if (!user) redirect("/login?next=/notifications");
   if (user.role !== "PLAYER") redirect("/profile");
   const result = await listNotifications(user.id, { page: 1, pageSize: 50 });
-  return <main className="page-shell pb-20 pt-10 sm:pt-16"><NotificationsPanel initialNotifications={result.notifications} initialUnread={result.unread} /></main>;
+  return (
+    <main className="page-shell player-page">
+      <PageHeader
+        description="Updates about your account, rewards and play controls."
+        eyebrow="Your inbox"
+        title="Notifications"
+      />
+      <section className="player-section">
+        <NotificationsPanel
+          initialNotifications={result.notifications}
+          initialUnread={result.unread}
+        />
+      </section>
+    </main>
+  );
 }
