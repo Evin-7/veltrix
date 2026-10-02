@@ -7,7 +7,7 @@ test.describe("admin journey", () => {
     await page.goto("http://localhost:3001/login");
     await page.getByLabel("Email").fill(process.env.E2E_ADMIN_EMAIL ?? "");
     await page.getByLabel("Password").fill(process.env.E2E_ADMIN_PASSWORD ?? "");
-    await page.getByRole("button", { name: "Enter control room" }).click();
+    await page.getByRole("button", { name: "Login" }).click();
     await expect(page).toHaveURL(/localhost:3001\/$/);
 
     await page.getByRole("button", { name: "Players" }).click();

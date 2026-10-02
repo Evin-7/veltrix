@@ -25,7 +25,8 @@ export function AdminVeltrixLogo({
         fill
         priority={priority}
         sizes="(min-width: 640px) 190px, 164px"
-        src="/veltrix-wordmark-on-dark.png"
+        src="/admin/veltrix-wordmark-on-dark.png"
+        unoptimized
       />
       <Image
         alt=""
@@ -34,7 +35,8 @@ export function AdminVeltrixLogo({
         fill
         priority={priority}
         sizes="(min-width: 640px) 190px, 164px"
-        src="/veltrix-wordmark-on-light.png"
+        src="/admin/veltrix-wordmark-on-light.png"
+        unoptimized
       />
     </span>
   );
