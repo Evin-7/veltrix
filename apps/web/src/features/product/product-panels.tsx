@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
   ActionRow,
@@ -281,6 +281,7 @@ export function ResponsibleGamingPanel({
   const [status, setStatus] = useState(initialStatus);
   const [busy, setBusy] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [daily, setDaily] = useState(
     settings.dailyWagerLimit?.toString() ?? "",
   );
@@ -345,9 +346,25 @@ export function ResponsibleGamingPanel({
     }
   }
 
-  const blocked = Boolean(
+  useEffect(() => {
+    const deadlines = [settings.coolOffUntil, settings.selfExcludedUntil]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => new Date(value).getTime())
+      .filter((value) => value > Date.now());
+    if (deadlines.length === 0) return;
+    const timeout = window.setTimeout(
+      () => setNow(Date.now()),
+      Math.max(1, Math.min(...deadlines) - Date.now() + 1),
+    );
+    return () => window.clearTimeout(timeout);
+  }, [now, settings.coolOffUntil, settings.selfExcludedUntil]);
+
+  const coolOffActive = Boolean(
+    settings.coolOffUntil && new Date(settings.coolOffUntil).getTime() > now,
+  );
+  const selfExclusionActive = Boolean(
     settings.selfExcludedUntil &&
-    new Date(settings.selfExcludedUntil) > new Date(),
+    new Date(settings.selfExcludedUntil).getTime() > now,
   );
   const activeSession = status.activeSession
     ? `${status.activeSession.gameName} · ${Math.floor(status.activeSession.elapsedSeconds / 60)}m active`
@@ -487,7 +504,7 @@ export function ResponsibleGamingPanel({
             action={
               <button
                 className="focus-ring min-h-11 rounded-[var(--radius-control)] border border-danger/40 px-4 text-xs font-bold text-danger hover:bg-danger/10 disabled:opacity-50"
-                disabled={blocked || busy}
+                disabled={selfExclusionActive || busy}
                 onClick={() => setPendingAction("selfExclusion")}
                 type="button"
               >
@@ -496,12 +513,12 @@ export function ResponsibleGamingPanel({
             }
           />
         </div>
-        {settings.coolOffUntil ? (
+        {coolOffActive && settings.coolOffUntil ? (
           <p className="mt-4 text-xs text-muted">
             Cool-off until {formatDate(settings.coolOffUntil)}.
           </p>
         ) : null}
-        {settings.selfExcludedUntil ? (
+        {selfExclusionActive && settings.selfExcludedUntil ? (
           <p className="mt-2 text-xs text-muted">
             Self-exclusion until {formatDate(settings.selfExcludedUntil)}.
           </p>
