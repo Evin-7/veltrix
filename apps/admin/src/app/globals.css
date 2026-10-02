@@ -63,6 +63,10 @@ button { cursor: pointer; }
 .admin-loading-screen { display: flex; min-height: 100vh; align-items: center; justify-content: center; gap: 0.65rem; background: var(--admin-bg); color: var(--admin-muted); font-size: 0.75rem; font-weight: 600; }
 .admin-loading-spinner { display: block; height: 1rem; width: 1rem; border: 2px solid color-mix(in srgb, var(--admin-accent) 24%, transparent); border-top-color: var(--admin-accent); border-radius: 999px; animation: admin-loading-spin 700ms linear infinite; }
 @keyframes admin-loading-spin { to { transform: rotate(360deg); } }
+.admin-veltrix-logo { position: relative; display: inline-block; aspect-ratio: 1291 / 234; flex: none; overflow: hidden; background: transparent; }
+.admin-veltrix-logo-image { display: none; object-fit: contain; }
+:root:not([data-theme="light"]) .admin-veltrix-logo-image--dark, :root[data-theme="dark"] .admin-veltrix-logo-image--dark { display: block; }
+:root[data-theme="light"] .admin-veltrix-logo-image--light { display: block; }
 
 .admin-input { width: 100%; border: 1px solid var(--admin-border); border-radius: 0.75rem; background: var(--admin-bg-deep); padding: 0.75rem; color: var(--admin-text); outline: none; transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
 .admin-input::placeholder { color: var(--admin-muted); opacity: 0.8; }

@@ -1,11 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Activity, CircleDollarSign, FileClock, Gamepad2, LayoutDashboard, LogOut, Menu, Search, Settings, Shield, Sparkles, Trophy, Users, X } from "lucide-react";
 import { apiFetch, type ApiError } from "@/lib/api";
 import { AdminThemeMenu } from "@/components/theme-menu";
+import { AdminVeltrixLogo } from "@/components/veltrix-logo";
 
 export type AdminUser = { id: string; email: string; role: "ADMIN" | "SUPER_ADMIN"; status: "ACTIVE"; profile: { username: string; displayName: string | null } | null };
 
@@ -57,7 +57,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/60 lg:hidden" />}
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-[#252d3d] bg-[#0d111a] px-5 py-6 transition-transform lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="mb-10 flex items-center justify-between px-2">
-          <div><Image alt="Veltrix" className="h-auto w-[164px]" height={300} priority src="/veltrix-wordmark.png" width={1450} /><div className="mt-2 pl-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#657188]">Control room</div></div>
+          <div><AdminVeltrixLogo className="w-[164px]" priority /><div className="mt-2 pl-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#657188]">Control room</div></div>
           <button onClick={() => setMobileOpen(false)} className="text-[#8994aa] lg:hidden"><X size={20} /></button>
         </div>
         <nav className="admin-scrollbar flex-1 space-y-1 overflow-y-auto">
