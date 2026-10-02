@@ -25,6 +25,8 @@ Player project:
 - `APP_URL`: deployed player URL, including `https://` and no trailing slash.
 - `ADMIN_APP_URL`: deployed admin URL, including `https://` and no trailing slash.
 - `NODE_ENV=production`.
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`: required for signed profile-image uploads. Keep them server-only. `CLOUDINARY_FOLDER` is optional and defaults to `veltrix/avatars`.
+- `CLOUDINARY_UPLOAD_PRESET`: optional alternative to signed uploads; use a restricted unsigned preset only when signed credentials are not available.
 - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`: required together for shared rate limiting across serverless instances.
 
 Admin project:
