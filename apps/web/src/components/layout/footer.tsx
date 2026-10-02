@@ -1,6 +1,5 @@
-import { ShieldCheck, Sparkles } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { VeltrixLogo } from "@/components/ui/veltrix-logo";
 
 export function Footer() {
   return (
@@ -8,19 +7,21 @@ export function Footer() {
       <div className="page-shell grid gap-10 py-12 sm:grid-cols-[1fr_auto] sm:items-end">
         <div>
           <Link aria-label="Veltrix home" className="focus-ring inline-flex items-center rounded-lg" href="/">
-            <Image alt="Veltrix" className="h-auto w-[156px]" height={300} src="/veltrix-wordmark.png" width={1450} />
+            <VeltrixLogo className="w-[156px]" />
           </Link>
-          <p className="mt-4 max-w-md text-sm leading-6 text-muted">A considered playground for fictional credits, atmospheric games, and polished product craft.</p>
-          <p className="mt-5 flex items-center gap-2 text-[11px] font-semibold text-muted"><ShieldCheck size={14} className="text-mint" /> Built as a portfolio demonstration</p>
+          <p className="mt-4 max-w-md text-sm leading-6 text-muted">A considered collection of atmospheric games and polished product craft.</p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs font-semibold text-muted">
-          <Link className="focus-ring rounded-sm hover:text-ink" href="/#promotions">Promotions</Link>
-          <Link className="focus-ring rounded-sm hover:text-ink" href="/#rewards">Rewards</Link>
+          <Link className="focus-ring rounded-sm hover:text-ink" href="/promotions">Promotions</Link>
+          <Link className="focus-ring rounded-sm hover:text-ink" href="/rewards">Rewards</Link>
           <Link className="focus-ring rounded-sm hover:text-ink" href="/casino">Casino</Link>
-          <span className="inline-flex items-center gap-1.5 text-amber"><Sparkles size={13} /> 100% virtual credits</span>
+          <Link className="focus-ring rounded-sm hover:text-ink" href="/terms">Terms</Link>
+          <Link className="focus-ring rounded-sm hover:text-ink" href="/privacy">Privacy</Link>
+          <Link className="focus-ring rounded-sm hover:text-ink" href="/cookies">Cookies</Link>
+          <Link className="focus-ring rounded-sm hover:text-ink" href="/responsible-gaming">Responsible gaming</Link>
         </div>
       </div>
-      <div className="border-t border-white/[0.06] py-4 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-muted/70">No deposits · No withdrawals · No real-money wagering</div>
+      <div className="border-t border-border px-6 py-4 text-center text-xs leading-5 text-muted">Veltrix Credits are virtual credits used within Veltrix and have no cash value. They cannot be purchased, withdrawn, or exchanged for money.</div>
     </footer>
   );
 }

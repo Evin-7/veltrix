@@ -11,10 +11,14 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "border-primary/60 bg-primary text-background hover:border-primary-hover hover:bg-primary-hover",
-  secondary: "border-border-strong bg-surface-hover/50 text-foreground hover:border-border-strong hover:bg-surface-hover",
-  ghost: "border-transparent bg-transparent text-foreground-subtle hover:bg-surface-hover hover:text-foreground",
-  quiet: "border-transparent bg-transparent px-0 text-foreground-muted hover:text-foreground",
+  primary:
+    "border-primary/60 bg-primary text-background hover:border-primary-hover hover:bg-primary-hover",
+  secondary:
+    "border-border-strong bg-surface-hover/50 text-foreground hover:border-border-strong hover:bg-surface-hover",
+  ghost:
+    "border-transparent bg-transparent text-foreground-subtle hover:bg-surface-hover hover:text-foreground",
+  quiet:
+    "border-transparent bg-transparent px-0 text-foreground-muted hover:text-foreground",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -23,11 +27,17 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: "min-h-12 px-5 text-sm",
 };
 
-export function Button({ className, variant = "secondary", size = "md", children, ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant = "secondary",
+  size = "md",
+  children,
+  ...props
+}: ButtonProps) {
   return (
     <button
       className={cn(
-        "focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border font-semibold tracking-[-0.01em] disabled:cursor-not-allowed disabled:opacity-50",
+        "focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-control)] border font-semibold tracking-[-0.01em] disabled:cursor-not-allowed disabled:opacity-50",
         variantClasses[variant],
         sizeClasses[size],
         className,

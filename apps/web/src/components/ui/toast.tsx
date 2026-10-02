@@ -6,8 +6,10 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export type ToastTone = "success" | "error" | "info";
-type ToastItem = { id: number; message: string; tone: ToastTone };
-type ToastContextValue = { showToast: (message: string, tone?: ToastTone) => void };
+type ToastCard = { rank: "J" | "K"; suit: "♠" | "♥" };
+export type ToastOptions = { variant?: "default" | "premium"; card?: ToastCard };
+type ToastItem = { id: number; message: string; tone: ToastTone; variant: ToastOptions["variant"]; card?: ToastCard };
+type ToastContextValue = { showToast: (message: string, tone?: ToastTone, options?: ToastOptions) => void };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
@@ -30,12 +32,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     timers.current.delete(id);
   }, []);
 
-  const showToast = useCallback((message: string, tone: ToastTone = "info") => {
+  const showToast = useCallback((message: string, tone: ToastTone = "info", options: ToastOptions = {}) => {
     const now = Date.now();
     if (lastToast.current?.message === message && now - lastToast.current.at < 500) return;
     lastToast.current = { message, at: now };
     const id = nextId.current++;
-    setToasts((current) => [...current.slice(-2), { id, message, tone }]);
+    setToasts((current) => [...current.slice(-2), { card: options.card, id, message, tone, variant: options.variant ?? "default" }]);
     timers.current.set(id, setTimeout(() => dismiss(id), 3200));
   }, [dismiss]);
 
@@ -51,7 +53,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => {
           const style = toneStyles[toast.tone];
           const Icon = style.icon;
-          return <div aria-atomic="true" className={cn("pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl backdrop-blur-xl", style.className)} key={toast.id} role={toast.tone === "error" ? "alert" : "status"}><Icon className="mt-0.5 shrink-0" size={17} /><span className="min-w-0 flex-1 leading-5">{toast.message}</span><button aria-label="Dismiss notification" className="focus-ring -mr-1 rounded-full p-1 opacity-70 hover:opacity-100" onClick={() => dismiss(toast.id)} type="button"><X size={14} /></button></div>;
+          const premium = toast.variant === "premium";
+          return <div aria-atomic="true" className={cn("pointer-events-auto flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl backdrop-blur-xl", premium ? "toast-premium" : style.className)} key={toast.id} role={toast.tone === "error" ? "alert" : "status"}>{premium && toast.card ? <span aria-hidden="true" className={cn("toast-playing-card", toast.card.suit === "♥" ? "toast-playing-card--heart" : "toast-playing-card--spade")}><span>{toast.card.rank}</span><b>{toast.card.suit}</b></span> : <Icon className="mt-0.5 shrink-0" size={17} />}<span className="min-w-0 flex-1 leading-5">{toast.message}</span><button aria-label="Dismiss notification" className="focus-ring -mr-1 rounded-full p-1 opacity-70 hover:opacity-100" onClick={() => dismiss(toast.id)} type="button"><X size={14} /></button></div>;
         })}
       </div>
     </ToastContext.Provider>

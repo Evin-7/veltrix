@@ -1,0 +1,8 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = { title: "Terms" };
+
+export default function TermsPage() {
+  return <main className="page-shell pb-20 pt-10 sm:pt-16"><div className="max-w-3xl"><p className="eyebrow">Veltrix information</p><h1 className="display mt-4 text-5xl leading-none text-ink sm:text-6xl">Terms</h1><p className="mt-5 max-w-2xl text-sm leading-7 text-muted">Veltrix is a collection of interactive games and account features designed for entertainment and product exploration.</p></div><article className="surface-subtle mt-10 max-w-3xl rounded-[28px] p-6 text-sm leading-7 text-muted sm:p-9"><h2 className="display text-3xl text-ink">Using Veltrix</h2><p className="mt-4">Keep your account details accurate, protect your password, and use the service in a way that respects other players and the product.</p><h2 className="display mt-9 text-3xl text-ink">Veltrix Credits</h2><p className="mt-4">Veltrix Credits are virtual credits used within Veltrix. They have no cash value and cannot be purchased, withdrawn, exchanged, or redeemed for money.</p><h2 className="display mt-9 text-3xl text-ink">Play at your pace</h2><p className="mt-4">Use the responsible gaming controls whenever you want to set a reminder, wager limit, cool-off, or self-exclusion period.</p><p className="mt-9 border-t border-border pt-5 text-xs">For privacy and cookie information, visit <Link className="font-semibold text-amber-bright hover:text-ink" href="/privacy">Privacy</Link> and <Link className="font-semibold text-amber-bright hover:text-ink" href="/cookies">Cookies</Link>.</p></article></main>;
+}
