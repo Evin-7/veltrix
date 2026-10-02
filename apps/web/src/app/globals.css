@@ -572,9 +572,6 @@ body:has(.auth-page) > footer { display: none; }
 .auth-scene-chip { position: absolute; right: 26%; bottom: 28%; z-index: 6; display: grid; height: 6rem; width: 6rem; place-content: center; border: 0.38rem dotted #edd38f; border-radius: 50%; background: conic-gradient(from 12deg, #e3bd5f, #78521d 13deg, #e3bd5f 26deg, #78521d 39deg, #e3bd5f 52deg, #78521d 65deg, #e3bd5f 78deg, #78521d 91deg, #e3bd5f 104deg, #78521d 117deg, #e3bd5f 130deg, #78521d 143deg, #e3bd5f 156deg, #78521d 169deg, #e3bd5f 182deg, #78521d 195deg, #e3bd5f 208deg, #78521d 221deg, #e3bd5f 234deg, #78521d 247deg, #e3bd5f 260deg, #78521d 273deg, #e3bd5f 286deg, #78521d 299deg, #e3bd5f 312deg, #78521d 325deg, #e3bd5f 338deg, #78521d 351deg); box-shadow: 0 1.1rem 1.7rem rgb(0 0 0 / 0.38), inset 0 0 0 0.28rem #151513, inset 0 0 0 0.36rem #c09139; color: #f6d98f; font-family: var(--font-display); font-size: 1.2rem; line-height: 0.8; transition: transform 420ms cubic-bezier(0.2, 0.8, 0.25, 1); animation: auth-scene-enter 820ms 120ms cubic-bezier(0.2, 0.8, 0.25, 1) both; }
 .auth-scene-chip::before { position: absolute; inset: 0.6rem; border: 1px solid rgb(247 221 147 / 0.62); border-radius: 50%; content: ""; }
 .auth-scene-chip b { font-family: var(--font-sans); font-size: 0.72rem; }
-.auth-scene-die { position: absolute; z-index: 5; display: grid; height: 3.5rem; width: 3.5rem; place-items: center; border: 1px solid rgb(229 198 130 / 0.7); border-radius: 0.7rem; background: linear-gradient(145deg, #fffdf5, #cfc4ac); box-shadow: 0 1rem 1.4rem rgb(0 0 0 / 0.26), inset 0 0 0 0.16rem rgb(255 255 255 / 0.5); color: #1d2426; font-family: var(--font-sans); font-size: 1rem; font-weight: 800; line-height: 0.9; text-align: center; }
-.auth-scene-die--one { bottom: 23%; left: 18%; transform: rotate(-18deg); }
-.auth-scene-die--five { right: 9%; bottom: 13%; transform: rotate(12deg); }
 .auth-scene-brand { position: absolute; top: 4%; left: 5%; display: flex; align-items: center; gap: 0.65rem; color: rgb(241 215 151 / 0.7); font-family: var(--font-display); font-size: 0.62rem; letter-spacing: 0.22em; }
 .auth-scene-brand-logo { width: clamp(7rem, 14vw, 10rem); }
 .auth-scene-copy { position: absolute; bottom: 20%; left: 5%; z-index: 7; max-width: 19rem; }
@@ -644,9 +641,6 @@ body:has(.auth-page) > footer { display: none; }
   .auth-scene-card--queen { right: 8%; top: 25%; height: 6.6rem; width: 4.7rem; }
   .auth-scene-chip { right: 20%; bottom: 17%; height: 4.5rem; width: 4.5rem; border-width: 0.28rem; font-size: 0.85rem; }
   .auth-scene-chip b { font-size: 0.55rem; }
-  .auth-scene-die { height: 2.5rem; width: 2.5rem; font-size: 0.75rem; }
-  .auth-scene-die--one { bottom: 16%; left: 12%; }
-  .auth-scene-die--five { right: 3%; bottom: 7%; }
   .auth-scene-brand { top: 2%; left: 3%; font-size: 0.48rem; }
   .auth-scene-brand-logo { width: 7rem; }
   .auth-scene-copy { bottom: 1%; left: 3%; }

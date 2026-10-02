@@ -29,8 +29,6 @@ export function AuthExperience({ mode, children }: AuthExperienceProps) {
         <div className="auth-scene-card auth-scene-card--ace" style={{ transform: `translate3d(${pointerShift.x * -5}px, ${pointerShift.y * -4}px, 0) rotate(-16deg)` }}><span>A</span><b>♠</b></div>
         <div className="auth-scene-card auth-scene-card--queen" style={{ transform: `translate3d(${pointerShift.x * 4}px, ${pointerShift.y * -3}px, 0) rotate(13deg)` }}><span>Q</span><b className="auth-card-red">♥</b></div>
         <div className="auth-scene-chip" style={{ transform: `translate3d(${pointerShift.x * 4}px, ${pointerShift.y * 3}px, 0) rotate(18deg)` }}><span>VC</span><b>100</b></div>
-        <div className="auth-scene-die auth-scene-die--one">•</div>
-        <div className="auth-scene-die auth-scene-die--five">••<br />•<br />••</div>
         <div className="auth-scene-brand"><VeltrixLogo alt="" className="auth-scene-brand-logo" /><span>PRIVATE TABLE</span></div>
         <div className="auth-scene-copy"><p className="eyebrow">{mode === "register" ? "A new seat at the table" : "The Veltrix lobby"}</p><p className="display">Play the atmosphere.</p><span>Cards, tables, and a little more room to breathe.</span></div>
       </section>
