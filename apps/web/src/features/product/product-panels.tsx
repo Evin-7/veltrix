@@ -269,6 +269,13 @@ export function RewardsPanel({ initial }: { initial: RewardOverview }) {
 }
 
 type PendingAction = "coolOff" | "selfExclusion" | null;
+type CoolOffHours = 1 | 24 | 168;
+
+const coolOffOptions: Array<{ value: CoolOffHours; label: string }> = [
+  { value: 1, label: "1 hour" },
+  { value: 24, label: "24 hours" },
+  { value: 168, label: "7 days" },
+];
 
 export function ResponsibleGamingPanel({
   initialSettings,
@@ -282,6 +289,7 @@ export function ResponsibleGamingPanel({
   const [busy, setBusy] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [coolOffHours, setCoolOffHours] = useState<CoolOffHours>(24);
   const [daily, setDaily] = useState(
     settings.dailyWagerLimit?.toString() ?? "",
   );
@@ -319,23 +327,30 @@ export function ResponsibleGamingPanel({
   async function confirmAction() {
     if (!pendingAction) return;
     const isCoolOff = pendingAction === "coolOff";
+    const endingCoolOff = isCoolOff && coolOffActive;
     setBusy(true);
     try {
       const payload = await request(
         isCoolOff
           ? "/api/v1/responsible-gaming/cool-off"
           : "/api/v1/responsible-gaming/self-exclusion",
-        {
-          method: "POST",
-          body: JSON.stringify(isCoolOff ? { hours: 24 } : { days: 7 }),
-        },
+        endingCoolOff
+          ? { method: "DELETE" }
+          : {
+              method: "POST",
+              body: JSON.stringify(
+                isCoolOff ? { hours: coolOffHours } : { days: 7 },
+              ),
+            },
       );
       setSettings(payload);
       setStatus((current) => ({ ...current, settings: payload }));
       showToast(
-        isCoolOff
-          ? "A 24-hour cool-off is active."
-          : "Self-exclusion is active for 7 days.",
+        endingCoolOff
+          ? "Your cool-off has ended early."
+          : isCoolOff
+            ? `A ${coolOffHours === 1 ? "1-hour" : coolOffHours === 24 ? "24-hour" : "7-day"} cool-off is active.`
+            : "Self-exclusion is active for 7 days.",
         "success",
       );
       setPendingAction(null);
@@ -479,21 +494,58 @@ export function ResponsibleGamingPanel({
         <SectionHeader
           eyebrow="Take a break"
           title="Pause when you need to"
-          description="These actions are enforced across gameplay and need confirmation before they begin."
+          description="These actions are enforced across gameplay and need confirmation before they change your access."
         />
         <div className="border-y border-border">
           <ActionRow
-            description="Pause gameplay until tomorrow. You can return when the 24-hour period ends."
-            label="24-hour cool-off"
+            description={
+              coolOffActive
+                ? "Gameplay is paused until the deadline below. You can end this cool-off early if you are ready to return."
+                : "Pause gameplay for a short break. Choose a duration before you start."
+            }
+            label="Cool-off"
             action={
-              <button
-                className="button-secondary focus-ring min-h-11 rounded-[var(--radius-control)] px-4 text-xs disabled:cursor-not-allowed"
-                disabled={busy}
-                onClick={() => setPendingAction("coolOff")}
-                type="button"
-              >
-                Start cool-off
-              </button>
+              coolOffActive ? (
+                <button
+                  className="button-secondary focus-ring min-h-11 rounded-[var(--radius-control)] px-4 text-xs disabled:cursor-not-allowed"
+                  disabled={busy}
+                  onClick={() => setPendingAction("coolOff")}
+                  type="button"
+                >
+                  End cool-off early
+                </button>
+              ) : (
+                <div className="flex flex-col items-start gap-3 sm:items-end">
+                  <fieldset className="flex flex-wrap gap-2" disabled={busy}>
+                    <legend className="sr-only">Cool-off duration</legend>
+                    {coolOffOptions.map((option) => (
+                      <label
+                        className={`focus-within:ring-2 focus-within:ring-amber/50 inline-flex min-h-10 cursor-pointer items-center rounded-full border px-3 text-xs font-semibold transition ${coolOffHours === option.value ? "border-amber/70 bg-amber/10 text-ink" : "border-border text-muted-strong hover:border-border-strong hover:text-ink"}`}
+                        key={option.value}
+                      >
+                        <input
+                          aria-label={option.label}
+                          checked={coolOffHours === option.value}
+                          className="sr-only"
+                          name="cool-off-duration"
+                          onChange={() => setCoolOffHours(option.value)}
+                          type="radio"
+                          value={option.value}
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </fieldset>
+                  <button
+                    className="button-secondary focus-ring min-h-11 rounded-[var(--radius-control)] px-4 text-xs disabled:cursor-not-allowed"
+                    disabled={busy}
+                    onClick={() => setPendingAction("coolOff")}
+                    type="button"
+                  >
+                    Start cool-off
+                  </button>
+                </div>
+              )
             }
           />
           <Divider />
@@ -515,7 +567,9 @@ export function ResponsibleGamingPanel({
         </div>
         {coolOffActive && settings.coolOffUntil ? (
           <p className="mt-4 text-xs text-muted">
-            Cool-off until {formatDate(settings.coolOffUntil)}.
+            Cool-off active until {formatDate(settings.coolOffUntil)}. Ending it
+            early removes this cool-off; any other active controls remain in
+            place.
           </p>
         ) : null}
         {selfExclusionActive && settings.selfExcludedUntil ? (
@@ -527,12 +581,18 @@ export function ResponsibleGamingPanel({
       <ConfirmationDialog
         busy={busy}
         confirmLabel={
-          pendingAction === "coolOff" ? "Start cool-off" : "Self-exclude"
+          pendingAction === "coolOff"
+            ? coolOffActive
+              ? "End cool-off early"
+              : "Start cool-off"
+            : "Self-exclude"
         }
         danger={pendingAction === "selfExclusion"}
         description={
           pendingAction === "coolOff"
-            ? "You will not be able to play during the next 24 hours."
+            ? coolOffActive
+              ? "This will end the current cool-off before its scheduled deadline. Any other active responsible gaming controls will remain in place."
+              : `You will not be able to play during the next ${coolOffHours === 1 ? "hour" : coolOffHours === 24 ? "24 hours" : "7 days"}.`
             : "You will not be able to play during this period. This action cannot be cancelled from the player interface."
         }
         onCancel={() => setPendingAction(null)}
@@ -540,7 +600,9 @@ export function ResponsibleGamingPanel({
         open={pendingAction !== null}
         title={
           pendingAction === "coolOff"
-            ? "Start a 24-hour cool-off?"
+            ? coolOffActive
+              ? "End your cool-off early?"
+              : `Start a ${coolOffHours === 1 ? "1-hour" : coolOffHours === 24 ? "24-hour" : "7-day"} cool-off?`
             : "Self-exclude for 7 days?"
         }
       />

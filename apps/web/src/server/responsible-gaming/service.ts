@@ -113,6 +113,42 @@ export async function enterCoolOff(userId: string, hours: 1 | 24 | 168) {
   });
 }
 
+export async function cancelCoolOff(userId: string) {
+  const prisma = getPrisma();
+  return prisma.$transaction(async (tx) => {
+    await lockWallet(tx, userId);
+    const current = await tx.responsibleGamingSetting.upsert({
+      where: { userId },
+      update: {},
+      create: { userId },
+    });
+
+    if (!current.coolOffUntil || current.coolOffUntil <= new Date()) {
+      return serializeSettings(current);
+    }
+
+    const settings = await tx.responsibleGamingSetting.update({
+      where: { userId },
+      data: { coolOffUntil: null },
+    });
+    await writeAuditLog(tx, {
+      actorUserId: userId,
+      action: "RESPONSIBLE_GAMING_COOLOFF_CANCELLED",
+      targetType: "RESPONSIBLE_GAMING",
+      targetId: userId,
+      metadata: { previousCoolOffUntil: current.coolOffUntil.toISOString() },
+    });
+    await createNotification(tx, {
+      userId,
+      type: "RESPONSIBLE_GAMING",
+      title: "Cool-off ended early",
+      message:
+        "Your cool-off has been ended early. Your other responsible gaming controls remain active.",
+    });
+    return serializeSettings(settings);
+  });
+}
+
 export async function activateSelfExclusion(
   userId: string,
   days: 1 | 7 | 30 | 365,

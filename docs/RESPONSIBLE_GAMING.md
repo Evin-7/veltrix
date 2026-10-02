@@ -9,10 +9,10 @@ Players can configure:
 - session reminders from 5 to 240 minutes;
 - a daily VC wager limit, measured in UTC calendar days;
 - a maximum wager up to the platform maximum;
-- a 1-hour, 24-hour, or 7-day cool-off;
+- a 1-hour, 24-hour, or 7-day cool-off, which can be ended early from the player interface;
 - a 1-day, 7-day, 30-day, or 365-day demo self-exclusion.
 
-Cool-off and self-exclusion cannot be shortened or cancelled from the player interface. Active self-exclusion blocks gameplay server-side. Session reminders are informational and do not block access.
+Cool-off can be ended early from the player interface after confirmation. Self-exclusion cannot be shortened or cancelled from the player interface. Active self-exclusion blocks gameplay server-side. Session reminders are informational and do not block access.
 
 ## Enforcement
 
