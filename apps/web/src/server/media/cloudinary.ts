@@ -19,7 +19,7 @@ function isConfiguredForAuthenticatedUpload(
   return Boolean(cloudName && apiKey && apiSecret);
 }
 
-function classifyCloudinaryRejection(status: number, message: unknown) {
+export function classifyCloudinaryRejection(status: number, message: unknown) {
   const normalizedMessage =
     typeof message === "string" ? message.toLowerCase() : "";
 
@@ -42,6 +42,26 @@ function classifyCloudinaryRejection(status: number, message: unknown) {
     return "file_too_large";
   }
   return "provider_rejected";
+}
+
+export function cloudinaryFailureMessage(reason: string) {
+  switch (reason) {
+    case "invalid_api_key":
+      return "The image service rejected its API key. Check that the production Cloudinary API key belongs to this Cloudinary account.";
+    case "invalid_signature":
+    case "credentials_rejected":
+      return "The image service rejected its credentials. Check the Cloudinary API key and secret for this account.";
+    case "account_limit":
+      return "The Cloudinary account has reached an upload limit. Check the account before trying again.";
+    case "file_too_large":
+      return "The image service could not accept this file. Choose a smaller image and try again.";
+    case "timeout":
+      return "The image service took too long to respond. Please try again.";
+    case "network_error":
+      return "The image service could not be reached. Please try again.";
+    default:
+      return "The image service could not upload that image. Please try again.";
+  }
 }
 
 function safeProviderMessage(message: unknown, credentials: string[]) {
@@ -119,6 +139,9 @@ async function uploadImageToCloudinary(
       !secureUrl.startsWith("https://")
     ) {
       const providerMessage = payload?.error?.message;
+      const reason = response.ok
+        ? "invalid_response"
+        : classifyCloudinaryRejection(response.status, providerMessage);
       logger.error("media.cloudinary_upload_rejected", {
         folder,
         providerStatus: response.status,
@@ -126,9 +149,7 @@ async function uploadImageToCloudinary(
           typeof payload?.error?.http_code === "number"
             ? payload.error.http_code
             : undefined,
-        reason: response.ok
-          ? "invalid_response"
-          : classifyCloudinaryRejection(response.status, providerMessage),
+        reason,
         providerMessage: safeProviderMessage(providerMessage, [
           environment.CLOUDINARY_API_KEY ?? "",
           environment.CLOUDINARY_API_SECRET ?? "",
@@ -137,25 +158,26 @@ async function uploadImageToCloudinary(
       throw new AppError(
         502,
         "IMAGE_UPLOAD_FAILED",
-        "We could not upload that image. Please try again.",
+        cloudinaryFailureMessage(reason),
       );
     }
 
     return secureUrl;
   } catch (error) {
     if (error instanceof AppError) throw error;
+    const reason =
+      error instanceof Error && error.name === "AbortError"
+        ? "timeout"
+        : "network_error";
     logger.error("media.cloudinary_upload_unreachable", {
       folder,
-      reason:
-        error instanceof Error && error.name === "AbortError"
-          ? "timeout"
-          : "network_error",
+      reason,
       errorName: error instanceof Error ? error.name : "unknown",
     });
     throw new AppError(
       502,
       "IMAGE_UPLOAD_FAILED",
-      "We could not upload that image. Please try again.",
+      cloudinaryFailureMessage(reason),
     );
   } finally {
     clearTimeout(timeoutId);
