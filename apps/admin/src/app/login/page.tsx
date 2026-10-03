@@ -1,8 +1,8 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type InputHTMLAttributes, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import {
   AdminButton,
   AdminField,
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const { errors, validate, setErrors } = useAdminFormValidation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -64,15 +65,16 @@ export default function LoginPage() {
             />
           </AdminField>
           <AdminField error={errors.password} label="Password" name="password">
-            <AdminInput
+            <LoginPasswordInput
               autoComplete="current-password"
               name="password"
+              onToggleVisibility={() => setShowPassword((visible) => !visible)}
               onChange={(event) => {
                 setPassword(event.target.value);
                 setErrors((current) => ({ ...current, password: "" }));
               }}
               required
-              type="password"
+              revealed={showPassword}
               value={password}
             />
           </AdminField>
@@ -95,5 +97,35 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+type LoginPasswordInputProps = InputHTMLAttributes<HTMLInputElement> & {
+  onToggleVisibility: () => void;
+  revealed: boolean;
+};
+
+function LoginPasswordInput({
+  onToggleVisibility,
+  revealed,
+  ...inputProps
+}: LoginPasswordInputProps) {
+  return (
+    <div className="admin-password-control">
+      <AdminInput {...inputProps} type={revealed ? "text" : "password"} />
+      <button
+        aria-controls={inputProps.id}
+        aria-label={revealed ? "Hide password" : "Show password"}
+        className="admin-password-toggle"
+        onClick={onToggleVisibility}
+        type="button"
+      >
+        {revealed ? (
+          <EyeOff aria-hidden="true" focusable="false" size={17} />
+        ) : (
+          <Eye aria-hidden="true" focusable="false" size={17} />
+        )}
+      </button>
+    </div>
   );
 }
