@@ -13,19 +13,22 @@ export const dynamic = "force-dynamic";
 function GameRail({
   games,
   favouriteGameIds,
+  priorityCount = 0,
 }: {
   games: Awaited<ReturnType<typeof listPublicGames>>["games"];
   favouriteGameIds: string[];
+  priorityCount?: number;
 }) {
   if (games.length === 0) return null;
   return (
     <div className="game-rail">
-      {games.map((game) => (
+      {games.map((game, index) => (
         <GameCard
           compact
           game={game}
           initialIsFavourite={favouriteGameIds.includes(game.id)}
           key={game.id}
+          priority={index < priorityCount}
         />
       ))}
     </div>
@@ -111,7 +114,7 @@ export default async function Home() {
           title="Trending now"
           href="/casino"
         />
-        <GameRail games={popularGames} favouriteGameIds={favouriteGameIds} />
+        <GameRail games={popularGames} favouriteGameIds={favouriteGameIds} priorityCount={4} />
       </section>
       <section className="page-shell player-section--large">
         <SectionHeading

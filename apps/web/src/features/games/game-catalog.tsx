@@ -182,11 +182,12 @@ export function GameCatalog({
       </div>
       {filteredGames.length > 0 ? (
         <div className="game-grid mt-4">
-          {filteredGames.map((game) => (
+          {filteredGames.map((game, index) => (
             <GameCard
               game={game}
               initialIsFavourite={favouriteGameIds.includes(game.id)}
               key={game.id}
+              priority={index < 6}
             />
           ))}
         </div>

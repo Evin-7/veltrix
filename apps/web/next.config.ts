@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
+    const gameArtworkCacheHeaders = [
+      { key: "Cache-Control", value: "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400" },
+    ];
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "X-Frame-Options", value: "DENY" },
@@ -16,6 +19,8 @@ const nextConfig: NextConfig = {
 
     return [
       { source: "/(.*)", headers: securityHeaders },
+      { source: "/games/:slug/cover.webp", headers: gameArtworkCacheHeaders },
+      { source: "/games/:slug/cover.jpg", headers: gameArtworkCacheHeaders },
       { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }] },
       // Only anonymous, read-only catalog data may be cached at the edge.
       { source: "/api/v1/games", headers: [{ key: "Cache-Control", value: "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }] },
