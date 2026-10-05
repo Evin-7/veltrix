@@ -7,8 +7,13 @@ describe("Dice rules", () => {
     expect(rollDice(100, "HIGH", { nextInt: () => 49 }).payout).toBe(0);
   });
 
-  it("does not treat 50 as a low win", () => {
-    expect(rollDice(100, "LOW", { nextInt: () => 49 }).roll).toBe(50);
-    expect(rollDice(100, "LOW", { nextInt: () => 49 }).payout).toBe(0);
+  it("treats 50 as a loss for either bet", () => {
+    const low = rollDice(100, "LOW", { nextInt: () => 49 });
+    const high = rollDice(100, "HIGH", { nextInt: () => 49 });
+
+    expect(low.roll).toBe(50);
+    expect(high.roll).toBe(50);
+    expect(low.payout).toBe(0);
+    expect(high.payout).toBe(0);
   });
 });

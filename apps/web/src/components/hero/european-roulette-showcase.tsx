@@ -26,7 +26,7 @@ export function EuropeanRouletteShowcase() {
             <p className="eyebrow text-[#d9b875]/75">The European table</p>
             <h2 className="display mt-3 text-4xl leading-[0.96] text-[#f7edda] sm:text-5xl" id="roulette-showcase-title">One wheel.<br />Your next move.</h2>
             <p className="mt-4 max-w-xs text-sm leading-6 text-[#c8c5b9]/75">A single zero, thirty-seven numbers, and a little more atmosphere.</p>
-            <Link className="focus-ring mt-6 inline-flex min-h-11 items-center rounded-full border border-[#e7c47e]/55 bg-[#d7a94f] px-4 text-xs font-bold text-[#1b1710] shadow-[0_8px_24px_rgba(0,0,0,0.28)] hover:bg-[#edc66e]" href="/casino/european-roulette">Play Roulette</Link>
+            <Link className="button-primary focus-ring mt-6 inline-flex min-h-11 items-center rounded-full px-4 text-xs shadow-[0_8px_24px_rgba(0,0,0,0.28)]" href="/casino/european-roulette">Play Roulette</Link>
           </div>
           <p className="max-w-[220px] text-xs font-semibold leading-5 text-[#c8c5b9]/55 lg:pt-1 lg:text-right">European Roulette<br />Single zero · 1–36</p>
         </div>

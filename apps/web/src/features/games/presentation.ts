@@ -23,7 +23,7 @@ const presentationBySlug: Record<string, GamePresentation> = {
 };
 
 const fallbackPresentation: GamePresentation = {
-  accent: "#e8b86a",
+  accent: "var(--gold)",
   palette: ["#334155", "#111827"],
   symbol: "✦",
 };

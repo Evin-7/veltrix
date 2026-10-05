@@ -1,70 +1,54 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { resultToDice } from "./dice-result";
 
-function PercentileDie({
+const ROLL_PREVIEW_COUNT = 12;
+const PIP_POSITIONS: Record<number, number[]> = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8],
+};
+
+function DiceFace({
   value,
-  units = false,
+  index,
+  rolling,
+  accented = false,
 }: {
-  value: string;
-  units?: boolean;
+  value: number;
+  index: number;
+  rolling: boolean;
+  accented?: boolean;
 }) {
-  const id = useId().replaceAll(":", "");
+  const rotation = ((index * 37) % 9) - 4;
+  const offset = ((index * 13) % 5) - 2;
+  const style = {
+    "--die-rotation": `${rotation}deg`,
+    "--die-offset": `${offset}px`,
+    animationDelay: `-${(index % 5) * 0.12}s`,
+  } as CSSProperties;
+  const pips = PIP_POSITIONS[value];
+
   return (
-    <svg
-      aria-hidden="true"
-      className={`gilded-die-art ${units ? "gilded-die-art--ivory" : ""}`}
-      viewBox="0 0 120 144"
+    <span
+      aria-hidden={rolling || undefined}
+      aria-label={`Die showing ${value}`}
+      className={`gilded-d6 ${rolling ? "gilded-d6--rolling" : ""} ${accented ? "gilded-d6--accented" : ""}`}
+      role="img"
+      style={style}
     >
-      <defs>
-        <linearGradient id={`${id}-body`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor={units ? "#fffdf3" : "#ffe4a1"} />
-          <stop offset=".5" stopColor={units ? "#eae0c7" : "#c18a34"} />
-          <stop offset="1" stopColor={units ? "#9b8c6d" : "#6d421b"} />
-        </linearGradient>
-        <linearGradient id={`${id}-face`} x1="0" y1="0" x2="0.8" y2="1">
-          <stop offset="0" stopColor={units ? "#fffef9" : "#fff0bd"} />
-          <stop offset="1" stopColor={units ? "#e9dfc5" : "#daa647"} />
-        </linearGradient>
-      </defs>
-      <path
-        d="M60 5 108 41 113 94 60 138 7 94 12 41Z"
-        fill={`url(#${id}-body)`}
-        stroke="#f5d58e"
-        strokeWidth="1.2"
-      />
-      <path d="M60 5 87 53 60 106 33 53Z" fill={`url(#${id}-face)`} />
-      <path d="M12 41 33 53 60 5Z" fill="#fff8df" opacity=".6" />
-      <path d="M60 5 87 53 108 41Z" fill="#fff4d0" opacity=".25" />
-      <path d="M7 94 33 53 60 106 60 138Z" fill="#37220f" opacity=".2" />
-      <path d="M60 106 87 53 113 94 60 138Z" fill="#fff3c7" opacity=".13" />
-      <path
-        d="M12 41 33 53 7 94M60 5 33 53 60 106 87 53 60 5M87 53 108 41M60 106 60 138"
-        fill="none"
-        stroke={units ? "#b5a781" : "#896025"}
-        strokeWidth=".9"
-        opacity=".55"
-      />
-      <path
-        d="M60 8 34 53 59 102"
-        fill="none"
-        stroke="#fff9e8"
-        strokeWidth="1.5"
-        opacity=".65"
-      />
-      <text
-        x="60"
-        y="65"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill="#473014"
-        fontSize={units ? "31" : "26"}
-        fontWeight="600"
-        fontFamily="Georgia, serif"
-      >
-        {value}
-      </text>
-    </svg>
+      {Array.from({ length: 9 }, (_, position) => (
+        <span
+          aria-hidden="true"
+          className={`gilded-d6-pip ${pips.includes(position) ? "gilded-d6-pip--visible" : ""}`}
+          key={position}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -77,67 +61,108 @@ export function DiceRollDisplay({
 }) {
   const [frame, setFrame] = useState(0);
   useEffect(() => {
-    if (
-      !rolling ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    )
-      return;
+    if (!rolling) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     const interval = window.setInterval(
       () => setFrame((current) => current + 1),
       90,
     );
     return () => window.clearInterval(interval);
   }, [rolling]);
-  const tens = rolling
-    ? (frame * 7) % 10
-    : roll === undefined
-      ? undefined
-      : Math.floor((roll % 100) / 10);
-  const units = rolling
-    ? (frame * 3 + 5) % 10
-    : roll === undefined
-      ? undefined
-      : roll % 10;
+
+  const hasValidResult =
+    roll !== undefined &&
+    Number.isSafeInteger(roll) &&
+    roll >= 1 &&
+    roll <= 100;
+  const settledDice = hasValidResult ? resultToDice(roll) : [];
+  const displayedTotal = settledDice.reduce((sum, face) => sum + face, 0);
+  const faces = rolling
+    ? Array.from(
+        { length: ROLL_PREVIEW_COUNT },
+        (_, index) => ((frame * 3 + index * 5) % 6) + 1,
+      )
+    : settledDice;
+  const resultLabel = rolling
+    ? "Dice are rolling"
+    : hasValidResult
+      ? `${settledDice.length} dice with a total result of ${displayedTotal}`
+      : roll === undefined
+        ? "Dice tray"
+        : "Dice result unavailable";
+
   return (
     <div
-      className={`gilded-roll ${rolling ? "gilded-roll--rolling" : roll !== undefined ? "gilded-roll--settled" : ""}`}
-      aria-busy={rolling}
+      className={`gilded-roll ${rolling ? "gilded-roll--rolling" : hasValidResult ? "gilded-roll--settled" : ""}`}
     >
-      <div aria-hidden="true" className="gilded-roll-stage">
-        <div className="gilded-roll-ring" />
-        <div className="gilded-die gilded-die--tens">
-          <PercentileDie value={tens === undefined ? "—" : `${tens}0`} />
+      <div className="gilded-roll-stage">
+        <div aria-hidden="true" className="gilded-roll-ring" />
+        <div
+          aria-busy={rolling || undefined}
+          aria-label={resultLabel}
+          className="gilded-dice-tray"
+          data-dice-count={
+            hasValidResult && !rolling ? settledDice.length : undefined
+          }
+          data-dice-total={
+            hasValidResult && !rolling ? displayedTotal : undefined
+          }
+          role="group"
+        >
+          {faces.map((face, index) => (
+            <span className="gilded-dice-slot" key={index}>
+              <DiceFace
+                accented={
+                  !rolling &&
+                  settledDice.length > 1 &&
+                  index === settledDice.length - 1 &&
+                  settledDice[index] !== 6
+                }
+                index={index}
+                rolling={rolling}
+                value={face}
+              />
+            </span>
+          ))}
+          {!rolling && !hasValidResult ? (
+            <p className="gilded-dice-empty">
+              {roll === undefined
+                ? "Roll to see your D6 result"
+                : "Dice result unavailable"}
+            </p>
+          ) : null}
         </div>
-        <div className="gilded-die gilded-die--units">
-          <PercentileDie
-            value={units === undefined ? "—" : String(units)}
-            units
-          />
-        </div>
-        <span className="gilded-die-label gilded-die-label--tens">Tens</span>
-        <span className="gilded-die-label gilded-die-label--units">Units</span>
       </div>
-      <div aria-live="polite" aria-atomic="true" className="gilded-roll-result">
+      <div aria-atomic="true" aria-live="polite" className="gilded-roll-result">
         <p className="gilded-roll-kicker">
           {rolling
             ? "Dice in motion"
-            : roll === undefined
-              ? "Ready to roll"
-              : "Roll result"}
+            : hasValidResult
+              ? "Roll result"
+              : roll === undefined
+                ? "Ready to roll"
+                : "Result unavailable"}
         </p>
         <p className="gilded-roll-number">
           {rolling ? (
             <span className="gilded-roll-ellipsis">•••</span>
-          ) : roll === undefined ? (
-            "—"
+          ) : hasValidResult ? (
+            String(roll)
           ) : (
-            String(roll).padStart(2, "0")
+            "—"
           )}
         </p>
       </div>
       <p className="gilded-roll-caption">
-        Percentile dice · 01–100
-        {roll === 100 && !rolling ? " · 00 + 0 = 100" : ""}
+        {rolling
+          ? ""
+          : hasValidResult
+            ? `${settledDice.length} dice · Total ${roll}`
+            : roll === undefined
+              ? "Standard six-sided dice"
+              : "The server result could not be displayed."}
       </p>
     </div>
   );

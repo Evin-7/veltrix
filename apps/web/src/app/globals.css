@@ -16,14 +16,25 @@
   --foreground-subtle: #c0c9d8;
   --border: rgb(203 214 232 / 0.12);
   --border-strong: rgb(203 214 232 / 0.22);
-  --primary: #e8b86a;
-  --primary-hover: #f5c879;
-  --button-primary-bg: #e8b86a;
-  --button-primary-fg: #17120c;
-  --button-primary-border: #e8b86a;
-  --button-primary-hover-bg: #f5c879;
-  --button-primary-hover-fg: #17120c;
-  --button-primary-hover-border: #f5c879;
+  --gold: #d4af37;
+  --gold-hover: #e6c65c;
+  --gold-active: #b89224;
+  --gold-subtle: color-mix(in srgb, var(--gold) 12%, transparent);
+  --gold-border: #b89224;
+  --gold-foreground: #17120c;
+  --gold-shadow: #8a6d14;
+  --primary: var(--gold);
+  --primary-hover: var(--gold-hover);
+  --button-primary-bg: var(--gold);
+  --button-primary-fg: var(--gold-foreground);
+  --button-primary-border: var(--gold-border);
+  --button-primary-hover-bg: var(--gold-hover);
+  --button-primary-hover-fg: var(--gold-foreground);
+  --button-primary-hover-border: var(--gold-hover);
+  --button-primary-active-bg: var(--gold-active);
+  --button-primary-disabled-bg: #948b67;
+  --button-primary-disabled-fg: #252216;
+  --button-primary-disabled-border: #80754c;
   --button-secondary-bg: #1c2736;
   --button-secondary-fg: #f5f7fb;
   --button-secondary-border: rgb(203 214 232 / 0.28);
@@ -58,12 +69,12 @@
   --select-fg: #f5f7fb;
   --select-border: rgb(203 214 232 / 0.24);
   --select-hover-bg: #1c2736;
-  --select-active-border: #e8b86a;
+  --select-active-border: var(--gold-border);
   --select-menu-bg: #161e2b;
   --select-menu-fg: #f5f7fb;
   --select-menu-border: rgb(203 214 232 / 0.2);
-  --select-option-hover-bg: color-mix(in srgb, #e8b86a 10%, #1c2736);
-  --select-option-selected-bg: color-mix(in srgb, #7ce1c0 13%, #161e2b);
+  --select-option-hover-bg: color-mix(in srgb, var(--gold) 10%, #1c2736);
+  --select-option-selected-bg: color-mix(in srgb, var(--gold) 14%, #161e2b);
   --select-option-selected-fg: #f5f7fb;
   --select-disabled-bg: #1c2736;
   --select-disabled-fg: #8491a4;
@@ -113,14 +124,24 @@
   --foreground-subtle: #3e494f;
   --border: rgb(58 47 34 / 0.16);
   --border-strong: rgb(58 47 34 / 0.28);
-  --primary: #8f570d;
-  --primary-hover: #71460b;
-  --button-primary-bg: #b6781c;
-  --button-primary-fg: #17120c;
-  --button-primary-border: #a86d16;
-  --button-primary-hover-bg: #c08325;
-  --button-primary-hover-fg: #17120c;
-  --button-primary-hover-border: #aa6e16;
+  --gold: #d4af37;
+  --gold-hover: #e6c65c;
+  --gold-active: #b89224;
+  --gold-border: #9d7f1d;
+  --gold-foreground: #17120c;
+  --gold-shadow: #806816;
+  --primary: #806816;
+  --primary-hover: #69540f;
+  --button-primary-bg: var(--gold);
+  --button-primary-fg: var(--gold-foreground);
+  --button-primary-border: var(--gold-border);
+  --button-primary-hover-bg: var(--gold-hover);
+  --button-primary-hover-fg: var(--gold-foreground);
+  --button-primary-hover-border: var(--gold-active);
+  --button-primary-active-bg: var(--gold-active);
+  --button-primary-disabled-bg: #ddd4b7;
+  --button-primary-disabled-fg: #635a40;
+  --button-primary-disabled-border: #c9bb83;
   --button-secondary-bg: #fffaf2;
   --button-secondary-fg: #1a2024;
   --button-secondary-border: rgb(58 47 34 / 0.28);
@@ -155,13 +176,13 @@
   --select-fg: #1a2024;
   --select-border: rgb(58 47 34 / 0.3);
   --select-hover-bg: #f4eee4;
-  --select-active-border: #9a620f;
+  --select-active-border: var(--gold-border);
   --select-menu-bg: #fffdf8;
   --select-menu-fg: #1a2024;
   --select-menu-border: rgb(58 47 34 / 0.2);
-  --select-option-hover-bg: color-mix(in srgb, #b6781c 10%, #fffdf8);
-  --select-option-selected-bg: color-mix(in srgb, #b6781c 14%, #fffdf8);
-  --select-option-selected-fg: #3a260c;
+  --select-option-hover-bg: color-mix(in srgb, var(--gold) 10%, #fffdf8);
+  --select-option-selected-bg: color-mix(in srgb, var(--gold) 14%, #fffdf8);
+  --select-option-selected-fg: #1a2024;
   --select-disabled-bg: #e8e2d9;
   --select-disabled-fg: #6b7478;
   --select-shadow: 0 1rem 2.2rem rgb(54 40 20 / 0.14), 0 0.2rem 0.6rem rgb(54 40 20 / 0.08);
@@ -200,6 +221,9 @@
   --color-foreground-subtle: var(--foreground-subtle);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-gold: var(--gold);
+  --color-gold-hover: var(--gold-hover);
+  --color-gold-active: var(--gold-active);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-accent: var(--accent);
@@ -282,6 +306,8 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .button-primary, .button-secondary, .button-danger { border-style: solid; border-width: 1px; font-weight: 700; }
 .button-primary { border-color: var(--button-primary-border); background: var(--button-primary-bg); color: var(--button-primary-fg); }
 .button-primary:hover { border-color: var(--button-primary-hover-border); background: var(--button-primary-hover-bg); color: var(--button-primary-hover-fg); }
+.button-primary:active:not(:disabled) { background: var(--button-primary-active-bg); border-color: var(--button-primary-active-bg); }
+.button-primary:disabled { background: var(--button-primary-disabled-bg); border-color: var(--button-primary-disabled-border); color: var(--button-primary-disabled-fg); }
 .button-primary:disabled, .button-secondary:disabled, .button-danger:disabled { opacity: 0.62; filter: saturate(0.72); }
 .button-secondary { border-color: var(--button-secondary-border); background: var(--button-secondary-bg); color: var(--button-secondary-fg); }
 .button-secondary:hover { border-color: var(--button-secondary-hover-border); background: var(--button-secondary-hover-bg); color: var(--button-secondary-hover-fg); }
@@ -316,7 +342,7 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .gameplay-layout .game-board { border: 1px solid var(--game-board-border); color: var(--game-board-fg); }
 .gameplay-layout .game-board--blackjack { background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 48%), var(--game-board-bg); }
 .gameplay-layout .game-board--baccarat { background: radial-gradient(circle at 50% 0%, rgb(167 139 250 / 0.22), transparent 52%), color-mix(in srgb, var(--game-board-bg) 88%, #6c4aa0 12%); }
-.gameplay-layout .game-board--dice { background: radial-gradient(circle at 50% 0%, rgb(245 158 11 / 0.2), transparent 52%), color-mix(in srgb, var(--game-board-bg) 84%, #8c5425 16%); }
+.gameplay-layout .game-board--dice { background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--gold) 18%, transparent), transparent 52%), color-mix(in srgb, var(--game-board-bg) 92%, var(--gold-active) 8%); }
 .gameplay-layout .game-board--arcade { background: linear-gradient(160deg, color-mix(in srgb, var(--game-board-bg) 82%, #4652a0 18%), color-mix(in srgb, var(--game-board-bg) 82%, #6a347e 18%)); }
 .gameplay-layout .game-reels-stage { border-color: rgb(130 223 255 / 0.22); background: linear-gradient(150deg, rgb(20 45 70 / 0.95), rgb(5 15 29 / 0.98)); box-shadow: inset 0 0 50px rgb(28 168 192 / 0.12); }
 .gameplay-layout .game-board-label { color: var(--game-board-label); }
@@ -330,6 +356,7 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .brand-display { font-family: var(--font-display); }
 .brand-display { font-weight: 600; letter-spacing: 0.12em; }
 .eyebrow { color: var(--primary); font-family: var(--font-ui); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+.gold-avatar { background: linear-gradient(135deg, var(--gold-hover), var(--gold-active)); color: var(--gold-foreground); }
 .favorite-heart-pop { animation: favorite-heart-pop 220ms cubic-bezier(0.2, 0.8, 0.25, 1); transform-origin: center; }
 .toast-premium { border-color: #ded3c0; background: linear-gradient(145deg, #ffffff, #f7f1e7); color: #18202a; box-shadow: 0 1rem 2.5rem rgb(5 8 12 / 0.24), inset 0 1px rgb(255 255 255 / 0.9); }
 .toast-playing-card { position: relative; display: grid; height: 2.8rem; width: 2rem; flex: none; place-content: space-between; overflow: hidden; border: 1px solid #d9c7a5; border-radius: 0.42rem; background: linear-gradient(145deg, #fffefb, #eee6d8); padding: 0.24rem 0.28rem 0.2rem; box-shadow: 0 0.35rem 0.75rem rgb(47 34 15 / 0.18), inset 0 0 0 1px rgb(255 255 255 / 0.75); font-family: var(--font-sans); line-height: 1; transform: rotate(-7deg); }
@@ -365,9 +392,9 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .hero-composition-atmosphere { position: absolute; inset: 7% 10%; background: radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 38%), radial-gradient(circle at 62% 45%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%); filter: blur(20px); opacity: 0.72; }
 .hero-composition-shadow { position: absolute; bottom: 10%; left: 50%; height: 3.5rem; width: 68%; border-radius: 50%; background: color-mix(in srgb, var(--foreground) 17%, transparent); filter: blur(24px); opacity: 0.24; transform: translateX(-50%); }
 .hero-composition-stage { --hero-tilt-x: 0deg; --hero-tilt-y: 0deg; position: relative; height: 30rem; width: 100%; perspective: 1000px; transform: rotateX(var(--hero-tilt-x)) rotateY(var(--hero-tilt-y)); transform-style: preserve-3d; transition: transform 420ms cubic-bezier(0.2, 0.8, 0.25, 1); }
-.hero-wheel { position: absolute; left: 50%; top: 51%; height: clamp(16rem, 31vw, 23rem); width: clamp(16rem, 31vw, 23rem); border: 1px solid color-mix(in srgb, var(--primary) 62%, transparent); border-radius: 50%; background: radial-gradient(circle, transparent 0 35%, color-mix(in srgb, #0b1018 94%, var(--primary)) 35.5% 40%, transparent 40.5%), repeating-conic-gradient(from -7deg, #141b27 0deg 11deg, #c49a4b 11deg 12deg, #7e202e 12deg 22deg, #f2e7cc 22deg 23deg); box-shadow: 0 1.2rem 2.7rem color-mix(in srgb, #05070b 35%, transparent), 0 0 0 0.45rem color-mix(in srgb, var(--primary) 9%, transparent), inset 0 0 1.5rem rgb(0 0 0 / 0.5); transform: translate(-50%, -50%) rotateX(57deg) rotateZ(-18deg); transform-style: preserve-3d; animation: hero-wheel-turn 28s linear infinite; }
+.hero-wheel { position: absolute; left: 50%; top: 51%; height: clamp(16rem, 31vw, 23rem); width: clamp(16rem, 31vw, 23rem); border: 1px solid color-mix(in srgb, var(--primary) 62%, transparent); border-radius: 50%; background: radial-gradient(circle, transparent 0 35%, color-mix(in srgb, #0b1018 94%, var(--primary)) 35.5% 40%, transparent 40.5%), repeating-conic-gradient(from -7deg, #141b27 0deg 11deg, var(--gold) 11deg 12deg, #7e202e 12deg 22deg, #f2e7cc 22deg 23deg); box-shadow: 0 1.2rem 2.7rem color-mix(in srgb, #05070b 35%, transparent), 0 0 0 0.45rem color-mix(in srgb, var(--primary) 9%, transparent), inset 0 0 1.5rem rgb(0 0 0 / 0.5); transform: translate(-50%, -50%) rotateX(57deg) rotateZ(-18deg); transform-style: preserve-3d; animation: hero-wheel-turn 28s linear infinite; }
 .hero-wheel::before { position: absolute; inset: 9%; border: 1px solid color-mix(in srgb, var(--primary) 46%, transparent); border-radius: 50%; background: repeating-conic-gradient(from 2deg, transparent 0deg 10deg, color-mix(in srgb, var(--primary) 32%, transparent) 10.5deg 11deg); content: ""; box-shadow: inset 0 0 0 0.45rem rgb(0 0 0 / 0.22); }
-.hero-wheel::after { position: absolute; left: 50%; top: 50%; height: 3.25rem; width: 3.25rem; border: 1px solid color-mix(in srgb, var(--primary) 80%, white 10%); border-radius: 50%; background: radial-gradient(circle at 35% 30%, #f0d68e, #8f6428 52%, #1a1711 54% 100%); box-shadow: 0 0 0 0.45rem #121820, 0 0 0 0.52rem color-mix(in srgb, var(--primary) 60%, transparent); content: ""; transform: translate(-50%, -50%); }
+.hero-wheel::after { position: absolute; left: 50%; top: 50%; height: 3.25rem; width: 3.25rem; border: 1px solid color-mix(in srgb, var(--primary) 80%, white 10%); border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--gold-hover), var(--gold-active) 52%, #1a1711 54% 100%); box-shadow: 0 0 0 0.45rem #121820, 0 0 0 0.52rem color-mix(in srgb, var(--primary) 60%, transparent); content: ""; transform: translate(-50%, -50%); }
 .hero-wheel-core { position: absolute; left: 50%; top: 50%; display: grid; height: 8.2rem; width: 8.2rem; place-content: center; justify-items: center; border: 1px solid color-mix(in srgb, var(--primary) 43%, transparent); border-radius: 50%; background: radial-gradient(circle at 35% 28%, #303943, #10161f 62%, #090c12); box-shadow: inset 0 0 1.4rem rgb(0 0 0 / 0.6); color: #f1e4c7; transform: translate(-50%, -50%) translateZ(1.5rem); }
 .hero-wheel-logo { width: 5.7rem; }
 .hero-wheel-subtitle { margin-top: 0.2rem; color: rgb(241 228 199 / 0.55); font-size: 0.4rem; font-weight: 700; letter-spacing: 0.15em; }
@@ -438,7 +465,7 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .slot-wager-chip { min-height: 2.15rem; min-width: 2.8rem; border: 1px solid rgb(255 255 255 / 0.15); border-radius: 0.65rem; background: rgb(255 255 255 / 0.06); color: rgb(255 255 255 / 0.67); font-size: 0.7rem; font-weight: 800; }
 .slot-wager-chip:hover { background: rgb(255 255 255 / 0.12); color: white; }
 .slot-wager-chip-active { border-color: var(--slot-line); background: rgb(243 201 104 / 0.16); color: #ffe398; box-shadow: inset 0 0 0 1px rgb(243 201 104 / 0.18); }
-.slot-spin-button { min-height: 3.35rem; box-shadow: 0 12px 24px rgb(232 184 106 / 0.2); }
+.slot-spin-button { min-height: 3.35rem; box-shadow: 0 12px 24px color-mix(in srgb, var(--gold) 20%, transparent); }
 .slot-result-callout { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; border: 1px solid rgb(255 255 255 / 0.12); border-radius: 0.9rem; background: rgb(255 255 255 / 0.06); padding: 0.8rem 1rem; }
 .slot-result-callout > div { display: grid; gap: 0.2rem; }
 .slot-result-kicker { color: rgb(255 255 255 / 0.5); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; }
@@ -451,6 +478,7 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .slot-paytable { overflow: hidden; border: 1px solid var(--border-strong); border-radius: 0.9rem; }
 .slot-paytable-head, .slot-paytable-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 2.4rem); align-items: center; gap: 0.5rem; padding: 0.65rem 0.75rem; }
 .slot-paytable-head { color: var(--foreground-subtle); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.slot-paytable-head > span:not(:first-child) { text-align: right; }
 .slot-paytable-row { border-top: 1px solid var(--border); color: var(--foreground); font-size: 0.72rem; font-weight: 700; }
 .slot-paytable-row > span:not(:first-child) { color: var(--foreground); text-align: right; }
 .slot-round-list { display: grid; gap: 0.4rem; }
@@ -606,7 +634,7 @@ body:has(.auth-page) > footer { display: none; }
 .auth-submit-button:hover { box-shadow: 0 0.75rem 1.5rem color-mix(in srgb, var(--primary) 20%, transparent); filter: saturate(1.08); transform: translateY(-2px); }
 .auth-submit-button:disabled { cursor: not-allowed; opacity: 0.62; filter: saturate(0.72); }
 .auth-submit-button:hover::before { transform: translateX(125%); }
-.auth-submit-button:active { transform: translateY(0) scale(0.985); }
+.auth-submit-button:active:not(:disabled) { transform: translateY(0) scale(0.985); border-color: var(--button-primary-active-bg); background: var(--button-primary-active-bg); }
 .auth-submit-button > * { position: relative; z-index: 1; }
 .auth-provider-divider { display: flex; align-items: center; gap: 0.65rem; margin-top: 1.35rem; color: var(--foreground-muted); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 .auth-provider-divider span:first-child, .auth-provider-divider span:last-child { height: 1px; flex: 1; background: color-mix(in srgb, var(--foreground) 11%, transparent); }
@@ -682,30 +710,29 @@ body:has(.auth-page) > footer { display: none; }
 @keyframes win-confetti { 15% { opacity: .8; } to { opacity: 0; translate: 12px 190px; rotate: 180deg; } }
 @media (prefers-reduced-motion: reduce) { .win-celebration[open], .win-celebration[open] .win-confetti i { animation: none; } }
 
-/* Faceted percentile dice, with a quiet felt stage and gold/ivory finish. */
-.gilded-roll { max-width: 440px; margin: 0 auto; }
-.gilded-roll-stage { position: relative; height: 236px; perspective: 800px; isolation: isolate; }
-.gilded-roll-ring { position: absolute; inset: 42px 0 10px; border: 1px solid color-mix(in srgb, var(--amber) 24%, transparent); border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--amber) 10%, transparent), transparent 68%); transform: rotateX(58deg); }
-.gilded-die { position: absolute; top: 44px; width: 116px; height: 140px; transform-style: preserve-3d; transition: transform 400ms cubic-bezier(.2,.8,.2,1); }
-.gilded-die::after { content: ""; position: absolute; z-index: -1; left: 15%; bottom: -10px; width: 70%; height: 14px; border-radius: 50%; background: #0005; filter: blur(8px); }
-.gilded-die--tens { left: calc(50% - 128px); transform: rotate(-14deg) rotateY(12deg); }
-.gilded-die--units { right: calc(50% - 128px); transform: translateY(12px) rotate(16deg) rotateY(-12deg); }
-.gilded-die-art { width: 100%; height: 100%; filter: drop-shadow(0 5px 2px #0002); }
-.gilded-die-label { position: absolute; bottom: 12px; font-size: 10px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--game-board-muted); }
-.gilded-die-label--tens { right: calc(50% + 48px); }
-.gilded-die-label--units { left: calc(50% + 48px); }
-.gilded-roll-result { min-height: 99px; margin-top: 10px; }
-.gilded-roll-kicker { font-size: 10px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--game-board-muted); }
-.gilded-roll-number { margin-top: 5px; font-size: 56px; line-height: 1.15; font-weight: 600; letter-spacing: -.06em; font-variant-numeric: tabular-nums; color: var(--game-board-fg); }
-.gilded-roll-ellipsis { font-size: 36px; letter-spacing: .16em; color: var(--amber); }
-.gilded-roll-caption { margin-top: 4px; font-size: 11px; color: var(--game-board-muted); }
-.gilded-roll--rolling .gilded-die--tens { animation: gilded-tumble-tens 700ms linear infinite; }
-.gilded-roll--rolling .gilded-die--units { animation: gilded-tumble-units 780ms linear infinite; }
-.gilded-roll--rolling .gilded-die::after { animation: gilded-die-shadow 700ms ease-in-out infinite; }
-@keyframes gilded-tumble-tens { 0% { transform: translateY(0) rotate(-14deg) rotateY(12deg) rotateX(0); } 25% { transform: translate(-10px,-22px) rotate(-45deg) rotateY(48deg) rotateX(25deg); } 50% { transform: translate(4px,-8px) rotate(-100deg) rotateY(-38deg) rotateX(0); } 75% { transform: translate(10px,-25px) rotate(-210deg) rotateY(-52deg) rotateX(-25deg); } 100% { transform: translateY(0) rotate(-374deg) rotateY(12deg) rotateX(0); } }
-@keyframes gilded-tumble-units { 0% { transform: translateY(12px) rotate(16deg) rotateY(-12deg) rotateX(0); } 25% { transform: translate(12px,-12px) rotate(70deg) rotateY(-48deg) rotateX(-20deg); } 50% { transform: translate(-4px,2px) rotate(170deg) rotateY(38deg) rotateX(0); } 75% { transform: translate(-8px,-22px) rotate(280deg) rotateY(52deg) rotateX(20deg); } 100% { transform: translateY(12px) rotate(376deg) rotateY(-12deg) rotateX(0); } }
-.gilded-roll--settled .gilded-die-art { animation: gilded-die-land 380ms ease-out; }
-@keyframes gilded-die-land { 0% { transform: translateY(-14px) scale(1.04); } 45% { transform: translateY(4px) scale(.97); } 75% { transform: translateY(-2px) scale(1.01); } 100% { transform: none; } }
-@keyframes gilded-die-shadow { 50% { opacity: .4; scale: .7; } }
-@media (max-width: 420px) { .gilded-die { width: 96px; height: 116px; top: 56px; } .gilded-die--tens { left: calc(50% - 102px); } .gilded-die--units { right: calc(50% - 102px); } .gilded-die-label--tens { right: calc(50% + 32px); } .gilded-die-label--units { left: calc(50% + 32px); } }
-@media (prefers-reduced-motion: reduce) { .gilded-die { transition: none; } .gilded-roll--rolling .gilded-die, .gilded-roll--rolling .gilded-die::after, .gilded-roll--settled .gilded-die-art { animation: none; } }
+/* Premium ivory D6, settled to the server's exact result. */
+.gilded-roll { width: 100%; max-width: 520px; margin: 0 auto; }
+.gilded-roll-stage { position: relative; display: grid; min-height: 320px; place-items: center; perspective: 900px; isolation: isolate; }
+.gilded-roll-ring { position: absolute; inset: 32px 0 20px; border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent); border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--gold) 9%, transparent), transparent 70%); transform: rotateX(58deg); }
+.gilded-dice-tray { position: relative; z-index: 1; display: grid; width: min(100%, 470px); grid-template-columns: repeat(6, minmax(0, 1fr)); align-content: center; justify-items: center; gap: 0.55rem 0.4rem; margin: 0 auto; padding: 1rem 0.25rem; }
+.gilded-dice-slot { display: grid; min-width: 0; min-height: 58px; width: 100%; place-items: center; }
+.gilded-d6 { position: relative; display: grid; width: clamp(42px, 5vw, 58px); aspect-ratio: 1; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); align-items: center; justify-items: center; border: 1px solid color-mix(in srgb, var(--gold) 42%, #fff9e9); border-radius: 14px; background: linear-gradient(145deg, #fffef9, #f3ecd9 58%, #e7dcc1); box-shadow: 0 4px 0 #c3b58f, 0 10px 18px rgb(4 12 15 / 0.24), inset 0 1px 0 #fff, inset 0 -4px 8px rgb(75 54 15 / 0.09); transform: translateY(var(--die-offset)) rotate(var(--die-rotation)); transform-style: preserve-3d; transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms ease; }
+.gilded-d6::after { position: absolute; inset: 4px; border: 1px solid rgb(255 255 255 / 0.78); border-radius: 10px; content: ""; pointer-events: none; }
+.gilded-d6--accented { border-color: var(--gold-active); box-shadow: 0 4px 0 #ad8c2e, 0 10px 18px rgb(4 12 15 / 0.24), inset 0 1px 0 #fff, inset 0 -4px 8px rgb(75 54 15 / 0.09); }
+.gilded-d6-pip { z-index: 1; width: clamp(5px, 0.65vw, 7px); aspect-ratio: 1; border-radius: 50%; background: #30280f; box-shadow: inset 0 1px 1px rgb(255 255 255 / 0.18), 0 1px 1px rgb(41 31 8 / 0.14); opacity: 0; transform: scale(0.72); }
+.gilded-d6-pip--visible { opacity: 1; transform: scale(1); }
+.gilded-dice-empty { grid-column: 1 / -1; margin: 0; color: var(--game-board-muted); font-size: 0.75rem; letter-spacing: 0.02em; }
+.gilded-roll-result { min-height: 99px; margin-top: 8px; }
+.gilded-roll-kicker { font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--game-board-muted); }
+.gilded-roll-number { margin-top: 5px; color: var(--game-board-fg); font-size: 56px; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -0.06em; line-height: 1.15; }
+.gilded-roll-ellipsis { color: var(--gold); font-size: 36px; letter-spacing: 0.16em; }
+.gilded-roll-caption { min-height: 1rem; margin-top: 4px; color: var(--game-board-muted); font-size: 11px; }
+.gilded-roll--rolling .gilded-d6 { animation: gilded-d6-tumble 760ms cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.gilded-roll--rolling .gilded-d6::after { animation: gilded-d6-shadow 760ms ease-in-out infinite; }
+.gilded-roll--settled .gilded-d6 { animation: gilded-d6-land 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes gilded-d6-tumble { 0% { transform: translateY(var(--die-offset)) rotate(var(--die-rotation)) rotateX(0deg); } 35% { transform: translateY(calc(var(--die-offset) - 11px)) rotate(calc(var(--die-rotation) + 72deg)) rotateX(16deg); } 68% { transform: translateY(calc(var(--die-offset) + 2px)) rotate(calc(var(--die-rotation) + 238deg)) rotateX(-12deg); } 100% { transform: translateY(var(--die-offset)) rotate(calc(var(--die-rotation) + 360deg)) rotateX(0deg); } }
+@keyframes gilded-d6-land { 0% { transform: translateY(calc(var(--die-offset) - 9px)) rotate(calc(var(--die-rotation) - 8deg)) scale(1.035); } 65% { transform: translateY(calc(var(--die-offset) + 2px)) rotate(calc(var(--die-rotation) + 2deg)) scale(0.985); } 100% { transform: translateY(var(--die-offset)) rotate(var(--die-rotation)) scale(1); } }
+@keyframes gilded-d6-shadow { 50% { opacity: 0.62; scale: 0.82; } }
+@media (max-width: 720px) { .gilded-roll-stage { min-height: 340px; } .gilded-dice-tray { width: min(100%, 330px); grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem 0.35rem; } .gilded-dice-slot { min-height: 52px; } .gilded-d6 { width: 46px; } }
+@media (max-width: 390px) { .gilded-roll-stage { min-height: 360px; } .gilded-dice-tray { width: min(100%, 280px); grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem 0.35rem; } .gilded-dice-slot { min-height: 46px; } .gilded-d6 { width: 42px; border-radius: 12px; } .gilded-d6::after { inset: 3px; border-radius: 9px; } }
+@media (prefers-reduced-motion: reduce) { .gilded-d6 { transition: none; } .gilded-roll--rolling .gilded-d6, .gilded-roll--rolling .gilded-d6::after, .gilded-roll--settled .gilded-d6 { animation: none; } }

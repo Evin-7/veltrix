@@ -57,7 +57,7 @@ export default async function ProfilePage() {
         <div className="border-y border-border py-7 sm:py-9">
           <div className="flex items-center gap-4">
             <span
-              className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#e8b86a] to-[#a86246] text-lg font-bold text-[#17110a]"
+              className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl gold-avatar text-lg font-bold"
               style={
                 profile?.avatarUrl
                   ? {
