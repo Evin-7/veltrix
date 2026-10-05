@@ -1,5 +1,7 @@
 "use client";
 
+import { WinCelebration } from "./win-celebration";
+
 import { Car, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -178,6 +180,7 @@ export function ArcadeGameplayPanel({
 
   return (
     <section className="gameplay-layout p-5 sm:p-8">
+      <WinCelebration kind="arcade" result={result} gameSlug={game.slug} ready={!busy} />
       <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div>
           <div

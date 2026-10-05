@@ -1,5 +1,7 @@
 "use client";
 
+import { WinCelebration } from "./win-celebration";
+
 import { CircleDot, Crown, Diamond, Gem, LoaderCircle, Star, Zap, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -88,6 +90,7 @@ export function NeonRelicsPanel({ initialBalance }: { initialBalance: number }) 
   const activePaths = [...new Set(result?.winningLines.map((line) => paylinePaths[line.line]).filter(Boolean))];
 
   return <section className="slot-game-shell">
+      <WinCelebration kind="slots" result={result} gameSlug={"neon-relics"} ready={!isAnimating && !isSubmitting} />
     <div className="slot-stage mt-0">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="slot-stage-kicker">Relic chamber</p><p className="mt-1 text-xs text-white/55">Five reels · three rows · five paylines</p></div></div>
       <div aria-label="Five reel three row slot machine" className={`slot-machine mt-5 ${isAnimating ? "slot-machine-spinning" : ""}`}>

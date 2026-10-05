@@ -1,5 +1,7 @@
 "use client";
 
+import { WinCelebration } from "./win-celebration";
+
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -174,6 +176,7 @@ export function SlotsPanel({
 
   return (
     <section className="gameplay-layout p-5 sm:p-8">
+      <WinCelebration kind="slots" result={result} gameSlug={gameSlug} ready={!isAnimating && !isSubmitting} />
       <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
         <div>
           <div
@@ -405,6 +408,7 @@ export function RoulettePanel({
     ];
   return (
     <section className="gameplay-layout p-5 sm:p-8">
+      <WinCelebration kind="roulette" result={result} gameSlug={gameSlug} ready={!isAnimating && !isSubmitting} />
       <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div>
           <div
@@ -668,6 +672,7 @@ export function BlackjackPanel({
   }
   async function action(actionName: "hit" | "stand" | "double") {
     if (!hand || isSubmitting) return;
+    setRecovered(false);
     setIsSubmitting(true);
     play(
       actionName === "hit"
@@ -711,6 +716,7 @@ export function BlackjackPanel({
   const phaseLabel = hand?.phase?.replaceAll("_", " ") ?? "Awaiting deal";
   return (
     <section className="gameplay-layout p-5 sm:p-8">
+      <WinCelebration kind="blackjack" result={hand} gameSlug={gameSlug} ready={!isSubmitting && !recovered} />
       <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div className="game-board game-board--blackjack rounded-[24px] p-5 sm:p-8">
           <div className="flex items-center justify-between gap-3">

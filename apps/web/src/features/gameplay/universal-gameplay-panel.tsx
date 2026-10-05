@@ -1,5 +1,7 @@
 "use client";
 
+import { WinCelebration } from "./win-celebration";
+
 import { Car, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Game } from "@/features/games/types";
@@ -112,6 +114,7 @@ function BaccaratPanel({
   }
   return (
     <section className="gameplay-layout p-5 sm:p-8">
+      <WinCelebration kind="baccarat" result={result} gameSlug={gameSlug} ready={!busy} />
       <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div className="game-board game-board--baccarat rounded-[24px] p-5 sm:p-8">
           <div className="grid gap-6 sm:grid-cols-2">
@@ -259,6 +262,7 @@ function DicePanel({
   }
   return (
     <section className="gameplay-layout p-5 sm:p-8">
+      <WinCelebration kind="dice" result={result} gameSlug={gameSlug} ready={!busy} />
       <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div className="game-board game-board--dice rounded-[24px] p-8 text-center sm:p-12">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] game-board-muted">
@@ -413,6 +417,7 @@ export function ArcadePanel({
   }
   return (
     <section className="gameplay-layout p-5 sm:p-8">
+      <WinCelebration kind="arcade" result={result} gameSlug={gameSlug} ready={!busy} />
       <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div>
           <div className="relative grid min-h-[360px] grid-cols-3 gap-2 overflow-hidden game-board game-board--arcade rounded-[24px] p-4">

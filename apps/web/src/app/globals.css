@@ -659,3 +659,25 @@ body:has(.auth-page) > footer { display: none; }
   .auth-page-atmosphere, .auth-scene-card, .auth-scene-chip, .auth-form-shell, .auth-scene-wheel { animation: none; }
   .auth-submit-button::before { display: none; }
 }
+
+/* Shared settled-win celebration; semantic tokens follow the selected theme. */
+.win-celebration { position: fixed; inset: 0; margin: auto; width: min( calc(100% - 32px), 460px); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--border); border-radius: 28px; background: var(--surface-raised); color: var(--foreground); box-shadow: 0 24px 100px #0005; overflow-y: auto; }
+.win-celebration::backdrop { background: #060b14b3; backdrop-filter: blur(8px); }
+.win-celebration[open] { animation: win-enter 300ms ease-out; }
+.win-celebration-content { position: relative; overflow: hidden; padding: 36px 28px 28px; text-align: center; background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--amber) 14%, transparent), transparent 55%); }
+.win-close { position: absolute; top: 16px; right: 16px; z-index: 1; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--foreground-muted); }
+.win-close:hover { background: var(--surface-hover); }
+.win-trophy { display: grid; place-items: center; width: 72px; height: 72px; margin: auto; border-radius: 24px; border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent); background: color-mix(in srgb, var(--amber) 12%, transparent); color: var(--amber); }
+.win-amount { margin-top: 18px; font-size: clamp(36px, 8vw, 52px); font-weight: 700; letter-spacing: -.05em; line-height: 1.2; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.win-reasons { margin-top: 24px; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); text-align: left; }
+.win-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.win-breakdown dt { font-size: 12px; color: var(--foreground-muted); }
+.win-breakdown dd { margin-top: 5px; font-size: 16px; font-weight: 700; }
+.win-confetti { position: absolute; inset: 0; pointer-events: none; height: 180px; overflow: hidden; }
+.win-confetti i { position: absolute; top: -16px; width: 5px; height: 10px; border-radius: 2px; background: var(--amber); opacity: 0; }
+.win-celebration[open] .win-confetti i { animation: win-confetti 1400ms ease-out both; }
+.win-confetti i:nth-child(3n) { background: var(--success); }
+.win-confetti i:nth-child(2n) { width: 7px; height: 7px; border-radius: 50%; }
+@keyframes win-enter { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes win-confetti { 15% { opacity: .8; } to { opacity: 0; translate: 12px 190px; rotate: 180deg; } }
+@media (prefers-reduced-motion: reduce) { .win-celebration[open], .win-celebration[open] .win-confetti i { animation: none; } }

@@ -26,6 +26,12 @@ function isInternalPageLink(anchor: HTMLAnchorElement) {
 
 export function RouteTransitionOverlay() {
   const pathname = usePathname();
+  // Discard a completed route's pending state. Keeping the origin pathname
+  // makes the old overlay reappear when browser history returns to that route.
+  return <RouteTransitionState key={pathname} pathname={pathname} />;
+}
+
+function RouteTransitionState({ pathname }: { pathname: string }) {
   const [navigationPath, setNavigationPath] = useState<string | null>(null);
   const isNavigating = navigationPath === pathname;
 

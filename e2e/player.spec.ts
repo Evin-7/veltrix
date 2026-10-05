@@ -102,11 +102,13 @@ test.describe("player journey", () => {
       await page.goto(`/casino/${game.slug}`);
       await page.getByRole("button", { name: "Play" }).click();
       await expect(page).toHaveURL(new RegExp(`/casino/${game.slug}/play$`));
+      let settledNet = 0;
       if (game.action === "Deal hand") {
         const dealResponse = gameplayResponse(game.slug, "/deal");
         await page.getByRole("button", { name: game.action }).click();
         const dealData = await dealResponse;
         expect(["ACTIVE", "SETTLED"]).toContain(dealData.status);
+        settledNet = dealData.netResult;
         const handInPlay = page.getByRole("button", { name: "Hand in play" });
         if (dealData.status === "ACTIVE") {
           const followUpName =
@@ -121,6 +123,7 @@ test.describe("player journey", () => {
           await followUp.click();
           const followUpData = await followUpResponse;
           expect(["ACTIVE", "SETTLED"]).toContain(followUpData.status);
+          settledNet = followUpData.netResult;
           if (followUpData.status === "ACTIVE") {
             const standResponse = gameplayResponse(game.slug, "/stand");
             const stand = page.getByRole("button", { name: "Stand" });
@@ -129,6 +132,7 @@ test.describe("player journey", () => {
             await stand.click();
             const standData = await standResponse;
             expect(standData.status).toBe("SETTLED");
+            settledNet = standData.netResult;
           }
         }
         await expect(handInPlay).toBeHidden({ timeout: 30_000 });
@@ -139,6 +143,30 @@ test.describe("player journey", () => {
         const data = await response;
         expect(data.roundId).toBeTruthy();
         expect(data.newBalance).toEqual(expect.any(Number));
+        settledNet = data.netResult;
+      }
+
+      if (settledNet > 0) {
+        const celebration = page.getByRole("dialog", { name: "A moment to celebrate" });
+        await expect(celebration).toBeVisible();
+        await expect(celebration.getByText("Why you won")).toBeVisible();
+        await expect(celebration.locator("li").first()).not.toBeEmpty();
+        await celebration.getByRole("button", { name: "Continue playing" }).click();
+        await expect(celebration).toBeHidden();
+      }
+
+      // Both exit paths must retire the loader from the original launch.
+      if (game.slug === "lunar-circuit") {
+        await page.getByRole("link", { name: "Back to game details" }).click();
+        await expect(page).toHaveURL(new RegExp(`/casino/${game.slug}$`));
+        await expect(page.getByRole("main", { name: "Loading page" })).toBeHidden();
+        await expect(page.getByRole("button", { name: "Play", exact: true })).toBeEnabled();
+        await page.getByRole("button", { name: "Play", exact: true }).click();
+        await expect(page).toHaveURL(new RegExp(`/casino/${game.slug}/play$`));
+        await page.goBack();
+        await expect(page).toHaveURL(new RegExp(`/casino/${game.slug}$`));
+        await expect(page.getByRole("main", { name: "Loading page" })).toBeHidden();
+        await expect(page.getByRole("button", { name: "Play", exact: true })).toBeEnabled();
       }
     }
 
