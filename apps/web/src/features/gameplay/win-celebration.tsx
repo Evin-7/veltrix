@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
-import { Sparkles, Trophy, X } from "lucide-react";
+import { Trophy, X } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { explainWin } from "./win-explanation";
 
@@ -88,7 +88,7 @@ export function WinCelebration({
           <Trophy size={32} strokeWidth={1.5} />
         </div>
         <p className="eyebrow mt-5 flex items-center justify-center gap-2">
-          <Sparkles size={14} /> Winning round
+          Winning round
         </p>
         <h2 id={titleId} className="display mt-2 text-3xl text-foreground">
           A moment to celebrate
