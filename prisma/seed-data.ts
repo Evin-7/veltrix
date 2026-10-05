@@ -19,7 +19,6 @@ export const gameSeeds = [
   { name: "Tide Chase", slug: "tide-chase", description: "Ride a teal current and collect the patterns in its wake.", category: "ARCADE", providerSlug: "lumen-labs", featured: false, newGame: true, popular: false, demoRtp: 95.4 },
   { name: "Ember Room", slug: "ember-room", description: "Warm reels, slow reveals and a little more atmosphere.", category: "SLOTS", providerSlug: "northstar-studio", featured: false, newGame: false, popular: true, demoRtp: 96.6 },
   { name: "Afterglow Baccarat", slug: "afterglow-baccarat", description: "A soft neon table for measured, low-noise play.", category: "LIVE_STYLE", providerSlug: "house-of-v", featured: false, newGame: false, popular: true, demoRtp: 98.7 },
-  { name: "Cinder Club", slug: "cinder-club", description: "A polished club table with a bright, tactile rhythm.", category: "LIVE_STYLE", providerSlug: "northstar-studio", featured: false, newGame: true, popular: false, demoRtp: 97.8 },
   { name: "Prism Pulse", slug: "prism-pulse", description: "A fast arcade loop built around color and timing.", category: "ARCADE", providerSlug: "lumen-labs", featured: false, newGame: false, popular: true, demoRtp: 95.9 },
   { name: "Moonlit Mint", slug: "moonlit-mint", description: "A fresh spin on the familiar with a cooler palette.", category: "SLOTS", providerSlug: "astra-works", featured: false, newGame: true, popular: false, demoRtp: 96.3 },
 ] as const;

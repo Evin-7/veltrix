@@ -24,7 +24,6 @@ const gameplayModes: Record<string, GameplayMode> = {
   "velvet-roulette": "ROULETTE",
   "afterglow-baccarat": "BACCARAT",
   "gilded-dice": "DICE",
-  "cinder-club": "DICE",
   "neon-paddock": "ARCADE",
   "tide-chase": "ARCADE",
   "prism-pulse": "ARCADE",

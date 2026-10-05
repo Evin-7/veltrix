@@ -556,7 +556,7 @@ export function UniversalGameplayPanel({
         gameSlug={game.slug}
       />
     );
-  if (game.slug === "gilded-dice" || game.slug === "cinder-club")
+  if (game.slug === "gilded-dice")
     return (
       <DicePanel
         gameSlug={game.slug}

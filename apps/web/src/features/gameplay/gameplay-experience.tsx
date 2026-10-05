@@ -30,7 +30,7 @@ type Props = { game: Game; initialBalance: number };
 const slots = new Set(["lunar-circuit", "orbit-reels", "ember-room", "moonlit-mint"]);
 const blackjack = new Set(["veltrix-blackjack", "signal-blackjack"]);
 const roulette = new Set(["european-roulette", "velvet-roulette"]);
-const universal = new Set(["afterglow-baccarat", "gilded-dice", "cinder-club", "neon-paddock", "tide-chase", "prism-pulse"]);
+const universal = new Set(["afterglow-baccarat", "gilded-dice", "neon-paddock", "tide-chase", "prism-pulse"]);
 
 export function GameplayExperience({ game, initialBalance }: Props) {
   if (game.slug === "neon-relics") return <NeonRelicsPanel initialBalance={initialBalance} />;

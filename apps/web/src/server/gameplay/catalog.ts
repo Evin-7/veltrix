@@ -23,7 +23,6 @@ const definitions: Record<string, GameplayDefinition> = {
   "velvet-roulette": { mode: "ROULETTE" },
   "afterglow-baccarat": { mode: "BACCARAT" },
   "gilded-dice": { mode: "DICE" },
-  "cinder-club": { mode: "DICE" },
   "neon-paddock": { mode: "ARCADE" },
   "tide-chase": { mode: "ARCADE" },
   "prism-pulse": { mode: "ARCADE" },

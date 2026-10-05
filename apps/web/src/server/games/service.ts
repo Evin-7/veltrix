@@ -37,7 +37,11 @@ type ListGamesInput = {
   includeTotal?: boolean;
 };
 
-const publicWhere = { status: "ACTIVE" as const, provider: { status: "ACTIVE" as const } };
+const publicWhere = {
+  status: "ACTIVE" as const,
+  provider: { status: "ACTIVE" as const },
+  NOT: { slug: "cinder-club" },
+};
 export const PUBLIC_GAMES_CACHE_TAG = "public-games";
 export const PUBLIC_PROVIDERS_CACHE_TAG = "public-providers";
 const PUBLIC_DATA_REVALIDATE_SECONDS = 300;

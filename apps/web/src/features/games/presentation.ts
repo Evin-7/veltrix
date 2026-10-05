@@ -17,7 +17,6 @@ const presentationBySlug: Record<string, GamePresentation> = {
   "tide-chase": { accent: "#69d3ec", palette: ["#155665", "#161d38"], symbol: "≈" },
   "ember-room": { accent: "#f18a63", palette: ["#713127", "#211a2b"], symbol: "✺" },
   "afterglow-baccarat": { accent: "#d99eff", palette: ["#3c2a64", "#1d1830"], symbol: "◈" },
-  "cinder-club": { accent: "#ffbb72", palette: ["#6b332e", "#262035"], symbol: "●" },
   "prism-pulse": { accent: "#82a5ff", palette: ["#273c75", "#321d55"], symbol: "＋" },
   "moonlit-mint": { accent: "#9af5d7", palette: ["#1b5751", "#171c31"], symbol: "⌁" },
 };
