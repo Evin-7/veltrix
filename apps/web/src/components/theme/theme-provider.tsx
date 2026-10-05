@@ -1,18 +1,31 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 export type ThemePreference = "system" | "light" | "dark";
 type ResolvedTheme = "light" | "dark";
 const STORAGE_KEY = "veltrix-theme";
 const themeListeners = new Set<() => void>();
 
-type ThemeContextValue = { theme: ThemePreference; resolvedTheme: ResolvedTheme; setTheme: (theme: ThemePreference) => void };
+type ThemeContextValue = {
+  theme: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (theme: ThemePreference) => void;
+};
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function resolveTheme(theme: ThemePreference): ResolvedTheme {
   if (theme !== "system") return theme;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function applyTheme(theme: ThemePreference) {
@@ -21,9 +34,42 @@ function applyTheme(theme: ThemePreference) {
   document.documentElement.style.colorScheme = resolved;
 }
 
-function getStoredPreference(): ThemePreference {
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+function getStoredPreference(
+  fallback: ThemePreference = "system",
+): ThemePreference {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark" || stored === "system")
+      return stored;
+  } catch {
+    // Fall back to the server-readable cookie when browser storage is unavailable.
+  }
+
+  try {
+    const stored = document.cookie.match(
+      /(?:^|;\s*)veltrix-theme=(light|dark|system)(?:;|$)/,
+    )?.[1];
+    if (stored === "light" || stored === "dark" || stored === "system")
+      return stored;
+  } catch {
+    // The default remains safe when cookies are unavailable too.
+  }
+
+  return fallback;
+}
+
+function persistPreference(theme: ThemePreference) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // The cookie still allows the server to render the selected theme.
+  }
+
+  try {
+    document.cookie = `${STORAGE_KEY}=${theme}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+  } catch {
+    // Applying the theme for this page still works when persistence is unavailable.
+  }
 }
 
 function subscribeToTheme(listener: () => void) {
@@ -38,8 +84,18 @@ function subscribeToTheme(listener: () => void) {
   };
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const theme = useSyncExternalStore(subscribeToTheme, getStoredPreference, (): ThemePreference => "system");
+export function ThemeProvider({
+  children,
+  initialTheme = "system",
+}: {
+  children: React.ReactNode;
+  initialTheme?: ThemePreference;
+}) {
+  const theme = useSyncExternalStore(
+    subscribeToTheme,
+    () => getStoredPreference(initialTheme),
+    () => initialTheme,
+  );
   const [systemTick, setSystemTick] = useState(0);
   const resolvedTheme = useMemo(() => {
     if (theme !== "system") return theme;
@@ -48,8 +104,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [systemTick, theme]);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (theme === "system" && stored && stored !== "system" && (stored === "light" || stored === "dark")) {
+    const stored = getStoredPreference(initialTheme);
+    if (
+      theme === "system" &&
+      stored &&
+      stored !== "system" &&
+      (stored === "light" || stored === "dark")
+    ) {
       themeListeners.forEach((listener) => listener());
       return;
     }
@@ -65,16 +126,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
     media.addEventListener("change", handleSystemChange);
     return () => media.removeEventListener("change", handleSystemChange);
-  }, [theme]);
+  }, [initialTheme, theme]);
 
   function setTheme(nextTheme: ThemePreference) {
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    persistPreference(nextTheme);
     themeListeners.forEach((listener) => listener());
     applyTheme(nextTheme);
   }
 
-  const value = useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme]);
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  const value = useMemo(
+    () => ({ theme, resolvedTheme, setTheme }),
+    [theme, resolvedTheme],
+  );
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {
