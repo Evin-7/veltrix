@@ -1,13 +1,14 @@
 "use client";
 
 import { WinCelebration } from "./win-celebration";
+import { DiceRollDisplay, waitForDiceRoll } from "./dice-roll-display";
 
 import { Car, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Game } from "@/features/games/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { requestJson } from "@/lib/api-client";
+import { isAbortError, requestJson } from "@/lib/api-client";
 import { errorMessage } from "@/lib/app-error";
 import { formatCurrency } from "@/lib/currency";
 import { emitWalletUpdate } from "@/lib/wallet-sync";
@@ -212,11 +213,7 @@ type DiceResult = {
   netResult: number;
   newBalance: number;
 };
-function DicePanel({
-  gameSlug,
-}: {
-  gameSlug: string;
-}) {
+function DicePanel({ gameSlug }: { gameSlug: string }) {
   const [wager, setWager] = useState<WagerValue>(100);
   const [bet, setBet] = useState<DiceResult["bet"]>("HIGH");
   const [result, setResult] = useState<DiceResult | null>(null);
@@ -224,22 +221,39 @@ function DicePanel({
   const [busy, setBusy] = useState(false);
   const { showToast } = useToast();
   const { play } = useGameAudio();
+  const rollController = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      rollController.current?.abort();
+    },
+    [],
+  );
   async function roll() {
-    if (busy) return;
+    if (rollController.current) return;
+    const controller = new AbortController();
+    rollController.current = controller;
     setBusy(true);
     play("dice-shake");
     play("dice-roll", { delayMs: 170 });
     try {
-      const next = await requestJson<DiceResult>(
-        `/api/v1/games/${gameSlug}/spin`,
-        {
+      const [next] = await Promise.all([
+        requestJson<DiceResult>(`/api/v1/games/${gameSlug}/spin`, {
           method: "POST",
+          signal: controller.signal,
           headers: {
             "Idempotency-Key": gameplayIdempotencyKey(`dice-${gameSlug}`),
           },
           body: JSON.stringify({ wager, bet }),
-        },
-      );
+        }),
+        waitForDiceRoll(
+          controller.signal,
+          gameSlug === "gilded-dice" &&
+            !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? 1100
+            : 0,
+        ),
+      ]);
+      if (controller.signal.aborted) return;
       setResult(next);
       emitWalletUpdate(next.newBalance);
       setHistory((current) =>
@@ -252,29 +266,41 @@ function DicePanel({
           ...current,
         ].slice(0, 5),
       );
-      play("dice-land", { delayMs: 350 });
-      play(next.payout > 0 ? "win" : "loss", { delayMs: 480 });
+      play("dice-land");
+      play(next.payout > 0 ? "win" : "loss", { delayMs: 180 });
     } catch (caught) {
-      showToast(errorMessage(caught, "INVALID_WAGER"), "error");
+      if (!controller.signal.aborted && !isAbortError(caught))
+        showToast(errorMessage(caught, "INVALID_WAGER"), "error");
     } finally {
-      setBusy(false);
+      if (!controller.signal.aborted) setBusy(false);
+      controller.abort();
+      if (rollController.current === controller) rollController.current = null;
     }
   }
   return (
     <section className="gameplay-layout p-5 sm:p-8">
-      <WinCelebration kind="dice" result={result} gameSlug={gameSlug} ready={!busy} />
+      <WinCelebration
+        kind="dice"
+        result={result}
+        gameSlug={gameSlug}
+        ready={!busy}
+      />
       <div className="grid gap-6 lg:grid-cols-[1fr_270px]">
         <div className="game-board game-board--dice rounded-[24px] p-8 text-center sm:p-12">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] game-board-muted">
             Dice table
           </p>
-          <div
-            className={`mx-auto mt-5 grid h-36 w-36 place-items-center rounded-[30px] border border-amber-200/20 bg-black/20 shadow-2xl ${busy ? "animate-pulse" : ""}`}
-          >
-            <span className="display text-7xl game-board-fg">
-              {result?.roll ?? "—"}
-            </span>
-          </div>
+          {gameSlug === "gilded-dice" ? (
+            <DiceRollDisplay rolling={busy} roll={result?.roll} />
+          ) : (
+            <div
+              className={`mx-auto mt-5 grid h-36 w-36 place-items-center rounded-[30px] border border-amber-200/20 bg-black/20 shadow-2xl ${busy ? "animate-pulse" : ""}`}
+            >
+              <span className="display text-7xl game-board-fg">
+                {result?.roll ?? "—"}
+              </span>
+            </div>
+          )}
           <p className="mt-5 text-sm game-board-muted">
             High is 51–100. Low is 1–49. A roll of 50 loses either bet.
           </p>
@@ -285,6 +311,7 @@ function DicePanel({
             {(["HIGH", "LOW"] as const).map((item) => (
               <button
                 aria-pressed={bet === item}
+                disabled={busy}
                 className={`focus-ring min-h-12 rounded-xl border text-sm font-bold ${bet === item ? "border-amber/60 bg-amber/10 text-ink" : "border-white/10 bg-white/[0.03] text-muted-strong"}`}
                 key={item}
                 onClick={() => setBet(item)}
@@ -298,10 +325,15 @@ function DicePanel({
             {busy ? <LoaderCircle className="animate-spin" size={17} /> : null}{" "}
             {busy ? "Rolling…" : "Roll dice"}
           </Button>
-          <p aria-live="polite" className="min-h-6 text-xs font-semibold text-mint">
-            {result
-              ? `${result.bet} settled · ${result.payout ? `returned ${formatCurrency(result.payout)}` : "no payout"}.`
-              : "Choose a side and roll."}
+          <p
+            aria-live="polite"
+            className="min-h-6 text-xs font-semibold text-mint"
+          >
+            {busy
+              ? "Rolling the dice…"
+              : result
+                ? `${result.bet} settled · ${result.payout ? `returned ${formatCurrency(result.payout)}` : "no payout"}.`
+                : "Choose a side and roll."}
           </p>
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-5 text-muted">
             <div className="font-semibold text-ink">House rules</div>

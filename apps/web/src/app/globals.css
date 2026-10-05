@@ -681,3 +681,31 @@ body:has(.auth-page) > footer { display: none; }
 @keyframes win-enter { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes win-confetti { 15% { opacity: .8; } to { opacity: 0; translate: 12px 190px; rotate: 180deg; } }
 @media (prefers-reduced-motion: reduce) { .win-celebration[open], .win-celebration[open] .win-confetti i { animation: none; } }
+
+/* Faceted percentile dice, with a quiet felt stage and gold/ivory finish. */
+.gilded-roll { max-width: 440px; margin: 0 auto; }
+.gilded-roll-stage { position: relative; height: 236px; perspective: 800px; isolation: isolate; }
+.gilded-roll-ring { position: absolute; inset: 42px 0 10px; border: 1px solid color-mix(in srgb, var(--amber) 24%, transparent); border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--amber) 10%, transparent), transparent 68%); transform: rotateX(58deg); }
+.gilded-die { position: absolute; top: 44px; width: 116px; height: 140px; transform-style: preserve-3d; transition: transform 400ms cubic-bezier(.2,.8,.2,1); }
+.gilded-die::after { content: ""; position: absolute; z-index: -1; left: 15%; bottom: -10px; width: 70%; height: 14px; border-radius: 50%; background: #0005; filter: blur(8px); }
+.gilded-die--tens { left: calc(50% - 128px); transform: rotate(-14deg) rotateY(12deg); }
+.gilded-die--units { right: calc(50% - 128px); transform: translateY(12px) rotate(16deg) rotateY(-12deg); }
+.gilded-die-art { width: 100%; height: 100%; filter: drop-shadow(0 5px 2px #0002); }
+.gilded-die-label { position: absolute; bottom: 12px; font-size: 10px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--game-board-muted); }
+.gilded-die-label--tens { right: calc(50% + 48px); }
+.gilded-die-label--units { left: calc(50% + 48px); }
+.gilded-roll-result { min-height: 99px; margin-top: 10px; }
+.gilded-roll-kicker { font-size: 10px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--game-board-muted); }
+.gilded-roll-number { margin-top: 5px; font-size: 56px; line-height: 1.15; font-weight: 600; letter-spacing: -.06em; font-variant-numeric: tabular-nums; color: var(--game-board-fg); }
+.gilded-roll-ellipsis { font-size: 36px; letter-spacing: .16em; color: var(--amber); }
+.gilded-roll-caption { margin-top: 4px; font-size: 11px; color: var(--game-board-muted); }
+.gilded-roll--rolling .gilded-die--tens { animation: gilded-tumble-tens 700ms linear infinite; }
+.gilded-roll--rolling .gilded-die--units { animation: gilded-tumble-units 780ms linear infinite; }
+.gilded-roll--rolling .gilded-die::after { animation: gilded-die-shadow 700ms ease-in-out infinite; }
+@keyframes gilded-tumble-tens { 0% { transform: translateY(0) rotate(-14deg) rotateY(12deg) rotateX(0); } 25% { transform: translate(-10px,-22px) rotate(-45deg) rotateY(48deg) rotateX(25deg); } 50% { transform: translate(4px,-8px) rotate(-100deg) rotateY(-38deg) rotateX(0); } 75% { transform: translate(10px,-25px) rotate(-210deg) rotateY(-52deg) rotateX(-25deg); } 100% { transform: translateY(0) rotate(-374deg) rotateY(12deg) rotateX(0); } }
+@keyframes gilded-tumble-units { 0% { transform: translateY(12px) rotate(16deg) rotateY(-12deg) rotateX(0); } 25% { transform: translate(12px,-12px) rotate(70deg) rotateY(-48deg) rotateX(-20deg); } 50% { transform: translate(-4px,2px) rotate(170deg) rotateY(38deg) rotateX(0); } 75% { transform: translate(-8px,-22px) rotate(280deg) rotateY(52deg) rotateX(20deg); } 100% { transform: translateY(12px) rotate(376deg) rotateY(-12deg) rotateX(0); } }
+.gilded-roll--settled .gilded-die-art { animation: gilded-die-land 380ms ease-out; }
+@keyframes gilded-die-land { 0% { transform: translateY(-14px) scale(1.04); } 45% { transform: translateY(4px) scale(.97); } 75% { transform: translateY(-2px) scale(1.01); } 100% { transform: none; } }
+@keyframes gilded-die-shadow { 50% { opacity: .4; scale: .7; } }
+@media (max-width: 420px) { .gilded-die { width: 96px; height: 116px; top: 56px; } .gilded-die--tens { left: calc(50% - 102px); } .gilded-die--units { right: calc(50% - 102px); } .gilded-die-label--tens { right: calc(50% + 32px); } .gilded-die-label--units { left: calc(50% + 32px); } }
+@media (prefers-reduced-motion: reduce) { .gilded-die { transition: none; } .gilded-roll--rolling .gilded-die, .gilded-roll--rolling .gilded-die::after, .gilded-roll--settled .gilded-die-art { animation: none; } }

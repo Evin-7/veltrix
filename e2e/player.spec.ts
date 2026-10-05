@@ -140,7 +140,15 @@ test.describe("player journey", () => {
         const endpoint = game.action === "Deal baccarat" ? "/deal" : "/spin";
         const response = gameplayResponse(game.slug, endpoint);
         await page.getByRole("button", { name: game.action }).click();
+        if (game.slug === "gilded-dice") {
+          await expect(page.getByText("Dice in motion")).toBeVisible();
+          await expect(page.getByRole("button", { name: "Rolling…", exact: true })).toBeDisabled();
+        }
         const data = await response;
+        if (game.slug === "gilded-dice") {
+          await expect(page.locator(".gilded-roll-number")).toHaveText(String(data.roll).padStart(2, "0"));
+          await expect(page.getByRole("button", { name: "Roll dice", exact: true })).toBeEnabled();
+        }
         expect(data.roundId).toBeTruthy();
         expect(data.newBalance).toEqual(expect.any(Number));
         settledNet = data.netResult;
