@@ -690,7 +690,7 @@ export function NotificationsPanel({
                   {item.title}
                 </span>
                 {!item.readAt ? (
-                  <span className="rounded-full bg-amber px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-background">
+                  <span className="rounded-full bg-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-gold-foreground">
                     New
                   </span>
                 ) : null}
