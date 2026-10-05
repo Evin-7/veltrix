@@ -144,7 +144,7 @@ export function Header({ initialUser, initialWallet, initialWalletError = false 
 
         <div className="hidden items-center gap-2 sm:flex">
           <ThemeMenu />
-          {user?.role === "PLAYER" ? <Link aria-label="Notifications" className="focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-surface-hover hover:text-ink" href="/notifications" onClick={closeTransientMenus}><Bell size={17} strokeWidth={1.8} />{realtime.unreadNotifications > 0 ? <span className="absolute right-[7px] top-[6px] grid min-h-4 min-w-4 place-items-center rounded-full bg-amber px-1 text-[9px] font-bold text-background">{realtime.unreadNotifications > 9 ? "9+" : realtime.unreadNotifications}</span> : null}</Link> : null}
+          {user?.role === "PLAYER" ? <Link aria-label="Notifications" className="focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-surface-hover hover:text-ink" href="/notifications" onClick={closeTransientMenus}><Bell size={17} strokeWidth={1.8} />{realtime.unreadNotifications > 0 ? <span className="absolute right-[7px] top-[6px] grid min-h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[9px] font-bold text-gold-foreground">{realtime.unreadNotifications > 9 ? "9+" : realtime.unreadNotifications}</span> : null}</Link> : null}
           {user ? (
             <>
               {hasWalletSurface ? <Link className="focus-ring inline-flex items-center gap-2 rounded-full border border-mint/20 bg-mint/10 px-3 py-2 text-xs font-semibold text-mint hover:border-mint/35 hover:bg-mint/15" href="/wallet" onClick={closeTransientMenus}><span className="h-1.5 w-1.5 rounded-full bg-mint" />{walletLabel()}</Link> : null}

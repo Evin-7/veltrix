@@ -224,6 +224,7 @@
   --color-gold: var(--gold);
   --color-gold-hover: var(--gold-hover);
   --color-gold-active: var(--gold-active);
+  --color-gold-foreground: var(--gold-foreground);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-accent: var(--accent);
