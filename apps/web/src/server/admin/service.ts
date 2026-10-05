@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 import { getPrisma } from "@/server/db/prisma";
-import { PUBLIC_GAMES_CACHE_TAG, PUBLIC_PROVIDERS_CACHE_TAG } from "@/server/games/service";
+import { PUBLIC_GAMES_CACHE_TAG, PUBLIC_PROVIDERS_CACHE_TAG, RETIRED_GAME_SLUGS } from "@/server/games/service";
 import { badRequest, forbidden, notFound } from "@/server/http/errors";
 import { applyWalletMutationToLockedWallet, lockWallet } from "@/server/wallet/ledger";
 import { writeAuditLog } from "./audit";
@@ -35,7 +35,7 @@ export async function getDashboard(range: "24h" | "7d" | "30d") {
   const [players, activePlayers, games, activeSessions, sessions, wagered, won, transactions, recentPlayers, recentSessions, recentTransactions, topGames] = await prisma.$transaction([
     prisma.user.count({ where: { role: "PLAYER" } }),
     prisma.user.count({ where: { role: "PLAYER", status: "ACTIVE" } }),
-    prisma.game.count(),
+    prisma.game.count({ where: { slug: { notIn: [...RETIRED_GAME_SLUGS] } } }),
     prisma.gameSession.count({ where: { status: "ACTIVE" } }),
     prisma.gameSession.count({ where: { createdAt: { gte: from } } }),
     prisma.walletTransaction.aggregate({ where: { type: "GAME_WAGER", createdAt: { gte: from } }, _sum: { amount: true } }),
@@ -165,7 +165,7 @@ export async function getSession(id: string) {
 
 export async function listAdminGames() {
   const [games, providers] = await Promise.all([
-    getPrisma().game.findMany({ orderBy: [{ updatedAt: "desc" }, { name: "asc" }], include: { provider: { select: { id: true, name: true, slug: true, status: true } }, _count: { select: { gameSessions: true } } } }),
+    getPrisma().game.findMany({ where: { slug: { notIn: [...RETIRED_GAME_SLUGS] } }, orderBy: [{ updatedAt: "desc" }, { name: "asc" }], include: { provider: { select: { id: true, name: true, slug: true, status: true } }, _count: { select: { gameSessions: true } } } }),
     getPrisma().gameProvider.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { games: true } } } }),
   ]);
   return { games: games.map((game) => ({ ...game, demoRtp: Number(game.demoRtp), createdAt: game.createdAt.toISOString(), updatedAt: game.updatedAt.toISOString() })), providers };

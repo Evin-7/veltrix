@@ -37,10 +37,11 @@ type ListGamesInput = {
   includeTotal?: boolean;
 };
 
+export const RETIRED_GAME_SLUGS = ["cinder-club"] as const;
 const publicWhere = {
   status: "ACTIVE" as const,
   provider: { status: "ACTIVE" as const },
-  NOT: { slug: "cinder-club" },
+  NOT: { slug: { in: [...RETIRED_GAME_SLUGS] } },
 };
 export const PUBLIC_GAMES_CACHE_TAG = "public-games";
 export const PUBLIC_PROVIDERS_CACHE_TAG = "public-providers";
