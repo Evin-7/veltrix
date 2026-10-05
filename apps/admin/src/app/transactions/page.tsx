@@ -140,7 +140,7 @@ function TransactionsContent() {
                     {record.type.replaceAll("_", " ")}
                   </td>
                   <td
-                    className={`text-sm font-semibold ${record.amount >= 0 ? "text-[var(--admin-success)]" : "text-[var(--admin-danger)]"}`}
+                    className={`text-sm font-semibold ${record.amount >= 0 ? "text-[var(--admin-success-text)]" : "text-[var(--admin-danger)]"}`}
                   >
                     {record.amount >= 0 ? "+" : ""}
                     {formatVc(record.amount)}

@@ -132,7 +132,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   <Icon aria-hidden="true" size={17} />
                   <span>{item.label}</span>
                   {item.muted && (
-                    <span className="ml-auto rounded-full border border-[#2b3547] px-2 py-0.5 text-[9px] uppercase tracking-wider text-[#637089]">
+                    <span className="ml-auto rounded-full border border-[var(--admin-border-strong)] px-2 py-0.5 text-[9px] uppercase tracking-wider text-[var(--admin-muted)]">
                       Soon
                     </span>
                   )}
@@ -140,7 +140,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="mt-4 border-t border-[#252d3d] pt-4">
+          <div className="mt-4 border-t border-[var(--admin-border)] pt-4">
             <AdminButton
               aria-label="Sign out"
               className="admin-shell-signout"
@@ -158,7 +158,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <button
                 aria-label="Open navigation"
                 onClick={() => setMobileOpen(true)}
-                className="text-[#aab4c8] lg:hidden"
+                className="text-[var(--admin-text-soft)] lg:hidden"
               >
                 <Menu size={22} />
               </button>
@@ -177,16 +177,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-3">
                 <AdminThemeMenu />
-                <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#83f5c5] to-[#3b8c78] text-sm font-bold text-[#09120f]">
+                <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[var(--admin-accent)] to-[var(--admin-accent-strong)] text-sm font-bold text-[var(--admin-accent-ink)]">
                   {(user.profile?.displayName ?? user.email)
                     .slice(0, 1)
                     .toUpperCase()}
                 </div>
                 <div className="hidden leading-tight sm:block">
-                  <div className="text-xs font-semibold text-[#edf3fd]">
+                  <div className="text-xs font-semibold text-[var(--admin-text-strong)]">
                     {user.profile?.displayName ?? user.email.split("@")[0]}
                   </div>
-                  <div className="mt-1 text-[10px] uppercase tracking-wider text-[#83f5c5]">
+                  <div className="mt-1 text-[10px] uppercase tracking-wider text-[var(--admin-accent)]">
                     {user.role.replace("_", " ")}
                   </div>
                 </div>
@@ -217,11 +217,11 @@ export function PageIntro({
     <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
       <div className="min-w-0">
         {eyebrow ? (
-          <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[#83f5c5]">
+          <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--admin-accent)]">
             {eyebrow}
           </div>
         ) : null}
-        <h1 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">
+        <h1 className="text-3xl font-semibold tracking-[-0.03em] text-[var(--admin-text-strong)] sm:text-4xl">
           {title}
         </h1>
         {description ? (

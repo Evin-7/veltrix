@@ -519,10 +519,10 @@ function GamesContent() {
       <Panel className="overflow-hidden">
         <div className="admin-panel-heading flex items-center justify-between px-6 py-5">
           <div>
-            <h2 className="text-sm font-semibold text-white">
+            <h2 className="text-sm font-semibold text-[var(--admin-text-strong)]">
               Catalog inventory
             </h2>
-            <p className="mt-1 text-xs text-[#718097]">
+            <p className="mt-1 text-xs text-[var(--admin-muted)]">
               {games.length} games · {providers.length} providers
             </p>
           </div>
@@ -569,8 +569,8 @@ function GamesContent() {
 
       <Panel className="mt-6 overflow-hidden">
         <div className="admin-panel-heading px-6 py-5">
-          <h2 className="text-sm font-semibold text-white">Providers</h2>
-          <p className="mt-1 text-xs text-[#718097]">
+          <h2 className="text-sm font-semibold text-[var(--admin-text-strong)]">Providers</h2>
+          <p className="mt-1 text-xs text-[var(--admin-muted)]">
             Disable providers to remove their games from the player catalog
             without deleting history.
           </p>
@@ -583,10 +583,10 @@ function GamesContent() {
                 className="flex items-center justify-between gap-4 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-soft)] px-5 py-4"
               >
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-white">
+                  <div className="text-sm font-semibold text-[var(--admin-text-strong)]">
                     {provider.name}
                   </div>
-                  <div className="mt-1 text-xs text-[#718097]">
+                  <div className="mt-1 text-xs text-[var(--admin-muted)]">
                     {provider._count.games} games · {provider.slug}
                   </div>
                 </div>
@@ -692,16 +692,16 @@ function GameRow({
     <>
       <tr>
         <td>
-          <div className="text-sm font-semibold text-[#edf3fd]">
+          <div className="text-sm font-semibold text-[var(--admin-text-strong)]">
             {game.name}
           </div>
-          <div className="mt-1 text-xs text-[#718097]">{game.slug}</div>
+          <div className="mt-1 text-xs text-[var(--admin-muted)]">{game.slug}</div>
         </td>
-        <td className="text-xs text-[#aab4c8]">{game.provider.name}</td>
+        <td className="text-xs text-[var(--admin-text-soft)]">{game.provider.name}</td>
         <td>
           <StatusPill value={game.status} />
         </td>
-        <td className="text-xs text-[#aab4c8]">{game.demoRtp.toFixed(2)}%</td>
+        <td className="text-xs text-[var(--admin-text-soft)]">{game.demoRtp.toFixed(2)}%</td>
         <td>
           <div
             aria-label={`Catalog flags for ${game.name}`}
@@ -714,7 +714,7 @@ function GameRow({
             ].map((flag) => (
               <span
                 aria-label={`${flag.label}: ${flag.checked ? "yes" : "no"}`}
-                className={`grid h-7 w-7 place-items-center rounded-md border text-[10px] font-bold ${flag.checked ? "border-[#245a4c] bg-[#12352e] text-[#83f5c5]" : "border-[#2b3547] text-[#637089]"}`}
+                className={`grid h-7 w-7 place-items-center rounded-md border text-[10px] font-bold ${flag.checked ? "border-[var(--admin-success-border)] bg-[var(--admin-success-bg)] text-[var(--admin-success-text)]" : "border-[var(--admin-border-strong)] text-[var(--admin-muted)]"}`}
                 key={flag.label}
               >
                 {flag.checked ? (

@@ -194,7 +194,7 @@ export function SlotsPanel({
                       key={`${reelIndex}-${rowIndex}`}
                     >
                       <span
-                        className={`${symbolArt.tone} drop-shadow-[0_0_14px_currentColor]`}
+                        className={`slot-tone-board ${symbolArt.tone} drop-shadow-[0_0_14px_currentColor]`}
                       >
                         {symbolArt.glyph}
                       </span>
@@ -244,7 +244,7 @@ export function SlotsPanel({
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
               Paytable · 3-symbol returns
             </p>
-            <div className="mt-3 grid gap-2 text-xs">
+            <div className="slot-paytable-list mt-3 grid gap-2 text-xs">
               {art.map((symbol) => (
                 <div
                   className="flex items-center justify-between gap-3"
@@ -326,6 +326,10 @@ type RouletteResult = {
   netResult: number;
   newBalance: number;
 };
+type RouletteHistoryItem = Pick<
+  RouletteResult,
+  "roundId" | "winningNumber" | "winningColor" | "wager" | "payout" | "netResult"
+>;
 const redNumbers = new Set([
   1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
 ]);
@@ -339,11 +343,38 @@ export function RoulettePanel({
   const [betType, setBetType] = useState<RouletteBetType>("RED");
   const [number, setNumber] = useState(7);
   const [result, setResult] = useState<RouletteResult | null>(null);
-  const [history, setHistory] = useState<RouletteResult[]>([]);
+  const [history, setHistory] = useState<RouletteHistoryItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const { showToast } = useToast();
   const animationTimer = useRef<number | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadRecentResults() {
+      try {
+        const recent = await requestJson<RouletteHistoryItem[]>(
+          `/api/v1/games/${gameSlug}/rounds/recent`,
+          { signal: controller.signal },
+        );
+        setHistory((current) => {
+          const seen = new Set(current.map((round) => round.roundId));
+          return [
+            ...current,
+            ...recent.filter((round) => !seen.has(round.roundId)),
+          ].slice(0, 5);
+        });
+      } catch (caught) {
+        if (!isAbortError(caught)) {
+          console.error(
+            "[Veltrix] Could not load recent roulette results",
+            caught,
+          );
+        }
+      }
+    }
+    void loadRecentResults();
+    return () => controller.abort();
+  }, [gameSlug]);
   useEffect(
     () => () => {
       if (animationTimer.current !== null)
@@ -406,6 +437,7 @@ export function RoulettePanel({
       { type: "COLUMN_3", label: "Column 3", detail: "2:1" },
       { type: "SINGLE_NUMBER", label: "Single number", detail: "35:1" },
     ];
+  const lastResult = history[0] ?? result;
   return (
     <section className="gameplay-layout p-5 sm:p-8">
       <WinCelebration kind="roulette" result={result} gameSlug={gameSlug} ready={!isAnimating && !isSubmitting} />
@@ -415,11 +447,19 @@ export function RoulettePanel({
             className={`mx-auto grid h-64 w-64 place-items-center rounded-full border-[14px] border-[#bd3e55]/80 bg-[conic-gradient(#171b2e_0_12deg,#bd3e55_12deg_24deg,#171b2e_24deg_36deg,#bd3e55_36deg_48deg,#171b2e_48deg_60deg,#bd3e55_60deg_72deg,#171b2e_72deg_84deg,#bd3e55_84deg_96deg,#171b2e_96deg_108deg,#bd3e55_108deg_120deg,#171b2e_120deg_132deg,#bd3e55_132deg_144deg,#171b2e_144deg_156deg,#bd3e55_156deg_168deg,#171b2e_168deg_180deg,#bd3e55_180deg_192deg,#171b2e_192deg_204deg,#bd3e55_204deg_216deg,#171b2e_216deg_228deg,#bd3e55_228deg_240deg,#171b2e_240deg_252deg,#bd3e55_252deg_264deg,#171b2e_264deg_276deg,#bd3e55_276deg_288deg,#171b2e_288deg_300deg,#bd3e55_300deg_312deg,#171b2e_312deg_324deg,#bd3e55_324deg_336deg,#171b2e_336deg_348deg,#bd3e55_348deg_360deg)] shadow-[0_20px_60px_rgba(0,0,0,0.35)] transition-transform duration-700 ${isAnimating ? "rotate-[360deg]" : ""}`}
           >
             <div className="grid h-36 w-36 place-items-center rounded-full border border-white/15 bg-[#111827] shadow-inner">
-              <div className="grid h-20 w-20 place-items-center rounded-full border border-amber/25 bg-amber/10 text-center">
-                <span className="display text-3xl text-amber-bright">
-                  {result ? result.winningNumber : "0"}
+              <div
+                aria-label={
+                  lastResult
+                    ? `Last result ${lastResult.winningNumber}, ${lastResult.winningColor.toLowerCase()}`
+                    : "No roulette result yet"
+                }
+                aria-live="polite"
+                className="grid h-20 w-20 place-items-center gap-1 rounded-full border border-amber/25 bg-amber/10 px-2 text-center"
+              >
+                <span className="roulette-last-result-value tabular-nums">
+                  {lastResult ? lastResult.winningNumber : "—"}
                 </span>
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-muted">
+                <span className="roulette-last-result-label">
                   last result
                 </span>
               </div>
@@ -430,9 +470,9 @@ export function RoulettePanel({
               <p className="text-[10px] uppercase tracking-[0.15em] text-muted">
                 Result
               </p>
-              <p className="mt-1 text-xl font-semibold text-ink">
-                {result
-                  ? `${result.winningNumber} · ${result.winningColor}`
+              <p className="mt-1 text-lg font-semibold text-ink tabular-nums">
+                {lastResult
+                  ? `${lastResult.winningNumber} · ${lastResult.winningColor}`
                   : "—"}
               </p>
             </div>
@@ -440,8 +480,8 @@ export function RoulettePanel({
               <p className="text-[10px] uppercase tracking-[0.15em] text-muted">
                 Payout
               </p>
-              <p className="mt-1 text-xl font-semibold text-mint">
-                {result ? formatCurrency(result.payout) : "—"}
+              <p className="mt-1 text-lg font-semibold text-mint tabular-nums">
+                {lastResult ? formatCurrency(lastResult.payout) : "—"}
               </p>
             </div>
           </div>
@@ -454,7 +494,7 @@ export function RoulettePanel({
                 <button
                   aria-label={`Bet on ${value}`}
                   aria-pressed={betType === "SINGLE_NUMBER" && number === value}
-                  className={`focus-ring min-h-8 rounded-lg border text-[11px] font-bold ${value === 0 ? "border-mint/50 bg-mint/15 text-mint" : redNumbers.has(value) ? "border-rose-300/30 bg-rose-400/15 text-rose-200" : "border-white/10 bg-white/[0.04] text-muted-strong"} ${betType === "SINGLE_NUMBER" && number === value ? "ring-2 ring-amber" : ""}`}
+                  className={`focus-ring min-h-8 rounded-lg border text-[11px] font-bold ${value === 0 ? "border-mint/50 bg-mint/15 text-mint" : redNumbers.has(value) ? "roulette-red-foreground border-rose-300/30 bg-rose-400/15" : "border-white/10 bg-white/[0.04] text-muted-strong"} ${betType === "SINGLE_NUMBER" && number === value ? "ring-2 ring-amber" : ""}`}
                   key={value}
                   onClick={() => {
                     setBetType("SINGLE_NUMBER");
@@ -521,7 +561,7 @@ export function RoulettePanel({
           {history.length ? (
             history.map((round) => (
               <span
-                className={`rounded-full border px-3 py-2 text-xs font-semibold ${round.winningColor === "RED" ? "border-rose-300/30 bg-rose-400/15 text-rose-200" : round.winningColor === "BLACK" ? "border-white/15 bg-white/[0.05] text-muted-strong" : "border-mint/30 bg-mint/10 text-mint"}`}
+                className={`rounded-full border px-3 py-2 text-xs font-semibold ${round.winningColor === "RED" ? "roulette-red-foreground border-rose-300/30 bg-rose-400/15" : round.winningColor === "BLACK" ? "border-white/15 bg-white/[0.05] text-muted-strong" : "border-mint/30 bg-mint/10 text-mint"}`}
                 key={round.roundId}
               >
                 {round.winningNumber} · {round.winningColor}

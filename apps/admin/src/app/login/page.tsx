@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[24rem]">
         <div className="mb-8 text-center">
           <AdminVeltrixLogo className="mx-auto mb-5 w-[190px]" priority />
-          <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#83f5c5]">
+          <div className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--admin-accent)]">
             Veltrix Admin
           </div>
         </div>
@@ -87,10 +87,10 @@ export default function LoginPage() {
             Login
           </AdminButton>
         </form>
-        <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-[#637089]">
+        <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-[var(--admin-muted)]">
           <ShieldCheck
             aria-hidden="true"
-            className="text-[#83f5c5]"
+            className="text-[var(--admin-accent)]"
             size={14}
           />{" "}
           Session protected by Veltrix auth

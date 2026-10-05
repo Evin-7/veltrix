@@ -12,6 +12,7 @@ describe("slot frontend symbol mapping", () => {
       expect(new Set(displaySymbols.map((symbol) => symbol.id)).size).toBe(definition.symbols.length);
       for (const symbol of definition.symbols) {
         expect(getSlotDisplaySymbol(slug, symbol).id).toBe(symbol);
+        expect(getSlotDisplaySymbol(slug, symbol).tone).toMatch(/^slot-tone--/);
       }
     }
   });

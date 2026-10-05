@@ -160,7 +160,7 @@ function PlayerDetailContent() {
     <>
       <Link
         href="/players"
-        className="mb-7 inline-flex items-center gap-2 text-xs font-semibold text-[#83f5c5] hover:text-white"
+        className="mb-7 inline-flex items-center gap-2 text-xs font-semibold text-[var(--admin-accent)] hover:text-[var(--admin-text-strong)]"
       >
         <ArrowLeft aria-hidden="true" size={15} /> Back to players
       </Link>
@@ -187,72 +187,72 @@ function PlayerDetailContent() {
               <Panel className="p-6">
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-[#637089]">
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--admin-muted)]">
                       Username
                     </div>
-                    <div className="mt-2 text-sm text-white">
+                    <div className="mt-2 text-sm text-[var(--admin-text)]">
                       {player.profile?.username ?? "—"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-[#637089]">
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--admin-muted)]">
                       Last login
                     </div>
-                    <div className="mt-2 text-sm text-white">
+                    <div className="mt-2 text-sm text-[var(--admin-text)]">
                       {formatDate(player.lastLoginAt)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-[#637089]">
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--admin-muted)]">
                       Game sessions
                     </div>
-                    <div className="mt-2 text-sm text-white">
+                    <div className="mt-2 text-sm text-[var(--admin-text)]">
                       {player.gameSessions.length} recent
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-[#637089]">
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--admin-muted)]">
                       Wallet balance
                     </div>
-                    <div className="mt-2 text-sm font-semibold text-white">
+                    <div className="mt-2 text-sm font-semibold text-[var(--admin-text-strong)]">
                       {player.wallet ? formatVc(player.wallet.balance) : "—"}
                     </div>
                   </div>
                 </div>
               </Panel>
               <Panel className="overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[#252d3d] px-6 py-5">
+                <div className="flex items-center justify-between border-b border-[var(--admin-border)] px-6 py-5">
                   <div>
-                    <h2 className="text-sm font-semibold text-white">
+                    <h2 className="text-sm font-semibold text-[var(--admin-text-strong)]">
                       Recent wallet activity
                     </h2>
-                    <p className="mt-1 text-xs text-[#718097]">
+                    <p className="mt-1 text-xs text-[var(--admin-muted)]">
                       Append-only ledger entries
                     </p>
                   </div>
                   <CircleDollarSign
                     aria-hidden="true"
                     size={18}
-                    className="text-[#83f5c5]"
+                    className="text-[var(--admin-accent)]"
                   />
                 </div>
                 {player.walletTransactions.length ? (
-                  <div className="divide-y divide-[#202837]">
+                  <div className="divide-y divide-[var(--admin-border)]">
                     {player.walletTransactions.map((transaction) => (
                       <div
                         key={transaction.id}
                         className="flex items-center justify-between gap-4 px-6 py-4"
                       >
                         <div>
-                          <div className="text-xs font-semibold text-[#e4eaf5]">
+                          <div className="text-xs font-semibold text-[var(--admin-text-strong)]">
                             {transaction.type.replaceAll("_", " ")}
                           </div>
-                          <div className="mt-1 text-[10px] text-[#718097]">
+                          <div className="mt-1 text-[10px] text-[var(--admin-muted)]">
                             {formatDate(transaction.createdAt)}
                           </div>
                         </div>
                         <div
-                          className={`text-sm font-semibold ${transaction.amount >= 0 ? "text-[#83f5c5]" : "text-[#ffadbd]"}`}
+                          className={`text-sm font-semibold ${transaction.amount >= 0 ? "text-[var(--admin-success-text)]" : "text-[var(--admin-danger)]"}`}
                         >
                           {transaction.amount >= 0 ? "+" : ""}
                           {formatVc(transaction.amount)}
@@ -265,30 +265,30 @@ function PlayerDetailContent() {
                 )}
               </Panel>
               <Panel className="overflow-hidden">
-                <div className="border-b border-[#252d3d] px-6 py-5">
-                  <h2 className="text-sm font-semibold text-white">
+                <div className="border-b border-[var(--admin-border)] px-6 py-5">
+                  <h2 className="text-sm font-semibold text-[var(--admin-text-strong)]">
                     Recent game sessions
                   </h2>
                 </div>
                 {player.gameSessions.length ? (
-                  <div className="divide-y divide-[#202837]">
+                  <div className="divide-y divide-[var(--admin-border)]">
                     {player.gameSessions.map((session) => (
                       <div
                         key={session.id}
                         className="flex items-center justify-between gap-4 px-6 py-4"
                       >
                         <div>
-                          <div className="text-xs font-semibold text-[#e4eaf5]">
+                          <div className="text-xs font-semibold text-[var(--admin-text-strong)]">
                             {session.game.name}
                           </div>
-                          <div className="mt-1 text-[10px] text-[#718097]">
+                          <div className="mt-1 text-[10px] text-[var(--admin-muted)]">
                             {formatDate(session.startedAt)} ·{" "}
                             {session.roundCount} rounds
                           </div>
                         </div>
                         <div className="text-right">
                           <StatusPill value={session.status} />
-                          <div className="mt-2 text-[10px] text-[#8994aa]">
+                          <div className="mt-2 text-[10px] text-[var(--admin-muted)]">
                             {formatVc(session.totalWagered)} wagered
                           </div>
                         </div>
@@ -305,14 +305,14 @@ function PlayerDetailContent() {
                 <>
                   <Panel className="p-6">
                     <div className="mb-5 grid grid-cols-[auto_1fr] items-start gap-3">
-                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#18362f] text-[#83f5c5]">
+                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--admin-accent)_12%,var(--admin-panel-soft))] text-[var(--admin-accent)]">
                         <ShieldAlert aria-hidden="true" size={17} />
                       </div>
                       <div>
-                        <h2 className="text-sm font-semibold text-white">
+                        <h2 className="text-sm font-semibold text-[var(--admin-text-strong)]">
                           Adjust balance
                         </h2>
-                        <p className="mt-1 text-xs leading-5 text-[#8994aa]">
+                        <p className="mt-1 text-xs leading-5 text-[var(--admin-muted)]">
                           Restricted to SUPER_ADMIN. Uses the locked wallet
                           ledger and requires an auditable reason.
                         </p>

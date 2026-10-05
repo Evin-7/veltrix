@@ -192,7 +192,7 @@ function PlayersContent() {
         open={Boolean(playerToToggle)}
         title={`${playerToToggle?.status === "ACTIVE" ? "Disable" : "Enable"} ${playerToToggle?.profile?.displayName ?? playerToToggle?.email ?? "player"}`}
       >
-        <p className="text-sm leading-6 text-[#8994aa]">
+        <p className="text-sm leading-6 text-[var(--admin-muted)]">
           Confirm this account access change to continue.
         </p>
       </AdminModal>
@@ -217,7 +217,7 @@ function PlayersContent() {
                       href={`/players/${player.id}`}
                       className="group flex items-center gap-3"
                     >
-                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#21352f] text-xs font-bold text-[#83f5c5]">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--admin-accent)_12%,var(--admin-panel-soft))] text-xs font-bold text-[var(--admin-accent)]">
                         {(
                           player.profile?.displayName ??
                           player.profile?.username ??
@@ -227,12 +227,12 @@ function PlayersContent() {
                           .toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-[#edf3fd] group-hover:text-[#83f5c5]">
+                        <div className="text-sm font-semibold text-[var(--admin-text-strong)] group-hover:text-[var(--admin-accent)]">
                           {player.profile?.displayName ??
                             player.profile?.username ??
                             "Unnamed player"}
                         </div>
-                        <div className="mt-1 text-xs text-[#718097]">
+                        <div className="mt-1 text-xs text-[var(--admin-muted)]">
                           {player.email}
                         </div>
                       </div>
@@ -275,7 +275,7 @@ function PlayersContent() {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-3 border-t border-[#252d3d] px-4 py-4 text-xs text-[#718097] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex flex-col gap-3 border-t border-[var(--admin-border)] px-4 py-4 text-xs text-[var(--admin-muted)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>
             {meta
               ? `Page ${meta.page} of ${Math.max(1, meta.totalPages)}`

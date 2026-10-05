@@ -971,6 +971,51 @@ export async function getGameSession(userId: string, sessionId: string) {
   };
 }
 
+export async function listRecentRouletteRounds(userId: string, gameSlug: string) {
+  const rounds = await getPrisma().gameRound.findMany({
+    where: {
+      userId,
+      gameType: "ROULETTE",
+      status: "SETTLED",
+      game: { slug: gameSlug },
+    },
+    orderBy: [{ settledAt: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+    take: 5,
+    select: {
+      id: true,
+      wager: true,
+      payout: true,
+      netResult: true,
+      result: true,
+    },
+  });
+
+  return rounds.flatMap((round) => {
+    if (!round.result || typeof round.result !== "object" || Array.isArray(round.result))
+      return [];
+    const result = round.result as Record<string, unknown>;
+    const winningNumber = result.winningNumber;
+    const winningColor = result.winningColor;
+    if (
+      typeof winningNumber !== "number" ||
+      !Number.isInteger(winningNumber) ||
+      winningNumber < 0 ||
+      winningNumber > 36 ||
+      (winningColor !== "GREEN" && winningColor !== "RED" && winningColor !== "BLACK")
+    ) {
+      return [];
+    }
+    return [{
+      roundId: round.id,
+      winningNumber,
+      winningColor,
+      wager: round.wager,
+      payout: round.payout,
+      netResult: round.netResult,
+    }];
+  });
+}
+
 export async function listGameSessionRounds(
   userId: string,
   sessionId: string,

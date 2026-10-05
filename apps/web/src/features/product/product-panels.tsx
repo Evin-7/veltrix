@@ -698,7 +698,7 @@ export function NotificationsPanel({
               <span className="mt-1 block break-words text-xs leading-5 text-muted">
                 {item.message}
               </span>
-              <span className="mt-2 block text-[10px] text-muted/70">
+              <span className="mt-2 block text-[11px] text-muted">
                 {formatDate(item.createdAt)}
               </span>
             </span>

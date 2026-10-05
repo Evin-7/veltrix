@@ -116,7 +116,7 @@ function SessionDetailContent() {
               <div className="text-[10px] uppercase tracking-wider text-[var(--admin-muted)]">
                 Won
               </div>
-              <div className="mt-3 text-2xl font-semibold text-[var(--admin-success)]">
+              <div className="mt-3 text-2xl font-semibold text-[var(--admin-success-text)]">
                 {formatVc(session.totalWon)}
               </div>
             </Panel>
@@ -151,7 +151,7 @@ function SessionDetailContent() {
                         </span>
                       </div>
                       <div
-                        className={`text-sm font-semibold ${round.netResult >= 0 ? "text-[var(--admin-success)]" : "text-[var(--admin-danger)]"}`}
+                        className={`text-sm font-semibold ${round.netResult >= 0 ? "text-[var(--admin-success-text)]" : "text-[var(--admin-danger)]"}`}
                       >
                         {round.netResult >= 0 ? "+" : ""}
                         {formatVc(round.netResult)}

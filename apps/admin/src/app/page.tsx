@@ -179,22 +179,22 @@ function DashboardContent() {
           return (
             <Panel key={card.label} className="p-5">
               <div className="flex items-start justify-between">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#18362f] text-[#83f5c5]">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--admin-accent)_12%,var(--admin-panel-soft))] text-[var(--admin-accent)]">
                   <Icon aria-hidden="true" size={18} />
                 </div>
                 <ArrowUpRight
                   aria-hidden="true"
-                  className="text-[#536077]"
+                  className="text-[var(--admin-muted)]"
                   size={16}
                 />
               </div>
-              <div className="mt-6 text-2xl font-semibold tracking-tight text-white">
+              <div className="mt-6 text-2xl font-semibold tracking-tight text-[var(--admin-text-strong)]">
                 {card.value}
               </div>
-              <div className="mt-1 text-xs font-medium text-[#aab4c8]">
+              <div className="mt-1 text-xs font-medium text-[var(--admin-text-soft)]">
                 {card.label}
               </div>
-              <div className="mt-3 text-[11px] text-[#718097]">{card.sub}</div>
+              <div className="mt-3 text-[11px] text-[var(--admin-muted)]">{card.sub}</div>
             </Panel>
           );
         })}
@@ -206,16 +206,16 @@ function DashboardContent() {
             <Panel className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">
+                  <h2 className="text-sm font-semibold text-[var(--admin-text-strong)]">
                     Activity pulse
                   </h2>
-                  <p className="mt-1 text-xs text-[#718097]">
+                  <p className="mt-1 text-xs text-[var(--admin-muted)]">
                     Daily sessions and virtual credits wagered
                   </p>
                 </div>
-                <div className="flex items-center gap-4 text-[10px] text-[#718097]">
+                <div className="flex items-center gap-4 text-[10px] text-[var(--admin-muted)]">
                   <span className="flex items-center gap-1.5">
-                    <i className="h-2 w-2 rounded-full bg-[#83f5c5]" />
+                    <i className="h-2 w-2 rounded-full bg-[var(--admin-accent)]" />
                     Sessions
                   </span>
                   <span className="flex items-center gap-1.5">
@@ -227,7 +227,7 @@ function DashboardContent() {
               {data.trends.points.length ? (
                 <div
                   aria-label="Sessions and wagers over time"
-                  className="mt-8 flex h-56 items-end gap-1.5 border-b border-l border-[#252d3d] px-3 pb-0 pt-5 sm:gap-3"
+                  className="mt-8 flex h-56 items-end gap-1.5 border-b border-l border-[var(--admin-border)] px-3 pb-0 pt-5 sm:gap-3"
                   role="img"
                 >
                   {data.trends.points.map((point) => {
@@ -242,7 +242,7 @@ function DashboardContent() {
                       >
                         <div
                           aria-label={`${point.sessions} sessions`}
-                          className="w-1.5 rounded-t bg-[#83f5c5]/70 transition group-hover:bg-[#83f5c5]"
+                          className="w-1.5 rounded-t bg-[color-mix(in_srgb,var(--admin-accent)_70%,transparent)] transition group-hover:bg-[var(--admin-accent)]"
                           style={{
                             height: `${Math.max(5, Math.min(100, point.sessions * 12))}%`,
                           }}
@@ -259,7 +259,7 @@ function DashboardContent() {
               ) : (
                 <EmptyState>No activity in this range.</EmptyState>
               )}
-              <div className="mt-3 flex justify-between pl-3 text-[10px] text-[#59657b]">
+              <div className="mt-3 flex justify-between pl-3 text-[10px] text-[var(--admin-muted)]">
                 <span>
                   {range === "24h"
                     ? "Yesterday"
@@ -274,39 +274,39 @@ function DashboardContent() {
             <Panel className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">
+                  <h2 className="text-sm font-semibold text-[var(--admin-text-strong)]">
                     Top games
                   </h2>
-                  <p className="mt-1 text-xs text-[#718097]">
+                  <p className="mt-1 text-xs text-[var(--admin-muted)]">
                     By session volume in range
                   </p>
                 </div>
                 <BarChart3
                   aria-hidden="true"
-                  className="text-[#83f5c5]"
+                  className="text-[var(--admin-accent)]"
                   size={17}
                 />
               </div>
               <div className="mt-6 space-y-5">
                 {data.topGames.map((game, index) => (
                   <div key={game.gameId} className="flex items-center gap-3">
-                    <span className="w-4 text-xs text-[#59657b]">
+                    <span className="w-4 text-xs text-[var(--admin-muted)]">
                       0{index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-semibold text-[#e4eaf5]">
+                      <div className="truncate text-xs font-semibold text-[var(--admin-text-strong)]">
                         {game.name ?? game.slug}
                       </div>
-                      <div className="mt-1 text-[10px] text-[#718097]">
+                      <div className="mt-1 text-[10px] text-[var(--admin-muted)]">
                         {game.sessions} sessions · {formatVc(game.wageredVc)}
                       </div>
                     </div>
                     <div
                       aria-hidden="true"
-                      className="h-1.5 w-20 overflow-hidden rounded-full bg-[#252d3d]"
+                      className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--admin-border)]"
                     >
                       <div
-                        className="h-full rounded-full bg-[#83f5c5]"
+                        className="h-full rounded-full bg-[var(--admin-accent)]"
                         style={{ width: `${Math.min(100, 100 - index * 17)}%` }}
                       />
                     </div>
@@ -320,10 +320,10 @@ function DashboardContent() {
           </div>
           <Panel className="mt-6 flex items-center justify-between gap-4 p-5">
             <div>
-              <div className="text-sm font-semibold text-white">
+              <div className="text-sm font-semibold text-[var(--admin-text-strong)]">
                 Data freshness
               </div>
-              <div className="mt-1 text-xs text-[#718097]">
+              <div className="mt-1 text-xs text-[var(--admin-muted)]">
                 Dashboard generated from server-side records{" "}
                 {new Date(data.generatedAt).toLocaleTimeString()}.
               </div>

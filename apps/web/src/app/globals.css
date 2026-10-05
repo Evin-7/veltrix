@@ -112,6 +112,45 @@
   --symbol-star: #fef08a;
   --symbol-lightning: #bef264;
   --symbol-diamond: #bae6fd;
+  --symbol-crystal-on-board: #a5f3fc;
+  --symbol-crown-on-board: #fde68a;
+  --symbol-orb-on-board: #f5a3ff;
+  --symbol-star-on-board: #fef08a;
+  --symbol-lightning-on-board: #bef264;
+  --symbol-diamond-on-board: #bae6fd;
+  --slot-tone-violet: #ddd6fe;
+  --slot-tone-cyan: #a5f3fc;
+  --slot-tone-indigo: #c7d2fe;
+  --slot-tone-yellow: #fef9c3;
+  --slot-tone-amber: #fde68a;
+  --slot-tone-sky: #bae6fd;
+  --slot-tone-fuchsia: #f5d0fe;
+  --slot-tone-slate: #cbd5e1;
+  --slot-tone-orange: #fed7aa;
+  --slot-tone-rose: #fecdd3;
+  --slot-tone-red: #fecaca;
+  --slot-tone-pink: #fbcfe8;
+  --slot-tone-emerald: #a7f3d0;
+  --slot-tone-lime: #d9f99d;
+  --slot-tone-teal: #99f6e4;
+  --slot-tone-violet-on-board: #ddd6fe;
+  --slot-tone-cyan-on-board: #a5f3fc;
+  --slot-tone-indigo-on-board: #c7d2fe;
+  --slot-tone-yellow-on-board: #fef9c3;
+  --slot-tone-amber-on-board: #fde68a;
+  --slot-tone-sky-on-board: #bae6fd;
+  --slot-tone-fuchsia-on-board: #f5d0fe;
+  --slot-tone-slate-on-board: #cbd5e1;
+  --slot-tone-orange-on-board: #fed7aa;
+  --slot-tone-rose-on-board: #fecdd3;
+  --slot-tone-red-on-board: #fecaca;
+  --slot-tone-pink-on-board: #fbcfe8;
+  --slot-tone-emerald-on-board: #a7f3d0;
+  --slot-tone-lime-on-board: #d9f99d;
+  --slot-tone-teal-on-board: #99f6e4;
+  --roulette-red-foreground: #fecdd3;
+  --roulette-last-result-value: #f4d27b;
+  --roulette-last-result-label: #cbd5e1;
 }
 
 :root[data-theme="light"] {
@@ -205,6 +244,22 @@
   --symbol-star: #8a5a00;
   --symbol-lightning: #3f6212;
   --symbol-diamond: #0369a1;
+  --slot-tone-violet: #6d28d9;
+  --slot-tone-cyan: #0e7490;
+  --slot-tone-indigo: #4338ca;
+  --slot-tone-yellow: #805b00;
+  --slot-tone-amber: #854d0e;
+  --slot-tone-sky: #0369a1;
+  --slot-tone-fuchsia: #a21caf;
+  --slot-tone-slate: #475569;
+  --slot-tone-orange: #9a3412;
+  --slot-tone-rose: #9f1239;
+  --slot-tone-red: #b91c1c;
+  --slot-tone-pink: #9d174d;
+  --slot-tone-emerald: #047857;
+  --slot-tone-lime: #4d7c0f;
+  --slot-tone-teal: #0f766e;
+  --roulette-red-foreground: #9f1239;
 }
 
 @theme inline {
@@ -331,6 +386,9 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .gameplay-layout .text-mint, .gameplay-layout .text-success { color: var(--game-status-success); }
 .gameplay-layout .text-amber, .gameplay-layout .text-amber-bright { color: var(--game-status-warning); }
 .gameplay-layout .text-rose-300, .gameplay-layout .text-danger { color: var(--game-status-danger); }
+.roulette-red-foreground { color: var(--roulette-red-foreground); }
+.roulette-last-result-value { color: var(--roulette-last-result-value); font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.roulette-last-result-label { color: var(--roulette-last-result-label); font-size: 0.52rem; font-weight: 800; letter-spacing: 0.1em; line-height: 1.15; text-transform: uppercase; white-space: nowrap; }
 .gameplay-layout .game-audio-control, .gameplay-layout .game-icon-control, .gameplay-game-header .game-audio-control, .gameplay-game-header .game-icon-control { border-color: var(--control-border); color: var(--game-muted); }
 .gameplay-layout .game-audio-control:hover, .gameplay-layout .game-icon-control:hover, .gameplay-game-header .game-audio-control:hover, .gameplay-game-header .game-icon-control:hover { background: color-mix(in srgb, var(--control-bg) 86%, var(--primary) 14%); color: var(--game-fg); }
 .gameplay-layout .game-value-badge { border-color: var(--game-border); background: var(--value-badge-bg); color: var(--value-badge-fg); }
@@ -351,6 +409,22 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .gameplay-layout .game-board-value { border-color: var(--game-board-border); background: color-mix(in srgb, var(--game-board-elevated) 78%, transparent); color: var(--game-board-fg); }
 .gameplay-layout .game-board-muted { color: var(--game-board-muted); }
 .gameplay-layout .game-board-divider { background: var(--game-board-border); }
+.slot-tone--violet { --slot-tone-board-color: var(--slot-tone-violet-on-board); color: var(--slot-tone-violet); }
+.slot-tone--cyan { --slot-tone-board-color: var(--slot-tone-cyan-on-board); color: var(--slot-tone-cyan); }
+.slot-tone--indigo { --slot-tone-board-color: var(--slot-tone-indigo-on-board); color: var(--slot-tone-indigo); }
+.slot-tone--yellow { --slot-tone-board-color: var(--slot-tone-yellow-on-board); color: var(--slot-tone-yellow); }
+.slot-tone--amber { --slot-tone-board-color: var(--slot-tone-amber-on-board); color: var(--slot-tone-amber); }
+.slot-tone--sky { --slot-tone-board-color: var(--slot-tone-sky-on-board); color: var(--slot-tone-sky); }
+.slot-tone--fuchsia { --slot-tone-board-color: var(--slot-tone-fuchsia-on-board); color: var(--slot-tone-fuchsia); }
+.slot-tone--slate { --slot-tone-board-color: var(--slot-tone-slate-on-board); color: var(--slot-tone-slate); }
+.slot-tone--orange { --slot-tone-board-color: var(--slot-tone-orange-on-board); color: var(--slot-tone-orange); }
+.slot-tone--rose { --slot-tone-board-color: var(--slot-tone-rose-on-board); color: var(--slot-tone-rose); }
+.slot-tone--red { --slot-tone-board-color: var(--slot-tone-red-on-board); color: var(--slot-tone-red); }
+.slot-tone--pink { --slot-tone-board-color: var(--slot-tone-pink-on-board); color: var(--slot-tone-pink); }
+.slot-tone--emerald { --slot-tone-board-color: var(--slot-tone-emerald-on-board); color: var(--slot-tone-emerald); }
+.slot-tone--lime { --slot-tone-board-color: var(--slot-tone-lime-on-board); color: var(--slot-tone-lime); }
+.slot-tone--teal { --slot-tone-board-color: var(--slot-tone-teal-on-board); color: var(--slot-tone-teal); }
+.slot-tone-board { color: var(--slot-tone-board-color); }
 .focus-ring:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .text-balance { text-wrap: balance; }
 .display { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.025em; }
@@ -449,6 +523,12 @@ button:disabled, select:disabled, [aria-disabled="true"] { cursor: not-allowed; 
 .slot-symbol-star { --slot-symbol-color: var(--symbol-star); }
 .slot-symbol-lightning { --slot-symbol-color: var(--symbol-lightning); }
 .slot-symbol-diamond { --slot-symbol-color: var(--symbol-diamond); }
+.slot-machine .slot-symbol-crystal { --slot-symbol-color: var(--symbol-crystal-on-board); }
+.slot-machine .slot-symbol-crown { --slot-symbol-color: var(--symbol-crown-on-board); }
+.slot-machine .slot-symbol-orb { --slot-symbol-color: var(--symbol-orb-on-board); }
+.slot-machine .slot-symbol-star { --slot-symbol-color: var(--symbol-star-on-board); }
+.slot-machine .slot-symbol-lightning { --slot-symbol-color: var(--symbol-lightning-on-board); }
+.slot-machine .slot-symbol-diamond { --slot-symbol-color: var(--symbol-diamond-on-board); }
 .slot-symbol-tile.slot-symbol-crystal, .slot-symbol-tile.slot-symbol-crown, .slot-symbol-tile.slot-symbol-orb, .slot-symbol-tile.slot-symbol-star, .slot-symbol-tile.slot-symbol-lightning, .slot-symbol-tile.slot-symbol-diamond { background-color: color-mix(in srgb, var(--slot-symbol-color) 10%, transparent); border-color: color-mix(in srgb, var(--slot-symbol-color) 32%, transparent); }
 .slot-symbol-tile::after { position: absolute; right: 10%; top: 10%; height: 18%; width: 30%; border-radius: 999px; background: rgb(255 255 255 / 0.15); filter: blur(5px); content: ""; transform: rotate(-25deg); }
 .slot-symbol-tile svg { filter: drop-shadow(0 0 12px currentColor); }
