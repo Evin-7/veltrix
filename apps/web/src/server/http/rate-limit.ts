@@ -50,6 +50,8 @@ async function enforceRateLimit(request: Request, action: string, maxRequests: n
     return;
   }
 
+  let upstreamStatus: number | undefined;
+  let reason = "request_failed";
   try {
     if (!redisUrl || !redisToken) throw new Error("Upstash REST configuration is incomplete.");
     const endpoint = redisUrl.replace(/\/$/, "");
@@ -57,16 +59,22 @@ async function enforceRateLimit(request: Request, action: string, maxRequests: n
       method: "POST",
       headers: { Authorization: `Bearer ${redisToken}`, "Content-Type": "application/json" },
       body: JSON.stringify([["INCR", key], ["EXPIRE", key, "60"]]),
-      signal: AbortSignal.timeout(750),
+      signal: AbortSignal.timeout(1500),
     });
-    if (!response.ok) throw new Error(`Upstash pipeline returned ${response.status}`);
+    upstreamStatus = response.status;
+    reason = "invalid_response";
+    if (!response.ok) {
+      reason = "upstream_http_error";
+      throw new Error("Upstash rejected the pipeline.");
+    }
     const payload = (await response.json()) as Array<{ result?: number }>;
     const count = Number(payload[0]?.result);
     if (!Number.isFinite(count)) throw new Error("Upstash returned an invalid counter.");
     if (count > maxRequests) throw new AppError(429, "RATE_LIMITED", message, undefined, 60);
   } catch (error) {
     if (error instanceof AppError) throw error;
-    logger.error("rate_limit.store_unavailable", { action });
+    if (error instanceof Error && error.name === "TimeoutError") reason = "timeout";
+    logger.error("rate_limit.store_unavailable", { action, reason, upstreamStatus });
     if (env.NODE_ENV !== "production") {
       enforceLocalRateLimit(key, maxRequests, message);
       return;
