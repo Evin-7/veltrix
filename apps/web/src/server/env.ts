@@ -19,6 +19,8 @@ const environmentSchema = z.object({
   CLOUDINARY_FOLDER: z.string().min(1).default("veltrix/avatars"),
   UPSTASH_REDIS_REST_URL: httpsUrl.optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+  VELTRIX_LIMIT_KV_REST_API_URL: httpsUrl.optional(),
+  VELTRIX_LIMIT_KV_REST_API_TOKEN: z.string().min(1).optional(),
   KV_REST_API_URL: httpsUrl.optional(),
   KV_REST_API_TOKEN: z.string().min(1).optional(),
 }).superRefine((environment, context) => {
@@ -33,6 +35,9 @@ const environmentSchema = z.object({
 
   const hasUrl = Boolean(environment.UPSTASH_REDIS_REST_URL ?? environment.KV_REST_API_URL);
   const hasToken = Boolean(environment.UPSTASH_REDIS_REST_TOKEN ?? environment.KV_REST_API_TOKEN);
+  if (Boolean(environment.VELTRIX_LIMIT_KV_REST_API_URL) !== Boolean(environment.VELTRIX_LIMIT_KV_REST_API_TOKEN)) {
+    context.addIssue({ code: "custom", path: ["VELTRIX_LIMIT_KV_REST_API_URL"], message: "Both Veltrix Redis REST variables must be configured together." });
+  }
   if (hasUrl !== hasToken) {
     context.addIssue({ code: "custom", path: ["UPSTASH_REDIS_REST_URL"], message: "Both Upstash REST variables must be configured together." });
   }
@@ -65,6 +70,8 @@ export function getEnv(): Environment {
     CLOUDINARY_FOLDER: process.env.CLOUDINARY_FOLDER,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    VELTRIX_LIMIT_KV_REST_API_URL: process.env.VELTRIX_LIMIT_KV_REST_API_URL,
+    VELTRIX_LIMIT_KV_REST_API_TOKEN: process.env.VELTRIX_LIMIT_KV_REST_API_TOKEN,
     KV_REST_API_URL: process.env.KV_REST_API_URL,
     KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
   });
